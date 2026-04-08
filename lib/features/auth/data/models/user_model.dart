@@ -1,3 +1,4 @@
+// lib/features/auth/data/models/user_model.dart
 enum TipusPrivacitat { public, privat, amics }
 
 class UserModel {
@@ -64,11 +65,11 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'],
-      nickname: json['nickname'],
-      nom: json['nom'],
-      cognom: json['cognom'],
-      correu: json['correu'],
+      id: json['id'] ?? '',
+      nickname: json['nickname'] ?? 'Usuari',
+      nom: json['nom'] ?? '',
+      cognom: json['cognom'] ?? '',
+      correu: json['correu'] ?? '',
       imatgePerfil: json['imatge_perfil'],
       puntsXP: json['punts_xp'] ?? 0,
       nivellXP: json['nivell_xp'] ?? 1,
@@ -77,7 +78,9 @@ class UserModel {
             (e) => e.toString().split('.').last == json['configuracio_privacitat'],
         orElse: () => TipusPrivacitat.public,
       ),
-      dataRegistre: DateTime.parse(json['data_registre']),
+      dataRegistre: json['data_registre'] != null
+          ? DateTime.parse(json['data_registre'])
+          : DateTime.now(),
       dobleFactorActiu: json['doble_factor_actiu'] ?? false,
       token: json['token'],
     );

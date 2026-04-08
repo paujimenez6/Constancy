@@ -22,11 +22,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m0(error) => "An error occurred: ${error}";
 
-  static String m1(coins) => "${coins} coins";
+  static String m1(email) => "Updating password for: ${email}";
 
-  static String m2(name) => "¡Welcome, ${name}!";
+  static String m2(coins) => "${coins} coins";
 
-  static String m3(level) => "Level ${level}";
+  static String m3(name) => "¡Welcome, ${name}!";
+
+  static String m4(level) => "Level ${level}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -37,12 +39,20 @@ class MessageLookup extends MessageLookupByLibrary {
             "Already have an account? Log in"),
         "appTitle": MessageLookupByLibrary.simpleMessage("Constancy"),
         "authError": m0,
+        "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
         "changePhoto": MessageLookupByLibrary.simpleMessage("Change photo"),
         "changesSaved": MessageLookupByLibrary.simpleMessage("Profile Updated"),
+        "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
         "confirmPasswordLabel":
             MessageLookupByLibrary.simpleMessage("Confirm password"),
+        "copySecret": MessageLookupByLibrary.simpleMessage("Copy secret code"),
         "creatingAccount":
             MessageLookupByLibrary.simpleMessage("Creating account..."),
+        "deleteAccount": MessageLookupByLibrary.simpleMessage("Delete account"),
+        "deleteAccountConfirm": MessageLookupByLibrary.simpleMessage(
+            "Are you sure do you want to permanently delete your account? This action cannot be undone."),
+        "deletedAccount": MessageLookupByLibrary.simpleMessage(
+            "Account successfully deleted"),
         "editProfile": MessageLookupByLibrary.simpleMessage("Edit Profile"),
         "editProfileTitle":
             MessageLookupByLibrary.simpleMessage("Edit Profile"),
@@ -51,15 +61,25 @@ class MessageLookup extends MessageLookupByLibrary {
             "Error connecting to the server."),
         "errorEmailExists": MessageLookupByLibrary.simpleMessage(
             "This email address already exists."),
+        "errorEmailNotExists": MessageLookupByLibrary.simpleMessage(
+            "This email is not registered"),
         "errorNicknameTaken": MessageLookupByLibrary.simpleMessage(
             "This username is already in use. Please choose another one."),
+        "errorSamePassword": MessageLookupByLibrary.simpleMessage(
+            "New password must be different from current one"),
         "errorUnknown": MessageLookupByLibrary.simpleMessage(
             "An unexpected error occurred. Please try again."),
         "fieldRequired":
             MessageLookupByLibrary.simpleMessage("This field is required"),
+        "forgotPassword":
+            MessageLookupByLibrary.simpleMessage("Forgot your password?"),
         "homeTitle": MessageLookupByLibrary.simpleMessage("My Habits"),
         "invalidEmail":
             MessageLookupByLibrary.simpleMessage("Invalid email address"),
+        "langCatalan": MessageLookupByLibrary.simpleMessage("Catalan"),
+        "langEnglish": MessageLookupByLibrary.simpleMessage("English"),
+        "langSpanish": MessageLookupByLibrary.simpleMessage("Spanish"),
+        "language": MessageLookupByLibrary.simpleMessage("Language"),
         "lastNameLabel": MessageLookupByLibrary.simpleMessage("Last name"),
         "loading": MessageLookupByLibrary.simpleMessage("Processing..."),
         "loginButton": MessageLookupByLibrary.simpleMessage("Log in"),
@@ -70,9 +90,35 @@ class MessageLookup extends MessageLookupByLibrary {
         "loginTitle": MessageLookupByLibrary.simpleMessage(
             "Let your habits speak for you"),
         "logout": MessageLookupByLibrary.simpleMessage("Log out"),
+        "logoutConfirmMessage": MessageLookupByLibrary.simpleMessage(
+            "Are you sure you want to log out of the current session?"),
+        "mfaButtonVerify":
+            MessageLookupByLibrary.simpleMessage("Verify and Activate"),
+        "mfaChallengeSubtitle": MessageLookupByLibrary.simpleMessage(
+            "Enter the 6-digit code from your authenticator app to continue."),
+        "mfaChallengeTitle":
+            MessageLookupByLibrary.simpleMessage("Security Verification"),
+        "mfaDisableConfirm":
+            MessageLookupByLibrary.simpleMessage("Do you want to disable 2FA?"),
+        "mfaDisabled": MessageLookupByLibrary.simpleMessage("2FA is disabled"),
+        "mfaEnabled": MessageLookupByLibrary.simpleMessage("2FA is enabled"),
+        "mfaEnrollSubtitle": MessageLookupByLibrary.simpleMessage(
+            "Copy this secret code to your authentication application (Google Authenticator or similar):"),
+        "mfaEnrollTitle":
+            MessageLookupByLibrary.simpleMessage("Enable Two Factor"),
+        "mfaError":
+            MessageLookupByLibrary.simpleMessage("Incorrect or expired code"),
+        "mfaLabelCode": MessageLookupByLibrary.simpleMessage(
+            "Verification Code (6 digits)"),
+        "mfaLabelSecret": MessageLookupByLibrary.simpleMessage("Secret Code"),
+        "mfaSuccess": MessageLookupByLibrary.simpleMessage(
+            "Two factor successfully activated!"),
+        "mfaVerifyButton": MessageLookupByLibrary.simpleMessage("Verify"),
         "nameLabel": MessageLookupByLibrary.simpleMessage("Name"),
         "navHome": MessageLookupByLibrary.simpleMessage("Home"),
         "navProfile": MessageLookupByLibrary.simpleMessage("Profile"),
+        "newPasswordLabel":
+            MessageLookupByLibrary.simpleMessage("New Password"),
         "noAccount": MessageLookupByLibrary.simpleMessage(
             "Don\'t have an account? Sign up"),
         "noHabits": MessageLookupByLibrary.simpleMessage(
@@ -80,6 +126,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "passwordLabel": MessageLookupByLibrary.simpleMessage("Password"),
         "passwordTooShort":
             MessageLookupByLibrary.simpleMessage("Minimum 6 characters"),
+        "passwordUpdated": MessageLookupByLibrary.simpleMessage(
+            "Password updated successfully!"),
         "passwordsDontMatch":
             MessageLookupByLibrary.simpleMessage("Passwords do not match"),
         "profileTitle": MessageLookupByLibrary.simpleMessage("My Profile"),
@@ -88,18 +136,37 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Create your account"),
         "registrationPending": MessageLookupByLibrary.simpleMessage(
             "Check your email to confirm account creation!"),
+        "resetEmailSent": MessageLookupByLibrary.simpleMessage(
+            "A password reset email has been sent"),
         "saveChanges": MessageLookupByLibrary.simpleMessage("Save Changes"),
         "savingError":
             MessageLookupByLibrary.simpleMessage("Error saving modified data"),
+        "secretCopied":
+            MessageLookupByLibrary.simpleMessage("Secret code copied"),
+        "sendResetLink":
+            MessageLookupByLibrary.simpleMessage("Send recovery link"),
+        "sendResetLinkSubTitle": MessageLookupByLibrary.simpleMessage(
+            "Enter your email and we\'ll send you a link to recover access."),
         "settings": MessageLookupByLibrary.simpleMessage("Settings"),
-        "userCoins": m1,
+        "theme": MessageLookupByLibrary.simpleMessage("App Theme"),
+        "themeDark": MessageLookupByLibrary.simpleMessage("Dark"),
+        "themeLight": MessageLookupByLibrary.simpleMessage("Light"),
+        "themeSystem": MessageLookupByLibrary.simpleMessage("System"),
+        "twoFactorAuth":
+            MessageLookupByLibrary.simpleMessage("Two Factor (2FA)"),
+        "updatePasswordButton":
+            MessageLookupByLibrary.simpleMessage("Save new password"),
+        "updatePasswordTitle":
+            MessageLookupByLibrary.simpleMessage("Update Password"),
+        "updatingPasswordFor": m1,
+        "userCoins": m2,
         "usernameInfo":
             MessageLookupByLibrary.simpleMessage("Username cannot be changed."),
         "usernameLabel":
             MessageLookupByLibrary.simpleMessage("Username (nickname)"),
         "validatingData":
             MessageLookupByLibrary.simpleMessage("Validating data..."),
-        "welcomeUser": m2,
-        "xpLevel": m3
+        "welcomeUser": m3,
+        "xpLevel": m4
       };
 }

@@ -519,6 +519,416 @@ class S {
       args: [],
     );
   }
+
+  /// `Forgot your password?`
+  String get forgotPassword {
+    return Intl.message(
+      'Forgot your password?',
+      name: 'forgotPassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Send recovery link`
+  String get sendResetLink {
+    return Intl.message(
+      'Send recovery link',
+      name: 'sendResetLink',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `A password reset email has been sent`
+  String get resetEmailSent {
+    return Intl.message(
+      'A password reset email has been sent',
+      name: 'resetEmailSent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Update Password`
+  String get updatePasswordTitle {
+    return Intl.message(
+      'Update Password',
+      name: 'updatePasswordTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `New Password`
+  String get newPasswordLabel {
+    return Intl.message(
+      'New Password',
+      name: 'newPasswordLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Save new password`
+  String get updatePasswordButton {
+    return Intl.message(
+      'Save new password',
+      name: 'updatePasswordButton',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Password updated successfully!`
+  String get passwordUpdated {
+    return Intl.message(
+      'Password updated successfully!',
+      name: 'passwordUpdated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter your email and we'll send you a link to recover access.`
+  String get sendResetLinkSubTitle {
+    return Intl.message(
+      'Enter your email and we\'ll send you a link to recover access.',
+      name: 'sendResetLinkSubTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This email is not registered`
+  String get errorEmailNotExists {
+    return Intl.message(
+      'This email is not registered',
+      name: 'errorEmailNotExists',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Updating password for: {email}`
+  String updatingPasswordFor(Object email) {
+    return Intl.message(
+      'Updating password for: $email',
+      name: 'updatingPasswordFor',
+      desc: '',
+      args: [email],
+    );
+  }
+
+  /// `New password must be different from current one`
+  String get errorSamePassword {
+    return Intl.message(
+      'New password must be different from current one',
+      name: 'errorSamePassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App Theme`
+  String get theme {
+    return Intl.message(
+      'App Theme',
+      name: 'theme',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `System`
+  String get themeSystem {
+    return Intl.message(
+      'System',
+      name: 'themeSystem',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Light`
+  String get themeLight {
+    return Intl.message(
+      'Light',
+      name: 'themeLight',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Dark`
+  String get themeDark {
+    return Intl.message(
+      'Dark',
+      name: 'themeDark',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Language`
+  String get language {
+    return Intl.message(
+      'Language',
+      name: 'language',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Catalan`
+  String get langCatalan {
+    return Intl.message(
+      'Catalan',
+      name: 'langCatalan',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Spanish`
+  String get langSpanish {
+    return Intl.message(
+      'Spanish',
+      name: 'langSpanish',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `English`
+  String get langEnglish {
+    return Intl.message(
+      'English',
+      name: 'langEnglish',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Two Factor (2FA)`
+  String get twoFactorAuth {
+    return Intl.message(
+      'Two Factor (2FA)',
+      name: 'twoFactorAuth',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `2FA is enabled`
+  String get mfaEnabled {
+    return Intl.message(
+      '2FA is enabled',
+      name: 'mfaEnabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `2FA is disabled`
+  String get mfaDisabled {
+    return Intl.message(
+      '2FA is disabled',
+      name: 'mfaDisabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable Two Factor`
+  String get mfaEnrollTitle {
+    return Intl.message(
+      'Enable Two Factor',
+      name: 'mfaEnrollTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy this secret code to your authentication application (Google Authenticator or similar):`
+  String get mfaEnrollSubtitle {
+    return Intl.message(
+      'Copy this secret code to your authentication application (Google Authenticator or similar):',
+      name: 'mfaEnrollSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Secret Code`
+  String get mfaLabelSecret {
+    return Intl.message(
+      'Secret Code',
+      name: 'mfaLabelSecret',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verification Code (6 digits)`
+  String get mfaLabelCode {
+    return Intl.message(
+      'Verification Code (6 digits)',
+      name: 'mfaLabelCode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verify and Activate`
+  String get mfaButtonVerify {
+    return Intl.message(
+      'Verify and Activate',
+      name: 'mfaButtonVerify',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Two factor successfully activated!`
+  String get mfaSuccess {
+    return Intl.message(
+      'Two factor successfully activated!',
+      name: 'mfaSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Delete account`
+  String get deleteAccount {
+    return Intl.message(
+      'Delete account',
+      name: 'deleteAccount',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure do you want to permanently delete your account? This action cannot be undone.`
+  String get deleteAccountConfirm {
+    return Intl.message(
+      'Are you sure do you want to permanently delete your account? This action cannot be undone.',
+      name: 'deleteAccountConfirm',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Confirm`
+  String get confirm {
+    return Intl.message(
+      'Confirm',
+      name: 'confirm',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Cancel`
+  String get cancel {
+    return Intl.message(
+      'Cancel',
+      name: 'cancel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Do you want to disable 2FA?`
+  String get mfaDisableConfirm {
+    return Intl.message(
+      'Do you want to disable 2FA?',
+      name: 'mfaDisableConfirm',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Security Verification`
+  String get mfaChallengeTitle {
+    return Intl.message(
+      'Security Verification',
+      name: 'mfaChallengeTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter the 6-digit code from your authenticator app to continue.`
+  String get mfaChallengeSubtitle {
+    return Intl.message(
+      'Enter the 6-digit code from your authenticator app to continue.',
+      name: 'mfaChallengeSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verify`
+  String get mfaVerifyButton {
+    return Intl.message(
+      'Verify',
+      name: 'mfaVerifyButton',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Incorrect or expired code`
+  String get mfaError {
+    return Intl.message(
+      'Incorrect or expired code',
+      name: 'mfaError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy secret code`
+  String get copySecret {
+    return Intl.message(
+      'Copy secret code',
+      name: 'copySecret',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Secret code copied`
+  String get secretCopied {
+    return Intl.message(
+      'Secret code copied',
+      name: 'secretCopied',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Account successfully deleted`
+  String get deletedAccount {
+    return Intl.message(
+      'Account successfully deleted',
+      name: 'deletedAccount',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure you want to log out of the current session?`
+  String get logoutConfirmMessage {
+    return Intl.message(
+      'Are you sure you want to log out of the current session?',
+      name: 'logoutConfirmMessage',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {
