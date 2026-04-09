@@ -32,6 +32,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "accept": MessageLookupByLibrary.simpleMessage("Accept"),
         "accountVerified": MessageLookupByLibrary.simpleMessage(
             "Account successfully verified! You can now log in."),
         "addHabit": MessageLookupByLibrary.simpleMessage("Add habit"),
@@ -71,8 +72,12 @@ class MessageLookup extends MessageLookupByLibrary {
             "An unexpected error occurred. Please try again."),
         "fieldRequired":
             MessageLookupByLibrary.simpleMessage("This field is required"),
+        "follow": MessageLookupByLibrary.simpleMessage("Follow"),
+        "followers": MessageLookupByLibrary.simpleMessage("Followers"),
+        "following": MessageLookupByLibrary.simpleMessage("Following"),
         "forgotPassword":
             MessageLookupByLibrary.simpleMessage("Forgot your password?"),
+        "friends": MessageLookupByLibrary.simpleMessage("Friends only"),
         "homeTitle": MessageLookupByLibrary.simpleMessage("My Habits"),
         "invalidEmail":
             MessageLookupByLibrary.simpleMessage("Invalid email address"),
@@ -92,6 +97,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "logout": MessageLookupByLibrary.simpleMessage("Log out"),
         "logoutConfirmMessage": MessageLookupByLibrary.simpleMessage(
             "Are you sure you want to log out of the current session?"),
+        "me": MessageLookupByLibrary.simpleMessage("You"),
         "mfaButtonVerify":
             MessageLookupByLibrary.simpleMessage("Verify and Activate"),
         "mfaChallengeSubtitle": MessageLookupByLibrary.simpleMessage(
@@ -116,13 +122,20 @@ class MessageLookup extends MessageLookupByLibrary {
         "mfaVerifyButton": MessageLookupByLibrary.simpleMessage("Verify"),
         "nameLabel": MessageLookupByLibrary.simpleMessage("Name"),
         "navHome": MessageLookupByLibrary.simpleMessage("Home"),
+        "navNotifications":
+            MessageLookupByLibrary.simpleMessage("Notifications"),
         "navProfile": MessageLookupByLibrary.simpleMessage("Profile"),
+        "navSearch": MessageLookupByLibrary.simpleMessage("Search"),
         "newPasswordLabel":
             MessageLookupByLibrary.simpleMessage("New Password"),
         "noAccount": MessageLookupByLibrary.simpleMessage(
             "Don\'t have an account? Sign up"),
         "noHabits": MessageLookupByLibrary.simpleMessage(
             "You don\'t have any habits yet. Shall we get started?"),
+        "noNotifications":
+            MessageLookupByLibrary.simpleMessage("You have no notifications"),
+        "noResultsFound":
+            MessageLookupByLibrary.simpleMessage("No users found"),
         "passwordLabel": MessageLookupByLibrary.simpleMessage("Password"),
         "passwordTooShort":
             MessageLookupByLibrary.simpleMessage("Minimum 6 characters"),
@@ -130,19 +143,33 @@ class MessageLookup extends MessageLookupByLibrary {
             "Password updated successfully!"),
         "passwordsDontMatch":
             MessageLookupByLibrary.simpleMessage("Passwords do not match"),
+        "privacy": MessageLookupByLibrary.simpleMessage("Privacy"),
+        "private": MessageLookupByLibrary.simpleMessage("Private profile"),
+        "privateInfoMessage":
+            MessageLookupByLibrary.simpleMessage("This information is private"),
+        "privateProfileMessage": MessageLookupByLibrary.simpleMessage(
+            "This profile is private. Follow it to see its content."),
         "profileTitle": MessageLookupByLibrary.simpleMessage("My Profile"),
+        "public": MessageLookupByLibrary.simpleMessage("Public profile"),
+        "publicDataPlaceholder": MessageLookupByLibrary.simpleMessage(
+            "You\'ll soon be able to see its habits here."),
         "registerButton": MessageLookupByLibrary.simpleMessage("Sign Up"),
         "registerTitle":
             MessageLookupByLibrary.simpleMessage("Create your account"),
         "registrationPending": MessageLookupByLibrary.simpleMessage(
             "Check your email to confirm account creation!"),
+        "reject": MessageLookupByLibrary.simpleMessage("Reject"),
+        "requestPending": MessageLookupByLibrary.simpleMessage("Request sent"),
         "resetEmailSent": MessageLookupByLibrary.simpleMessage(
             "A password reset email has been sent"),
         "saveChanges": MessageLookupByLibrary.simpleMessage("Save Changes"),
         "savingError":
             MessageLookupByLibrary.simpleMessage("Error saving modified data"),
+        "searchUsersHint":
+            MessageLookupByLibrary.simpleMessage("Search users..."),
         "secretCopied":
             MessageLookupByLibrary.simpleMessage("Secret code copied"),
+        "sendRequest": MessageLookupByLibrary.simpleMessage("Send request"),
         "sendResetLink":
             MessageLookupByLibrary.simpleMessage("Send recovery link"),
         "sendResetLinkSubTitle": MessageLookupByLibrary.simpleMessage(
@@ -154,6 +181,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "themeSystem": MessageLookupByLibrary.simpleMessage("System"),
         "twoFactorAuth":
             MessageLookupByLibrary.simpleMessage("Two Factor (2FA)"),
+        "unfollowConfirm": MessageLookupByLibrary.simpleMessage(
+            "Do you want to unfollow this user?"),
         "updatePasswordButton":
             MessageLookupByLibrary.simpleMessage("Save new password"),
         "updatePasswordTitle":
@@ -166,6 +195,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Username (nickname)"),
         "validatingData":
             MessageLookupByLibrary.simpleMessage("Validating data..."),
+        "wantsToFollow":
+            MessageLookupByLibrary.simpleMessage("Wants to follow you"),
         "welcomeUser": m3,
         "xpLevel": m4
       };

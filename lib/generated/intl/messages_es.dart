@@ -32,6 +32,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "accept": MessageLookupByLibrary.simpleMessage("Aceptar"),
         "accountVerified": MessageLookupByLibrary.simpleMessage(
             "¡Cuenta verificada correctamente! Ahora ya puedes iniciar sesión."),
         "addHabit": MessageLookupByLibrary.simpleMessage("Añadir hábito"),
@@ -75,8 +76,12 @@ class MessageLookup extends MessageLookupByLibrary {
             "Se ha producido un error inesperado. Vuelve a intentarlo."),
         "fieldRequired":
             MessageLookupByLibrary.simpleMessage("Este campo es obligatorio"),
+        "follow": MessageLookupByLibrary.simpleMessage("Seguir"),
+        "followers": MessageLookupByLibrary.simpleMessage("Seguidores"),
+        "following": MessageLookupByLibrary.simpleMessage("Siguiendo"),
         "forgotPassword": MessageLookupByLibrary.simpleMessage(
             "¿Has olvidado la contraseña?"),
+        "friends": MessageLookupByLibrary.simpleMessage("Solo amigos"),
         "homeTitle": MessageLookupByLibrary.simpleMessage("Mis hábitos"),
         "invalidEmail": MessageLookupByLibrary.simpleMessage(
             "Correo electrónico no válido"),
@@ -96,6 +101,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "logout": MessageLookupByLibrary.simpleMessage("Cerrar sesión"),
         "logoutConfirmMessage": MessageLookupByLibrary.simpleMessage(
             "¿Estás seguro de que quieres cerrar la sesión actual?"),
+        "me": MessageLookupByLibrary.simpleMessage("Tú"),
         "mfaButtonVerify":
             MessageLookupByLibrary.simpleMessage("Verificar y Activar"),
         "mfaChallengeSubtitle": MessageLookupByLibrary.simpleMessage(
@@ -123,13 +129,20 @@ class MessageLookup extends MessageLookupByLibrary {
         "mfaVerifyButton": MessageLookupByLibrary.simpleMessage("Verificar"),
         "nameLabel": MessageLookupByLibrary.simpleMessage("Nombre"),
         "navHome": MessageLookupByLibrary.simpleMessage("Inicio"),
+        "navNotifications":
+            MessageLookupByLibrary.simpleMessage("Notificaciones"),
         "navProfile": MessageLookupByLibrary.simpleMessage("Perfil"),
+        "navSearch": MessageLookupByLibrary.simpleMessage("Buscar"),
         "newPasswordLabel":
             MessageLookupByLibrary.simpleMessage("Nueva contraseña"),
         "noAccount": MessageLookupByLibrary.simpleMessage(
             "¿No tienes cuenta? Regístrate"),
         "noHabits": MessageLookupByLibrary.simpleMessage(
             "Aún no tienes ningún hábito. ¿Empecamos?"),
+        "noNotifications": MessageLookupByLibrary.simpleMessage(
+            "No tienes ninguna notificación"),
+        "noResultsFound":
+            MessageLookupByLibrary.simpleMessage("No se encontraron usuarios"),
         "passwordLabel": MessageLookupByLibrary.simpleMessage("Contraseña"),
         "passwordTooShort":
             MessageLookupByLibrary.simpleMessage("Mínimo 6 caracteres"),
@@ -137,18 +150,33 @@ class MessageLookup extends MessageLookupByLibrary {
             "¡Contraseña actualizada correctamente!"),
         "passwordsDontMatch": MessageLookupByLibrary.simpleMessage(
             "Las contraseñas no coinciden"),
+        "privacy": MessageLookupByLibrary.simpleMessage("Privacidad"),
+        "private": MessageLookupByLibrary.simpleMessage("Perfil privado"),
+        "privateInfoMessage":
+            MessageLookupByLibrary.simpleMessage("Esta información es privada"),
+        "privateProfileMessage": MessageLookupByLibrary.simpleMessage(
+            "Este perfil es privado. Síguelo para ver su contenido."),
         "profileTitle": MessageLookupByLibrary.simpleMessage("Mi Perfil"),
+        "public": MessageLookupByLibrary.simpleMessage("Perfil público"),
+        "publicDataPlaceholder": MessageLookupByLibrary.simpleMessage(
+            "Pronto podrás ver sus hábitos aquí."),
         "registerButton": MessageLookupByLibrary.simpleMessage("Registrarse"),
         "registerTitle": MessageLookupByLibrary.simpleMessage("Crea tu cuenta"),
         "registrationPending": MessageLookupByLibrary.simpleMessage(
             "¡Revisa tu buzón de correo para confirmar la creación de la cuenta!"),
+        "reject": MessageLookupByLibrary.simpleMessage("Rechazar"),
+        "requestPending":
+            MessageLookupByLibrary.simpleMessage("Solicitud enviada"),
         "resetEmailSent": MessageLookupByLibrary.simpleMessage(
             "Se ha enviado un correo para restablecer la contraseña"),
         "saveChanges": MessageLookupByLibrary.simpleMessage("Guardar cambios"),
         "savingError": MessageLookupByLibrary.simpleMessage(
             "Error guardando los datos modificados"),
+        "searchUsersHint":
+            MessageLookupByLibrary.simpleMessage("Buscar usuarios..."),
         "secretCopied":
             MessageLookupByLibrary.simpleMessage("Código secreto copiado"),
+        "sendRequest": MessageLookupByLibrary.simpleMessage("Enviar solicitud"),
         "sendResetLink": MessageLookupByLibrary.simpleMessage(
             "Enviar enlace de recuperación"),
         "sendResetLinkSubTitle": MessageLookupByLibrary.simpleMessage(
@@ -160,6 +188,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "themeSystem": MessageLookupByLibrary.simpleMessage("Sistema"),
         "twoFactorAuth":
             MessageLookupByLibrary.simpleMessage("Doble Factor (2FA)"),
+        "unfollowConfirm": MessageLookupByLibrary.simpleMessage(
+            "¿Quieres dejar de seguir a este usuario?"),
         "updatePasswordButton":
             MessageLookupByLibrary.simpleMessage("Guardar nueva contraseña"),
         "updatePasswordTitle":
@@ -172,6 +202,8 @@ class MessageLookup extends MessageLookupByLibrary {
             "Nombre de usuario (nickname)"),
         "validatingData":
             MessageLookupByLibrary.simpleMessage("Validando datos..."),
+        "wantsToFollow":
+            MessageLookupByLibrary.simpleMessage("Quiere seguirte"),
         "welcomeUser": m3,
         "xpLevel": m4
       };

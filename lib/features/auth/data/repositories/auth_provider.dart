@@ -29,6 +29,13 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  void updateProfilePrivacy(TipusPrivacitat nouValor) {
+    if (_currentUser != null) {
+      _currentUser = _currentUser!.copyWith(configuracioPrivacitat: nouValor);
+      notifyListeners();
+    }
+  }
+
   void logout() {
     _currentUser = null;
     isManualLogin = false;

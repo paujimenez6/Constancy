@@ -1,9 +1,12 @@
 import 'package:Constancy/features/profiles/screens/settings_screen.dart';
+import 'package:Constancy/features/profiles/screens/user_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../generated/l10n.dart';
 import '../../auth/data/repositories/auth_provider.dart';
+import '../data/repositories/social_provider.dart';
+import '../data/repositories/social_repository.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -14,6 +17,7 @@ class ProfileScreen extends StatelessWidget {
     final strings = S.of(context);
     final theme = Theme.of(context);
     final user = context.watch<AuthProvider>().currentUser;
+    final social = context.watch<SocialProvider>();
 
     if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -32,7 +36,6 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
         child: Column(
           children: [
-            // --- SECCIÓ CAPÇALERA (Avatar i Nom) ---
             Center(
               child: Column(
                 children: [
@@ -64,9 +67,48 @@ class ProfileScreen extends StatelessWidget {
                       style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   Text(user.correu, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
-                  // Badge de Nivell estilitzat
+                  Center(
+                    child: SizedBox(
+                      width: 280,
+                      child: IntrinsicHeight(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final list = await SocialRepository().getFollowersList(user.id);
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                                      UserListScreen(title: strings.followers, users: list)));
+                                },
+                                child: _buildStatItem(social.followersCount.toString(), strings.followers),
+                              ),
+                            ),
+                            VerticalDivider(
+                              width: 1,
+                              thickness: 1,
+                              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                            ),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final list = await SocialRepository().getFollowingList(user.id);
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                                      UserListScreen(title: strings.following, users: list)));
+                                },
+                                child: _buildStatItem(social.followingCount.toString(), strings.following),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
@@ -90,7 +132,6 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
-            // --- SECCIÓ MENÚ (Targeta d'opcions) ---
             Align(
               alignment: Alignment.centerLeft,
               child: Padding(
@@ -147,7 +188,6 @@ class ProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // --- SECCIÓ SORTIDA ---
             Container(
               decoration: BoxDecoration(
                 color: Colors.red.withValues(alpha: 0.05),
@@ -299,6 +339,15 @@ class ProfileScreen extends StatelessWidget {
           ? null
           : Icon(Icons.chevron_right_rounded, size: 24, color: theme.colorScheme.outline),
       onTap: onTap,
+    );
+  }
+
+  Widget _buildStatItem(String value, String label) {
+    return Column(
+      children: [
+        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      ],
     );
   }
 }

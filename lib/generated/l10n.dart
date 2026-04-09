@@ -929,6 +929,226 @@ class S {
       args: [],
     );
   }
+
+  /// `Search`
+  String get navSearch {
+    return Intl.message(
+      'Search',
+      name: 'navSearch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Search users...`
+  String get searchUsersHint {
+    return Intl.message(
+      'Search users...',
+      name: 'searchUsersHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Followers`
+  String get followers {
+    return Intl.message(
+      'Followers',
+      name: 'followers',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Following`
+  String get following {
+    return Intl.message(
+      'Following',
+      name: 'following',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Privacy`
+  String get privacy {
+    return Intl.message(
+      'Privacy',
+      name: 'privacy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Public profile`
+  String get public {
+    return Intl.message(
+      'Public profile',
+      name: 'public',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Private profile`
+  String get private {
+    return Intl.message(
+      'Private profile',
+      name: 'private',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Friends only`
+  String get friends {
+    return Intl.message(
+      'Friends only',
+      name: 'friends',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No users found`
+  String get noResultsFound {
+    return Intl.message(
+      'No users found',
+      name: 'noResultsFound',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Follow`
+  String get follow {
+    return Intl.message(
+      'Follow',
+      name: 'follow',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Send request`
+  String get sendRequest {
+    return Intl.message(
+      'Send request',
+      name: 'sendRequest',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request sent`
+  String get requestPending {
+    return Intl.message(
+      'Request sent',
+      name: 'requestPending',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This profile is private. Follow it to see its content.`
+  String get privateProfileMessage {
+    return Intl.message(
+      'This profile is private. Follow it to see its content.',
+      name: 'privateProfileMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You'll soon be able to see its habits here.`
+  String get publicDataPlaceholder {
+    return Intl.message(
+      'You\'ll soon be able to see its habits here.',
+      name: 'publicDataPlaceholder',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Do you want to unfollow this user?`
+  String get unfollowConfirm {
+    return Intl.message(
+      'Do you want to unfollow this user?',
+      name: 'unfollowConfirm',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Notifications`
+  String get navNotifications {
+    return Intl.message(
+      'Notifications',
+      name: 'navNotifications',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You have no notifications`
+  String get noNotifications {
+    return Intl.message(
+      'You have no notifications',
+      name: 'noNotifications',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Wants to follow you`
+  String get wantsToFollow {
+    return Intl.message(
+      'Wants to follow you',
+      name: 'wantsToFollow',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Accept`
+  String get accept {
+    return Intl.message(
+      'Accept',
+      name: 'accept',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reject`
+  String get reject {
+    return Intl.message(
+      'Reject',
+      name: 'reject',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This information is private`
+  String get privateInfoMessage {
+    return Intl.message(
+      'This information is private',
+      name: 'privateInfoMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You`
+  String get me {
+    return Intl.message(
+      'You',
+      name: 'me',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

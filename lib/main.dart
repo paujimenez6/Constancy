@@ -11,6 +11,8 @@ import 'generated/l10n.dart';
 import 'features/auth/data/repositories/auth_provider.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'core/providers/settings_provider.dart';
+import 'features/profiles/data/repositories/social_provider.dart';
+import 'features/profiles/data/repositories/social_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +30,9 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => SocialProvider()),
         Provider(create: (_) => AuthRepository()),
+        Provider(create: (_) => SocialRepository()),
       ],
       child: const ConstancyApp(),
     ),
@@ -66,35 +70,33 @@ class _ConstancyAppState extends State<ConstancyApp> {
         return;
       }
 
-      if (session != null) {
+      if (authProvider.isManualLogin && _justVerified) {
+        setState(() => _justVerified = false);
+      }
 
-        if (authProvider.isManualLogin && _justVerified) {
-          setState(() => _justVerified = false);
-        }
+      if (event == AuthChangeEvent.signedIn && !authProvider.isManualLogin && authProvider.currentUser == null) {
+        await Supabase.instance.client.auth.signOut();
+        if (mounted) setState(() => _justVerified = true);
+        return;
+      }
 
-        if (event == AuthChangeEvent.signedIn && !authProvider.isManualLogin && authProvider.currentUser == null) {
-          await Supabase.instance.client.auth.signOut();
-          if (mounted) setState(() => _justVerified = true);
-          return;
-        }
-
-        if (authProvider.currentUser == null || authProvider.currentUser!.id != session.user.id) {
-          try {
-            final userData = await Supabase.instance.client
-                .from('profiles')
-                .select()
-                .eq('id', session.user.id)
-                .single();
-            authProvider.setUser(UserModel.fromJson(userData));
-          } catch (e) {
-            debugPrint("Error sincronitzant perfil: $e");
-          }
-        }
-
-        if (event == AuthChangeEvent.userUpdated && _isRecoveringPassword) {
-          setState(() => _isRecoveringPassword = false);
+      if (authProvider.currentUser == null || authProvider.currentUser!.id != session.user.id) {
+        try {
+          final userData = await Supabase.instance.client
+              .from('profiles')
+              .select()
+              .eq('id', session.user.id)
+              .single();
+          authProvider.setUser(UserModel.fromJson(userData));
+        } catch (e) {
+          debugPrint("Error sincronitzant perfil: $e");
         }
       }
+
+      if (event == AuthChangeEvent.userUpdated && _isRecoveringPassword) {
+        setState(() => _isRecoveringPassword = false);
+      }
+
     });
   }
 

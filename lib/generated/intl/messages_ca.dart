@@ -32,6 +32,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "accept": MessageLookupByLibrary.simpleMessage("Acceptar"),
         "accountVerified": MessageLookupByLibrary.simpleMessage(
             "Compte verificat correctament! Ara ja pots iniciar sessió."),
         "addHabit": MessageLookupByLibrary.simpleMessage("Afegir hàbit"),
@@ -74,8 +75,12 @@ class MessageLookup extends MessageLookupByLibrary {
             "S\'ha produït un error inesperat. Torna-ho a provar."),
         "fieldRequired":
             MessageLookupByLibrary.simpleMessage("Aquest camp és obligatori"),
+        "follow": MessageLookupByLibrary.simpleMessage("Seguir"),
+        "followers": MessageLookupByLibrary.simpleMessage("Seguidors"),
+        "following": MessageLookupByLibrary.simpleMessage("Seguint"),
         "forgotPassword":
             MessageLookupByLibrary.simpleMessage("Heu oblidat la contrasenya?"),
+        "friends": MessageLookupByLibrary.simpleMessage("Només amics"),
         "homeTitle": MessageLookupByLibrary.simpleMessage("Els meus hàbits"),
         "invalidEmail":
             MessageLookupByLibrary.simpleMessage("Correu electrònic no vàlid"),
@@ -95,6 +100,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "logout": MessageLookupByLibrary.simpleMessage("Tancar sessió"),
         "logoutConfirmMessage": MessageLookupByLibrary.simpleMessage(
             "Estàs segur que vols tancar la sessió actual?"),
+        "me": MessageLookupByLibrary.simpleMessage("Tu"),
         "mfaButtonVerify":
             MessageLookupByLibrary.simpleMessage("Verificar i Activar"),
         "mfaChallengeSubtitle": MessageLookupByLibrary.simpleMessage(
@@ -121,13 +127,20 @@ class MessageLookup extends MessageLookupByLibrary {
         "mfaVerifyButton": MessageLookupByLibrary.simpleMessage("Verificar"),
         "nameLabel": MessageLookupByLibrary.simpleMessage("Nom"),
         "navHome": MessageLookupByLibrary.simpleMessage("Inici"),
+        "navNotifications":
+            MessageLookupByLibrary.simpleMessage("Notificacions"),
         "navProfile": MessageLookupByLibrary.simpleMessage("Perfil"),
+        "navSearch": MessageLookupByLibrary.simpleMessage("Cerca"),
         "newPasswordLabel":
             MessageLookupByLibrary.simpleMessage("Nova contrasenya"),
         "noAccount":
             MessageLookupByLibrary.simpleMessage("No tens compte? Registra\'t"),
         "noHabits": MessageLookupByLibrary.simpleMessage(
             "Encara no tens cap hàbit. Comencem?"),
+        "noNotifications":
+            MessageLookupByLibrary.simpleMessage("No tens cap notificació"),
+        "noResultsFound":
+            MessageLookupByLibrary.simpleMessage("No s\'han trobat usuaris"),
         "passwordLabel": MessageLookupByLibrary.simpleMessage("Contrasenya"),
         "passwordTooShort":
             MessageLookupByLibrary.simpleMessage("Mínim 6 caràcters"),
@@ -135,19 +148,35 @@ class MessageLookup extends MessageLookupByLibrary {
             "Contrasenya actualitzada correctament!"),
         "passwordsDontMatch": MessageLookupByLibrary.simpleMessage(
             "Les contrasenyes no coincideixen"),
+        "privacy": MessageLookupByLibrary.simpleMessage("Privacitat"),
+        "private": MessageLookupByLibrary.simpleMessage("Perfil privat"),
+        "privateInfoMessage": MessageLookupByLibrary.simpleMessage(
+            "Aquesta informació és privada"),
+        "privateProfileMessage": MessageLookupByLibrary.simpleMessage(
+            "Aquest perfil és privat. Segueix-lo per veure el seu contingut."),
         "profileTitle": MessageLookupByLibrary.simpleMessage("El meu Perfil"),
+        "public": MessageLookupByLibrary.simpleMessage("Perfil públic"),
+        "publicDataPlaceholder": MessageLookupByLibrary.simpleMessage(
+            "Aviat podràs veure els seus hàbits aquí."),
         "registerButton": MessageLookupByLibrary.simpleMessage("Registrar-se"),
         "registerTitle":
             MessageLookupByLibrary.simpleMessage("Crea el teu compte"),
         "registrationPending": MessageLookupByLibrary.simpleMessage(
             "Revisa la teva bústia de correu per confirmar la creació del compte!"),
+        "reject": MessageLookupByLibrary.simpleMessage("Rebutjar"),
+        "requestPending":
+            MessageLookupByLibrary.simpleMessage("Sol·licitud enviada"),
         "resetEmailSent": MessageLookupByLibrary.simpleMessage(
             "S\'ha enviat un correu per restablir la contrasenya"),
         "saveChanges": MessageLookupByLibrary.simpleMessage("Desar canvis"),
         "savingError": MessageLookupByLibrary.simpleMessage(
             "Error guardant les dades modificades"),
+        "searchUsersHint":
+            MessageLookupByLibrary.simpleMessage("Cerca usuaris..."),
         "secretCopied":
             MessageLookupByLibrary.simpleMessage("Codi secret copiat"),
+        "sendRequest":
+            MessageLookupByLibrary.simpleMessage("Enviar sol·licitud"),
         "sendResetLink": MessageLookupByLibrary.simpleMessage(
             "Enviar enllaç de recuperació"),
         "sendResetLinkSubTitle": MessageLookupByLibrary.simpleMessage(
@@ -159,6 +188,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "themeSystem": MessageLookupByLibrary.simpleMessage("Sistema"),
         "twoFactorAuth":
             MessageLookupByLibrary.simpleMessage("Doble Factor (2FA)"),
+        "unfollowConfirm": MessageLookupByLibrary.simpleMessage(
+            "Vols deixar de seguir a aquest usuari?"),
         "updatePasswordButton":
             MessageLookupByLibrary.simpleMessage("Desar nova contrasenya"),
         "updatePasswordTitle":
@@ -171,6 +202,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Nom d\'usuari (nickname)"),
         "validatingData":
             MessageLookupByLibrary.simpleMessage("Validant dades..."),
+        "wantsToFollow": MessageLookupByLibrary.simpleMessage("Vol seguir-te"),
         "welcomeUser": m3,
         "xpLevel": m4
       };

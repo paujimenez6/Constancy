@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../generated/l10n.dart';
+import '../../auth/data/models/user_model.dart';
 import '../../auth/data/repositories/auth_provider.dart';
 import '../../auth/data/repositories/auth_repository.dart';
 
@@ -70,6 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final strings = S.of(context);
     final settings = context.watch<SettingsProvider>();
     final theme = Theme.of(context);
+    final user = context.watch<AuthProvider>().currentUser!;
 
     if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
@@ -100,6 +103,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               DropdownMenuItem(value: 'en', child: Text(strings.langEnglish)),
             ],
             onChanged: (code) => settings.setLocale(Locale(code!)),
+          ),
+          _buildDropdown<TipusPrivacitat>(
+            label: strings.privacy,
+            value: user.configuracioPrivacitat,
+            items:  [
+              DropdownMenuItem(value: TipusPrivacitat.public, child: Text(strings.public)),
+              DropdownMenuItem(value: TipusPrivacitat.privat, child: Text(strings.private)),
+              DropdownMenuItem(value: TipusPrivacitat.amics, child: Text(strings.friends)),
+            ],
+            onChanged: (nouValor) async {
+              if (nouValor != null) {
+                await Supabase.instance.client
+                    .from('profiles')
+                    .update({'configuracio_privacitat': nouValor.name})
+                    .eq('id', user.id);
+                context.read<AuthProvider>().updateProfilePrivacy(nouValor);
+              }
+            },
           ),
 
           const Padding(
@@ -287,6 +308,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => _buildActionSheet(
+        context: context,
         icon: Icons.warning_amber_rounded,
         iconColor: Theme.of(context).colorScheme.primary,
         title: strings.twoFactorAuth,
@@ -310,11 +332,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _confirmDeleteAccount() {
     final strings = S.of(context);
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => _buildActionSheet(
+        context: context,
         icon: Icons.dangerous_outlined,
         iconColor: Theme.of(context).colorScheme.primary,
         title: strings.deleteAccount,
@@ -336,6 +358,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildActionSheet({
+    required BuildContext context,
     required IconData icon,
     required Color iconColor,
     required String title,
@@ -350,27 +373,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(color: theme.colorScheme.outlineVariant, borderRadius: BorderRadius.circular(2)),
+          ),
           const SizedBox(height: 24),
-          Icon(icon, size: 60, color: iconColor),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 60, color: iconColor),
+          ),
           const SizedBox(height: 16),
           Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          Text(description, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600], fontSize: 15)),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 15),
+          ),
           const SizedBox(height: 32),
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                  child: Text(strings.cancel),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: Text(strings.cancel, style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -378,13 +419,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: ElevatedButton(
                   onPressed: onConfirm,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: isDestructive ? Colors.red : theme.colorScheme.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 0,
                   ),
-                  child: Text(confirmLabel),
+                  child: Text(confirmLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
