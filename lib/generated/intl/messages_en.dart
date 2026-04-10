@@ -90,6 +90,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "langSpanish": MessageLookupByLibrary.simpleMessage("Spanish"),
         "language": MessageLookupByLibrary.simpleMessage("Language"),
         "lastNameLabel": MessageLookupByLibrary.simpleMessage("Last name"),
+        "listFor": MessageLookupByLibrary.simpleMessage("List of"),
         "loading": MessageLookupByLibrary.simpleMessage("Processing..."),
         "loginButton": MessageLookupByLibrary.simpleMessage("Log in"),
         "loginError":
@@ -190,6 +191,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "themeDark": MessageLookupByLibrary.simpleMessage("Dark"),
         "themeLight": MessageLookupByLibrary.simpleMessage("Light"),
         "themeSystem": MessageLookupByLibrary.simpleMessage("System"),
+        "totalCount1": MessageLookupByLibrary.simpleMessage("user"),
+        "totalCount2": MessageLookupByLibrary.simpleMessage("users"),
         "twoFactorAuth":
             MessageLookupByLibrary.simpleMessage("Two Factor (2FA)"),
         "unfollowConfirm": MessageLookupByLibrary.simpleMessage(

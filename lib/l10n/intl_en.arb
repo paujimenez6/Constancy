@@ -115,5 +115,8 @@
   "recentActivity": "Recent activity",
   "remove": "Remove",
   "removeFollower": "Remove follower",
-  "confirmRemoveFollower": "Are you sure you want to remove"
+  "confirmRemoveFollower": "Are you sure you want to remove",
+  "listFor": "List of",
+  "totalCount1": "user",
+  "totalCount2": "users"
 }

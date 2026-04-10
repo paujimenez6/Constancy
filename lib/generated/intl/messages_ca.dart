@@ -93,6 +93,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "langSpanish": MessageLookupByLibrary.simpleMessage("Espanyol"),
         "language": MessageLookupByLibrary.simpleMessage("Idioma"),
         "lastNameLabel": MessageLookupByLibrary.simpleMessage("Cognom"),
+        "listFor": MessageLookupByLibrary.simpleMessage("Llista de"),
         "loading": MessageLookupByLibrary.simpleMessage("Processant..."),
         "loginButton": MessageLookupByLibrary.simpleMessage("Iniciar sessió"),
         "loginError": MessageLookupByLibrary.simpleMessage(
@@ -197,6 +198,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "themeDark": MessageLookupByLibrary.simpleMessage("Fosc"),
         "themeLight": MessageLookupByLibrary.simpleMessage("Clar"),
         "themeSystem": MessageLookupByLibrary.simpleMessage("Sistema"),
+        "totalCount1": MessageLookupByLibrary.simpleMessage("usuari"),
+        "totalCount2": MessageLookupByLibrary.simpleMessage("usuaris"),
         "twoFactorAuth":
             MessageLookupByLibrary.simpleMessage("Doble Factor (2FA)"),
         "unfollowConfirm": MessageLookupByLibrary.simpleMessage(
