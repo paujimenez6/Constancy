@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../generated/l10n.dart';
-import '../../navigation/screens/main_screen.dart';
 import 'register_screen.dart';
 import 'package:provider/provider.dart';
 import '../data/repositories/auth_repository.dart';
@@ -27,6 +25,131 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
+  void _showForgotPasswordSheet(BuildContext context) {
+    final emailController = TextEditingController();
+    final sheetFormKey = GlobalKey<FormState>();
+    final strings = S.of(context);
+    final theme = Theme.of(context);
+    final authRepo = context.read<AuthRepository>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (sheetContext) {
+        String? serverError;
+
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Form(
+                    key: sheetFormKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Icon(Icons.lock_reset_rounded, size: 48, color: theme.colorScheme.primary),
+                        const SizedBox(height: 16),
+                        Text(
+                          strings.forgotPassword,
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          strings.sendResetLinkSubTitle,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                        const SizedBox(height: 24),
+
+                        TextFormField(
+                          controller: emailController,
+                          decoration: InputDecoration(
+                            labelText: strings.emailLabel,
+                            prefixIcon: const Icon(Icons.email_outlined),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            errorText: serverError,
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) => _validateEmail(value, strings),
+                          onChanged: (_) {
+                            if (serverError != null) {
+                              setSheetState(() => serverError = null);
+                            }
+                          },
+                        ),
+
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () async {
+                            if (sheetFormKey.currentState!.validate()) {
+                              final email = emailController.text.trim();
+
+                              try {
+                                final exists = await authRepo.checkEmailExists(email);
+
+                                if (exists) {
+                                  await authRepo.sendPasswordResetEmail(email);
+
+                                  if (sheetContext.mounted) {
+                                    FocusScope.of(context).unfocus();
+                                    Navigator.pop(sheetContext);
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(strings.resetEmailSent),
+                                        backgroundColor: Colors.green
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  setSheetState(() {
+                                    serverError = strings.errorEmailNotExists;
+                                  });
+                                }
+                              } catch (e) {
+                                setSheetState(() {
+                                  serverError = strings.errorUnknown;
+                                });
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 55),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: Text(strings.sendResetLink),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final strings = S.of(context);
@@ -43,7 +166,6 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-
                 const SizedBox(height: 16),
 
                 Container(
@@ -119,7 +241,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: (value) => (value == null || value.isEmpty) ? strings.fieldRequired : null,
                 ),
 
-                const SizedBox(height: 40),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => _showForgotPasswordSheet(context),
+                    child: Text(strings.forgotPassword),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
 
                 ElevatedButton(
                   onPressed: () async {
@@ -128,22 +258,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         context.read<AuthProvider>().isManualLogin = true;
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.validatingData)));
 
-                        final user = await context.read<AuthRepository>().signIn(
+                        await context.read<AuthRepository>().signIn(
                           _emailController.text.trim(),
                           _passwordController.text.trim(),
                         );
 
-                        if (mounted) {
-                          context.read<AuthProvider>().setUser(user);
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(strings.welcomeUser(user.nickname)))
-                          );
-                          final supabase = Supabase.instance.client;
-                          print("sessió: ${supabase.auth.currentSession?.user.id}");
-                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainScreen()),);
-                        }
                       } catch (e) {
+                        if (mounted) context.read<AuthProvider>().isManualLogin = false;
                         ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text(strings.loginError), backgroundColor: Colors.red)
                         );
