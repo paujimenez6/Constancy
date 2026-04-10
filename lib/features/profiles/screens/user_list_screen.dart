@@ -11,7 +11,7 @@ class UserListScreen extends StatefulWidget {
   final String title;
   final List<Map<String, dynamic>> users;
   final bool isMyFollowersList;
-  final String ownerNickname; // Afegim el nickname del propietari de la llista
+  final String ownerNickname;
 
   const UserListScreen({
     super.key,
@@ -192,10 +192,7 @@ class _UserListScreenState extends State<UserListScreen> {
                     color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    widget.title == strings.followers
-                        ? Icons.people_outline_rounded
-                        : Icons.person_add_outlined,
+                  child: Icon(Icons.people_outline_rounded,
                     color: theme.colorScheme.primary,
                   ),
                 ),
@@ -203,7 +200,6 @@ class _UserListScreenState extends State<UserListScreen> {
             ),
           ),
 
-          // LLISTA D'USUARIS
           Expanded(
             child: _currentUsers.isEmpty
                 ? Center(

@@ -35,7 +35,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  // --- RECANVI PER ALS DESPLEGABLES (Uniformitat i Alineació) ---
   Widget _buildDropdown<T>({
     required String label,
     required T value,
@@ -46,7 +45,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListTile(
       title: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
       trailing: Container(
-        width: 145, // Amplada fixa per garantir alineació
+        width: 145,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: theme.colorScheme.primary.withValues(alpha: 0.05),
@@ -72,9 +71,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final strings = S.of(context);
     final settings = context.watch<SettingsProvider>();
     final theme = Theme.of(context);
-    final user = context.watch<AuthProvider>().currentUser!;
+    final user = context.watch<AuthProvider>().currentUser;
 
-    if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (user == null || _isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     return Scaffold(
       appBar: AppBar(
@@ -376,7 +375,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-      // Fem que el contingut sigui scrollable per evitar l'overflow en textos llargs
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -396,13 +394,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: iconColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              // Reduïm una mica la mida de l'icona (de 60 a 48) per guanyar espai vital
               child: Icon(icon, size: 48, color: iconColor),
             ),
             const SizedBox(height: 16),
             Text(
                 title,
-                textAlign: TextAlign.center, // Centrem per seguretat
+                textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)
             ),
             const SizedBox(height: 12),
