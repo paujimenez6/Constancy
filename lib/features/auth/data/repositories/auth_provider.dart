@@ -4,9 +4,9 @@ import '../models/user_model.dart';
 class AuthProvider extends ChangeNotifier {
   UserModel? _currentUser;
   bool isManualLogin = false;
+  int _currentTabIndex = 0;
 
   UserModel? get currentUser => _currentUser;
-
   bool get isAuthenticated => _currentUser != null;
 
   void setUser(UserModel user) {
@@ -29,8 +29,24 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  void updateProfilePrivacy(TipusPrivacitat nouValor) {
+    if (_currentUser != null) {
+      _currentUser = _currentUser!.copyWith(configuracioPrivacitat: nouValor);
+      notifyListeners();
+    }
+  }
+
   void logout() {
     _currentUser = null;
+    isManualLogin = false;
+    _currentTabIndex = 0;
+    notifyListeners();
+  }
+
+  int get currentTabIndex => _currentTabIndex;
+
+  void setTabIndex(int index) {
+    _currentTabIndex = index;
     notifyListeners();
   }
 }

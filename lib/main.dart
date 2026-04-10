@@ -3,18 +3,26 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/auth/data/models/user_model.dart';
+import 'features/auth/screens/mfa_challenge_screen.dart';
+import 'features/auth/screens/update_password_screen.dart';
 import 'features/navigation/screens/main_screen.dart';
+import 'features/auth/screens/login_screen.dart';
 import 'generated/l10n.dart';
 import 'features/auth/data/repositories/auth_provider.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
-import 'features/auth/screens/login_screen.dart';
+import 'core/providers/settings_provider.dart';
+import 'features/profiles/data/repositories/social_provider.dart';
+import 'features/profiles/data/repositories/social_repository.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await dotenv.load(fileName: ".env");
+
   await Supabase.initialize(
-    url: 'https://eppzouncrrfkzkuapgjg.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwcHpvdW5jcnJma3prdWFwZ2pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDE3NDcsImV4cCI6MjA5MDExNzc0N30.ByTuSooYY_i7BrEFDRvyQ0bA52v2TR3i7voH-FL9jhg',
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    anonKey: dotenv.env['SUPABASE_KEY'] ?? '',
     authOptions: const FlutterAuthClientOptions(
       authFlowType: AuthFlowType.implicit,
     ),
@@ -24,7 +32,10 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => SocialProvider()),
         Provider(create: (_) => AuthRepository()),
+        Provider(create: (_) => SocialRepository()),
       ],
       child: const ConstancyApp(),
     ),
@@ -40,6 +51,7 @@ class ConstancyApp extends StatefulWidget {
 
 class _ConstancyAppState extends State<ConstancyApp> {
   bool _justVerified = false;
+  bool _isRecoveringPassword = false;
 
   @override
   void initState() {
@@ -50,33 +62,57 @@ class _ConstancyAppState extends State<ConstancyApp> {
       final Session? session = data.session;
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-      if (session != null) {
-        // 1. Lògica de verificació del correu (Deep Link)
-        if (event == AuthChangeEvent.signedIn && !authProvider.isManualLogin && authProvider.currentUser == null) {
-          await Supabase.instance.client.auth.signOut();
-          setState(() => _justVerified = true);
-          return;
-        }
-        // 2. SI TENIM SESSIÓ PERÒ NO TENIM USUARI AL PROVIDER -> EL CARREGUEM
-        if (authProvider.currentUser == null) {
-          try {
-            final userData = await Supabase.instance.client.from('profiles').select().eq('id', session.user.id).single();
-            authProvider.setUser(UserModel.fromJson(userData));
-          } catch (e) {
-            debugPrint("Error carregant perfil automàtic: $e");
-          }
+      if (session == null || event == AuthChangeEvent.signedOut) {
+        authProvider.logout();
+        if (mounted) setState(() => _isRecoveringPassword = false);
+        return;
+      }
+
+      if (event == AuthChangeEvent.passwordRecovery) {
+        setState(() => _isRecoveringPassword = true);
+        return;
+      }
+
+      if (authProvider.isManualLogin && _justVerified) {
+        setState(() => _justVerified = false);
+      }
+
+      if (event == AuthChangeEvent.signedIn && !authProvider.isManualLogin && authProvider.currentUser == null) {
+        await Supabase.instance.client.auth.signOut();
+        if (mounted) setState(() => _justVerified = true);
+        return;
+      }
+
+      if (authProvider.currentUser == null || authProvider.currentUser!.id != session.user.id) {
+        try {
+          final userData = await Supabase.instance.client
+              .from('profiles')
+              .select()
+              .eq('id', session.user.id)
+              .single();
+          authProvider.setUser(UserModel.fromJson(userData));
+        } catch (e) {
+          debugPrint("Error sincronitzant perfil: $e");
         }
       }
+
+      if (event == AuthChangeEvent.userUpdated && _isRecoveringPassword) {
+        setState(() => _isRecoveringPassword = false);
+      }
+
     });
   }
 
   @override
   Widget build(BuildContext context) {
     const fontFamily = 'Inter';
+    final settings = context.watch<SettingsProvider>();
+
     return MaterialApp(
       title: 'Constancy',
       debugShowCheckedModeBanner: false,
 
+      locale: settings.locale,
       localizationsDelegates: const [
         S.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -85,9 +121,8 @@ class _ConstancyAppState extends State<ConstancyApp> {
       ],
       supportedLocales: S.delegate.supportedLocales,
 
-      themeMode: ThemeMode.system,
+      themeMode: settings.themeMode,
 
-      //Tema Clar
       theme: ThemeData(
         useMaterial3: true,
         fontFamily: fontFamily,
@@ -97,7 +132,6 @@ class _ConstancyAppState extends State<ConstancyApp> {
         ),
       ),
 
-      //Tema Fosc
       darkTheme: ThemeData(
         useMaterial3: true,
         fontFamily: fontFamily,
@@ -111,20 +145,36 @@ class _ConstancyAppState extends State<ConstancyApp> {
         stream: Supabase.instance.client.auth.onAuthStateChange,
         builder: (context, snapshot) {
           final session = snapshot.data?.session;
+          final authProvider = Provider.of<AuthProvider>(context);
 
-          if (session != null && !_justVerified) return const MainScreen();
+          if (_isRecoveringPassword) {
+            return UpdatePasswordScreen(
+              onCancel: () {
+                setState(() => _isRecoveringPassword = false);
+              },
+            );
+          }
+
+          if (_justVerified) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(S.of(context).accountVerified),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              _justVerified = false;
+            });
+          }
+          if (session != null && !_justVerified && authProvider.currentUser?.id == session.user.id) {
+            final bool hasMfaFactor = session.user.factors?.any((f) => f.status.name == 'verified') ?? false;
+            final String currentAal = AuthRepository.getAalFromJWT(session.accessToken);
+
+            if (hasMfaFactor && currentAal != 'aal2') return const MfaChallengeScreen();
+            return const MainScreen();
+          }
+
           else {
-            if (_justVerified) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(S.of(context).accountVerified),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                _justVerified = false;
-              });
-            }
             return const LoginScreen();
           }
         },

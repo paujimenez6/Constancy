@@ -37,8 +37,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 500, imageQuality: 80,);
-    if (image != null) setState(() {_imagePreview = File(image.path);});
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 500,
+      imageQuality: 80,
+    );
+    if (image != null) {
+      setState(() {
+        _imagePreview = File(image.path);
+      });
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -54,9 +62,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (_imagePreview != null) {
         final String storagePath = '${user.id}/avatar.png';
-
-        await supabase.storage.from('avatars').upload(storagePath, _imagePreview!, fileOptions: const FileOptions(upsert: true),);
-
+        await supabase.storage.from('avatars').upload(
+          storagePath,
+          _imagePreview!,
+          fileOptions: const FileOptions(upsert: true),
+        );
         final String rawUrl = supabase.storage.from('avatars').getPublicUrl(storagePath);
         finalImageUrl = "$rawUrl?t=${DateTime.now().millisecondsSinceEpoch}";
       }
@@ -68,16 +78,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }).eq('id', user.id);
 
       if (mounted) {
-        if (_imagePreview != null) context.read<AuthProvider>().updateProfileImage(finalImageUrl!);
-        context.read<AuthProvider>().updateUserData(nom: _nomController.text.trim(), cognom: _cognomController.text.trim(),);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.changesSaved), backgroundColor: Colors.green));
+        if (finalImageUrl != null) context.read<AuthProvider>().updateProfileImage(finalImageUrl);
+        context.read<AuthProvider>().updateUserData(
+          nom: _nomController.text.trim(),
+          cognom: _cognomController.text.trim(),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(strings.changesSaved), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
+        );
         Navigator.pop(context);
       }
     } catch (e) {
-      //debugPrint("Error saving profile: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(strings.savingError), backgroundColor: Colors.red)
+          SnackBar(content: Text(strings.savingError), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
         );
       }
     } finally {
@@ -92,9 +106,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = context.watch<AuthProvider>().currentUser!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(strings.editProfileTitle)),
+      backgroundColor: theme.colorScheme.surface,
+      appBar: AppBar(
+        title: Text(strings.editProfileTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
         child: Form(
           key: _formKey,
           child: Column(
@@ -102,23 +122,40 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Center(
                 child: Stack(
                   children: [
-                    CircleAvatar(
-                      radius: 60,
-                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      backgroundImage: _imagePreview != null
-                          ? FileImage(_imagePreview!) as ImageProvider
-                          : (user.imatgePerfil != null ? NetworkImage(user.imatgePerfil!) : null),
-                      child: (_imagePreview == null && user.imatgePerfil == null)
-                          ? Text(user.nickname[0].toUpperCase(), style: TextStyle(fontSize: 40, color: theme.colorScheme.primary))
-                          : null,
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2), width: 3),
+                      ),
+                      child: CircleAvatar(
+                        radius: 60,
+                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        backgroundImage: _imagePreview != null
+                            ? FileImage(_imagePreview!) as ImageProvider
+                            : (user.imatgePerfil != null ? NetworkImage(user.imatgePerfil!) : null),
+                        child: (_imagePreview == null && user.imatgePerfil == null)
+                            ? Text(user.nickname[0].toUpperCase(),
+                            style: TextStyle(fontSize: 40, color: theme.colorScheme.primary, fontWeight: FontWeight.bold))
+                            : null,
+                      ),
                     ),
                     Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: FloatingActionButton.small(
-                        onPressed: _pickImage,
-                        backgroundColor: const Color(0xFF172748),
-                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                      bottom: 4,
+                      right: 4,
+                      child: GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))
+                            ],
+                          ),
+                          child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
+                        ),
                       ),
                     ),
                   ],
@@ -126,46 +163,93 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 40),
 
-              TextFormField(
+              // --- CAMPS DE TEXT PREMIUM ---
+              _buildTextField(
+                label: strings.usernameLabel,
                 initialValue: user.nickname,
                 enabled: false,
-                decoration: InputDecoration(
-                  labelText: strings.usernameLabel,
-                  helperText: strings.usernameInfo,
-                  prefixIcon: const Icon(Icons.alternate_email),
-                  filled: true,
-                ),
+                prefixIcon: Icons.alternate_email_rounded,
+                helperText: strings.usernameInfo,
+                theme: theme,
               ),
-              const SizedBox(height: 20),
-
-              TextFormField(
+              const SizedBox(height: 24),
+              _buildTextField(
+                label: strings.nameLabel,
                 controller: _nomController,
-                decoration: InputDecoration(labelText: strings.nameLabel, prefixIcon: const Icon(Icons.person_outline)),
+                prefixIcon: Icons.person_outline_rounded,
+                theme: theme,
                 validator: (v) => v!.isEmpty ? strings.fieldRequired : null,
               ),
-              const SizedBox(height: 20),
-              TextFormField(
+              const SizedBox(height: 24),
+              _buildTextField(
+                label: strings.lastNameLabel,
                 controller: _cognomController,
-                decoration: InputDecoration(labelText: strings.lastNameLabel, prefixIcon: const Icon(Icons.person_outline)),
+                prefixIcon: Icons.person_outline_rounded,
+                theme: theme,
                 validator: (v) => v!.isEmpty ? strings.fieldRequired : null,
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 48),
 
+              // --- BOTÓ DE DESAR ---
               ElevatedButton(
                 onPressed: _isSaving ? null : _saveProfile,
                 style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 55),
-                  backgroundColor: const Color(0xFF172748),
+                  minimumSize: const Size(double.infinity, 56),
+                  backgroundColor: theme.colorScheme.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 child: _isSaving
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Text(strings.saveChanges),
+                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                    : Text(strings.saveChanges, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // Giny d'ajuda per crear inputs consistents amb l'estil premium
+  Widget _buildTextField({
+    required String label,
+    required ThemeData theme,
+    TextEditingController? controller,
+    String? initialValue,
+    bool enabled = true,
+    IconData? prefixIcon,
+    String? helperText,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      initialValue: initialValue,
+      enabled: enabled,
+      validator: validator,
+      style: TextStyle(fontWeight: FontWeight.w500, color: enabled ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant),
+      decoration: InputDecoration(
+        labelText: label,
+        helperText: helperText,
+        prefixIcon: Icon(prefixIcon, color: theme.colorScheme.primary),
+        filled: true,
+        fillColor: enabled ? theme.colorScheme.surface : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red),
         ),
       ),
     );

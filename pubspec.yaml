@@ -16,6 +16,7 @@ dependencies:
   provider: ^6.1.2
   supabase_flutter: ^2.8.0
   image_picker: ^1.2.1
+  flutter_dotenv: ^5.1.0
 
 dev_dependencies:
   flutter_test:
@@ -33,6 +34,7 @@ flutter:
   assets:
     - assets/images/Logo_Constancy.png
     - assets/images/Logo_Constancy_Sense_Fons.png
+    - .env
 
 flutter_launcher_icons:
   android: "launcher_icon"
