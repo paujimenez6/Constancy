@@ -115,5 +115,8 @@
   "recentActivity": "Activitat recent",
   "remove": "Eliminar",
   "removeFollower": "Eliminar seguidor",
-  "confirmRemoveFollower": "Segur que vols eliminar a"
+  "confirmRemoveFollower": "Segur que vols eliminar a",
+  "listFor": "Llista de",
+  "totalCount1": "usuari",
+  "totalCount2": "usuaris"
 }

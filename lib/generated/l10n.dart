@@ -1209,6 +1209,36 @@ class S {
       args: [],
     );
   }
+
+  /// `List of`
+  String get listFor {
+    return Intl.message(
+      'List of',
+      name: 'listFor',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `user`
+  String get totalCount1 {
+    return Intl.message(
+      'user',
+      name: 'totalCount1',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `users`
+  String get totalCount2 {
+    return Intl.message(
+      'users',
+      name: 'totalCount2',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

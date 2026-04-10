@@ -105,7 +105,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
 
     if (mounted) {
       Navigator.push(context, MaterialPageRoute(builder: (context) =>
-          UserListScreen(title: isFollowers ? strings.followers : strings.following, users: list)));
+          UserListScreen(title: isFollowers ? strings.followers : strings.following, users: list, ownerNickname: widget.userData['nickname'])));
     }
   }
 

@@ -81,7 +81,7 @@ class ProfileScreen extends StatelessWidget {
                                 onTap: () async {
                                   final list = await SocialRepository().getFollowersList(user.id);
                                   Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                                      UserListScreen(title: strings.followers, users: list, isMyFollowersList: true)));
+                                      UserListScreen(title: strings.followers, users: list, isMyFollowersList: true, ownerNickname: user.nickname)));
                                 },
                                 child: _buildStatItem(social.followersCount.toString(), strings.followers),
                               ),
@@ -96,7 +96,7 @@ class ProfileScreen extends StatelessWidget {
                                 onTap: () async {
                                   final list = await SocialRepository().getFollowingList(user.id);
                                   Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                                      UserListScreen(title: strings.following, users: list)));
+                                      UserListScreen(title: strings.following, users: list, ownerNickname: user.nickname)));
                                 },
                                 child: _buildStatItem(social.followingCount.toString(), strings.following),
                               ),
