@@ -81,7 +81,7 @@ class ProfileScreen extends StatelessWidget {
                                 onTap: () async {
                                   final list = await SocialRepository().getFollowersList(user.id);
                                   Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                                      UserListScreen(title: strings.followers, users: list)));
+                                      UserListScreen(title: strings.followers, users: list, isMyFollowersList: true)));
                                 },
                                 child: _buildStatItem(social.followersCount.toString(), strings.followers),
                               ),

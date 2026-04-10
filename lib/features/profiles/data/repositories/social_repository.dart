@@ -126,4 +126,31 @@ class SocialRepository {
         .eq('follower_id', userId);
     return (res as List).map((e) => e['profiles'] as Map<String, dynamic>).toList();
   }
+
+  Future<List<Map<String, dynamic>>> getFollowNotifications() async {
+    final currentUserId = _supabase.auth.currentUser!.id;
+    final res = await _supabase
+        .from('notifications')
+        .select('*, profiles:sender_id(id, nickname, nom, cognom, imatge_perfil, configuracio_privacitat, nivell_xp)')
+        .eq('receiver_id', currentUserId)
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(res);
+  }
+
+  Future<void> markNotificationsAsRead() async {
+    final currentUserId = _supabase.auth.currentUser!.id;
+    await _supabase
+        .from('notifications')
+        .update({'is_read': true})
+        .eq('receiver_id', currentUserId);
+  }
+
+  Future<void> removeFollower(String followerId) async {
+    final currentUserId = _supabase.auth.currentUser!.id;
+    await _supabase
+        .from('follows')
+        .delete()
+        .eq('follower_id', followerId)
+        .eq('following_id', currentUserId);
+  }
 }

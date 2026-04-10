@@ -1149,6 +1149,66 @@ class S {
       args: [],
     );
   }
+
+  /// `started following you`
+  String get startedFollowingYou {
+    return Intl.message(
+      'started following you',
+      name: 'startedFollowingYou',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Follow requests`
+  String get followRequests {
+    return Intl.message(
+      'Follow requests',
+      name: 'followRequests',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Recent activity`
+  String get recentActivity {
+    return Intl.message(
+      'Recent activity',
+      name: 'recentActivity',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remove`
+  String get remove {
+    return Intl.message(
+      'Remove',
+      name: 'remove',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remove follower`
+  String get removeFollower {
+    return Intl.message(
+      'Remove follower',
+      name: 'removeFollower',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure you want to remove`
+  String get confirmRemoveFollower {
+    return Intl.message(
+      'Are you sure you want to remove',
+      name: 'confirmRemoveFollower',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

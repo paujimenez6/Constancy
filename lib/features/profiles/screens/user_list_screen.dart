@@ -2,14 +2,144 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../generated/l10n.dart';
 import '../../auth/data/repositories/auth_provider.dart';
+import '../data/repositories/social_repository.dart';
+import '../data/repositories/social_provider.dart';
 import 'profile_screen.dart';
 import 'other_profile_screen.dart';
 
-class UserListScreen extends StatelessWidget {
+class UserListScreen extends StatefulWidget {
   final String title;
   final List<Map<String, dynamic>> users;
+  final bool isMyFollowersList;
 
-  const UserListScreen({super.key, required this.title, required this.users});
+  const UserListScreen({
+    super.key,
+    required this.title,
+    required this.users,
+    this.isMyFollowersList = false
+  });
+
+  @override
+  State<UserListScreen> createState() => _UserListScreenState();
+}
+
+class _UserListScreenState extends State<UserListScreen> {
+  late List<Map<String, dynamic>> _currentUsers;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentUsers = List.from(widget.users);
+  }
+
+  void _confirmRemoveFollower(Map<String, dynamic> user) {
+    final strings = S.of(context);
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _buildActionSheet(
+        context: context,
+        icon: Icons.person_remove_rounded,
+        iconColor: theme.colorScheme.primary,
+        title: strings.removeFollower,
+        description: "${strings.confirmRemoveFollower} ${user['nickname']}?",
+        confirmLabel: strings.remove,
+        isDestructive: true,
+        onConfirm: () async {
+          await SocialRepository().removeFollower(user['id']);
+          if (mounted) {
+            setState(() => _currentUsers.removeWhere((u) => u['id'] == user['id']));
+            final myId = context.read<AuthProvider>().currentUser!.id;
+            context.read<SocialProvider>().refreshSocialStats(myId);
+            Navigator.pop(context);
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildActionSheet({
+    required BuildContext context,
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String description,
+    required String confirmLabel,
+    required VoidCallback onConfirm,
+    bool isDestructive = false,
+  }) {
+    final theme = Theme.of(context);
+    final strings = S.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.outlineVariant,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 40, color: iconColor),
+          ),
+          const SizedBox(height: 16),
+          Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 15),
+          ),
+          const SizedBox(height: 32),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: Text(strings.cancel, style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: onConfirm,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: isDestructive ? Colors.red : theme.colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
+                  ),
+                  child: Text(confirmLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,17 +150,17 @@ class UserListScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(widget.title, style: const TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: users.isEmpty
+      body: _currentUsers.isEmpty
           ? Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.group_outlined, size: 45, color: theme.colorScheme.outlineVariant),
+            Icon(Icons.group_outlined, size: 64, color: theme.colorScheme.outlineVariant),
             const SizedBox(height: 16),
             Text(
               strings.noResultsFound,
@@ -42,24 +172,18 @@ class UserListScreen extends StatelessWidget {
           : ListView.separated(
         padding: const EdgeInsets.all(20),
         physics: const BouncingScrollPhysics(),
-        itemCount: users.length,
+        itemCount: _currentUsers.length,
         separatorBuilder: (context, index) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
-          final user = users[index];
+          final user = _currentUsers[index];
           final bool isMe = user['id'] == currentUserId;
 
           return InkWell(
             onTap: () {
               if (isMe) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
               } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: user)),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: user)));
               }
             },
             borderRadius: BorderRadius.circular(16),
@@ -71,56 +195,29 @@ class UserListScreen extends StatelessWidget {
                     : theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isMe
-                      ? theme.colorScheme.primary.withValues(alpha: 0.2)
-                      : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    color: isMe
+                        ? theme.colorScheme.primary.withValues(alpha: 0.2)
+                        : theme.colorScheme.outlineVariant.withValues(alpha: 0.5)
                 ),
               ),
               child: Row(
                 children: [
-                  // Avatar amb vora fina
-                  Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        width: 1,
-                      ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 26,
-                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      backgroundImage: user['imatge_perfil'] != null
-                          ? NetworkImage(user['imatge_perfil'])
-                          : null,
-                      child: user['imatge_perfil'] == null
-                          ? Text(
-                        user['nickname'][0].toUpperCase(),
-                        style: TextStyle(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      )
-                          : null,
-                    ),
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    backgroundImage: user['imatge_perfil'] != null ? NetworkImage(user['imatge_perfil']) : null,
+                    child: user['imatge_perfil'] == null
+                        ? Text(user['nickname'][0].toUpperCase(), style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold))
+                        : null,
                   ),
                   const SizedBox(width: 16),
-                  // Informació de l'usuari
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Text(
-                              user['nickname'],
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
+                            Text(user['nickname'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                             if (isMe) ...[
                               const SizedBox(width: 8),
                               Container(
@@ -141,21 +238,18 @@ class UserListScreen extends StatelessWidget {
                             ],
                           ],
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          "${user['nom']} ${user['cognom']}",
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontSize: 14,
-                          ),
-                        ),
+                        Text("${user['nom']} ${user['cognom']}", style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 14)),
                       ],
                     ),
                   ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: theme.colorScheme.outline.withValues(alpha: 0.5),
-                  ),
+                  if (widget.isMyFollowersList && !isMe)
+                    TextButton(
+                      onPressed: () => _confirmRemoveFollower(user),
+                      style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+                      child: Text(strings.remove, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    )
+                  else
+                    Icon(Icons.chevron_right_rounded, color: theme.colorScheme.outline.withValues(alpha: 0.5)),
                 ],
               ),
             ),

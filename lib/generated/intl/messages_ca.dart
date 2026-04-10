@@ -47,6 +47,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "confirm": MessageLookupByLibrary.simpleMessage("Confirmar"),
         "confirmPasswordLabel":
             MessageLookupByLibrary.simpleMessage("Confirmar contrasenya"),
+        "confirmRemoveFollower":
+            MessageLookupByLibrary.simpleMessage("Segur que vols eliminar a"),
         "copySecret":
             MessageLookupByLibrary.simpleMessage("Copiar codi secret"),
         "creatingAccount":
@@ -76,6 +78,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "fieldRequired":
             MessageLookupByLibrary.simpleMessage("Aquest camp és obligatori"),
         "follow": MessageLookupByLibrary.simpleMessage("Seguir"),
+        "followRequests":
+            MessageLookupByLibrary.simpleMessage("Sol·licituds de seguiment"),
         "followers": MessageLookupByLibrary.simpleMessage("Seguidors"),
         "following": MessageLookupByLibrary.simpleMessage("Seguint"),
         "forgotPassword":
@@ -158,12 +162,17 @@ class MessageLookup extends MessageLookupByLibrary {
         "public": MessageLookupByLibrary.simpleMessage("Perfil públic"),
         "publicDataPlaceholder": MessageLookupByLibrary.simpleMessage(
             "Aviat podràs veure els seus hàbits aquí."),
+        "recentActivity":
+            MessageLookupByLibrary.simpleMessage("Activitat recent"),
         "registerButton": MessageLookupByLibrary.simpleMessage("Registrar-se"),
         "registerTitle":
             MessageLookupByLibrary.simpleMessage("Crea el teu compte"),
         "registrationPending": MessageLookupByLibrary.simpleMessage(
             "Revisa la teva bústia de correu per confirmar la creació del compte!"),
         "reject": MessageLookupByLibrary.simpleMessage("Rebutjar"),
+        "remove": MessageLookupByLibrary.simpleMessage("Eliminar"),
+        "removeFollower":
+            MessageLookupByLibrary.simpleMessage("Eliminar seguidor"),
         "requestPending":
             MessageLookupByLibrary.simpleMessage("Sol·licitud enviada"),
         "resetEmailSent": MessageLookupByLibrary.simpleMessage(
@@ -182,6 +191,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "sendResetLinkSubTitle": MessageLookupByLibrary.simpleMessage(
             "Introdueix el teu correu i t\'enviarem un enllaç per recuperar l\'accés."),
         "settings": MessageLookupByLibrary.simpleMessage("Configuració"),
+        "startedFollowingYou":
+            MessageLookupByLibrary.simpleMessage("t\'ha començat a seguir"),
         "theme": MessageLookupByLibrary.simpleMessage("Tema de l\'aplicació"),
         "themeDark": MessageLookupByLibrary.simpleMessage("Fosc"),
         "themeLight": MessageLookupByLibrary.simpleMessage("Clar"),

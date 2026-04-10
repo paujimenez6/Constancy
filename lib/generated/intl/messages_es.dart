@@ -47,6 +47,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "confirm": MessageLookupByLibrary.simpleMessage("Confirmar"),
         "confirmPasswordLabel":
             MessageLookupByLibrary.simpleMessage("Confirmar contraseña"),
+        "confirmRemoveFollower": MessageLookupByLibrary.simpleMessage(
+            "¿Seguro que quieres eliminar a"),
         "copySecret":
             MessageLookupByLibrary.simpleMessage("Copiar código secreto"),
         "creatingAccount":
@@ -77,6 +79,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "fieldRequired":
             MessageLookupByLibrary.simpleMessage("Este campo es obligatorio"),
         "follow": MessageLookupByLibrary.simpleMessage("Seguir"),
+        "followRequests":
+            MessageLookupByLibrary.simpleMessage("Solicitudes de seguimiento"),
         "followers": MessageLookupByLibrary.simpleMessage("Seguidores"),
         "following": MessageLookupByLibrary.simpleMessage("Siguiendo"),
         "forgotPassword": MessageLookupByLibrary.simpleMessage(
@@ -160,11 +164,16 @@ class MessageLookup extends MessageLookupByLibrary {
         "public": MessageLookupByLibrary.simpleMessage("Perfil público"),
         "publicDataPlaceholder": MessageLookupByLibrary.simpleMessage(
             "Pronto podrás ver sus hábitos aquí."),
+        "recentActivity":
+            MessageLookupByLibrary.simpleMessage("Actividad reciente"),
         "registerButton": MessageLookupByLibrary.simpleMessage("Registrarse"),
         "registerTitle": MessageLookupByLibrary.simpleMessage("Crea tu cuenta"),
         "registrationPending": MessageLookupByLibrary.simpleMessage(
             "¡Revisa tu buzón de correo para confirmar la creación de la cuenta!"),
         "reject": MessageLookupByLibrary.simpleMessage("Rechazar"),
+        "remove": MessageLookupByLibrary.simpleMessage("Eliminar"),
+        "removeFollower":
+            MessageLookupByLibrary.simpleMessage("Eliminar seguidor"),
         "requestPending":
             MessageLookupByLibrary.simpleMessage("Solicitud enviada"),
         "resetEmailSent": MessageLookupByLibrary.simpleMessage(
@@ -182,6 +191,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "sendResetLinkSubTitle": MessageLookupByLibrary.simpleMessage(
             "Introduce tu correo y te enviaremos un enlace para recuperar el acceso."),
         "settings": MessageLookupByLibrary.simpleMessage("Configuración"),
+        "startedFollowingYou":
+            MessageLookupByLibrary.simpleMessage("te ha empezado a seguir"),
         "theme": MessageLookupByLibrary.simpleMessage("Tema de la aplicación"),
         "themeDark": MessageLookupByLibrary.simpleMessage("Oscuro"),
         "themeLight": MessageLookupByLibrary.simpleMessage("Claro"),

@@ -13,13 +13,16 @@ import 'features/auth/data/repositories/auth_repository.dart';
 import 'core/providers/settings_provider.dart';
 import 'features/profiles/data/repositories/social_provider.dart';
 import 'features/profiles/data/repositories/social_repository.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await dotenv.load(fileName: ".env");
+
   await Supabase.initialize(
-    url: 'https://eppzouncrrfkzkuapgjg.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwcHpvdW5jcnJma3prdWFwZ2pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDE3NDcsImV4cCI6MjA5MDExNzc0N30.ByTuSooYY_i7BrEFDRvyQ0bA52v2TR3i7voH-FL9jhg',
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    anonKey: dotenv.env['SUPABASE_KEY'] ?? '',
     authOptions: const FlutterAuthClientOptions(
       authFlowType: AuthFlowType.implicit,
     ),

@@ -46,6 +46,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
         "confirmPasswordLabel":
             MessageLookupByLibrary.simpleMessage("Confirm password"),
+        "confirmRemoveFollower": MessageLookupByLibrary.simpleMessage(
+            "Are you sure you want to remove"),
         "copySecret": MessageLookupByLibrary.simpleMessage("Copy secret code"),
         "creatingAccount":
             MessageLookupByLibrary.simpleMessage("Creating account..."),
@@ -73,6 +75,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "fieldRequired":
             MessageLookupByLibrary.simpleMessage("This field is required"),
         "follow": MessageLookupByLibrary.simpleMessage("Follow"),
+        "followRequests":
+            MessageLookupByLibrary.simpleMessage("Follow requests"),
         "followers": MessageLookupByLibrary.simpleMessage("Followers"),
         "following": MessageLookupByLibrary.simpleMessage("Following"),
         "forgotPassword":
@@ -153,12 +157,17 @@ class MessageLookup extends MessageLookupByLibrary {
         "public": MessageLookupByLibrary.simpleMessage("Public profile"),
         "publicDataPlaceholder": MessageLookupByLibrary.simpleMessage(
             "You\'ll soon be able to see its habits here."),
+        "recentActivity":
+            MessageLookupByLibrary.simpleMessage("Recent activity"),
         "registerButton": MessageLookupByLibrary.simpleMessage("Sign Up"),
         "registerTitle":
             MessageLookupByLibrary.simpleMessage("Create your account"),
         "registrationPending": MessageLookupByLibrary.simpleMessage(
             "Check your email to confirm account creation!"),
         "reject": MessageLookupByLibrary.simpleMessage("Reject"),
+        "remove": MessageLookupByLibrary.simpleMessage("Remove"),
+        "removeFollower":
+            MessageLookupByLibrary.simpleMessage("Remove follower"),
         "requestPending": MessageLookupByLibrary.simpleMessage("Request sent"),
         "resetEmailSent": MessageLookupByLibrary.simpleMessage(
             "A password reset email has been sent"),
@@ -175,6 +184,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "sendResetLinkSubTitle": MessageLookupByLibrary.simpleMessage(
             "Enter your email and we\'ll send you a link to recover access."),
         "settings": MessageLookupByLibrary.simpleMessage("Settings"),
+        "startedFollowingYou":
+            MessageLookupByLibrary.simpleMessage("started following you"),
         "theme": MessageLookupByLibrary.simpleMessage("App Theme"),
         "themeDark": MessageLookupByLibrary.simpleMessage("Dark"),
         "themeLight": MessageLookupByLibrary.simpleMessage("Light"),

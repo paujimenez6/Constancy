@@ -109,5 +109,11 @@
   "accept": "Aceptar",
   "reject": "Rechazar",
   "privateInfoMessage": "Esta información es privada",
-  "me": "Tú"
+  "me": "Tú",
+  "startedFollowingYou": "te ha empezado a seguir",
+  "followRequests": "Solicitudes de seguimiento",
+  "recentActivity": "Actividad reciente",
+  "remove": "Eliminar",
+  "removeFollower": "Eliminar seguidor",
+  "confirmRemoveFollower": "¿Seguro que quieres eliminar a"
 }
