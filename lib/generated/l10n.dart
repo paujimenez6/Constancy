@@ -1239,6 +1239,36 @@ class S {
       args: [],
     );
   }
+
+  /// `Data Consent`
+  String get consentTitle {
+    return Intl.message(
+      'Data Consent',
+      name: 'consentTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `In order to create your account on Constancy, we need your permission to store your email and profile data on our secure servers. This data is used exclusively for the management of your habits and will not be shared with third parties. You can delete your account and your data at any time from the settings.`
+  String get consentDescription {
+    return Intl.message(
+      'In order to create your account on Constancy, we need your permission to store your email and profile data on our secure servers. This data is used exclusively for the management of your habits and will not be shared with third parties. You can delete your account and your data at any time from the settings.',
+      name: 'consentDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Deny`
+  String get decline {
+    return Intl.message(
+      'Deny',
+      name: 'decline',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

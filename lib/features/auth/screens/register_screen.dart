@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../generated/l10n.dart';
 import 'package:provider/provider.dart';
 import '../data/repositories/auth_repository.dart';
@@ -19,6 +20,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  @override
+  void dispose() {
+    _nomController.dispose();
+    _cognomController.dispose();
+    _nicknameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -27,6 +39,70 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) return strings.invalidEmail;
     return null;
+  }
+
+  Future<bool> _showConsentDialog() async {
+    final strings = S.of(context);
+    final theme = Theme.of(context);
+
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isDismissible: false,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+            left: 24.0,
+            right: 24.0,
+            top: 24.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24.0
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.privacy_tip_outlined, size: 64, color: theme.colorScheme.primary),
+              const SizedBox(height: 16),
+              Text(
+                strings.consentTitle,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                strings.consentDescription,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey[600], height: 1.4),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: Text(strings.decline),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text(strings.accept),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    return result ?? false;
   }
 
   @override
@@ -47,17 +123,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 20),
               Text(strings.registerTitle, style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: colorScheme.primary)),
               const SizedBox(height: 20),
-              TextFormField(controller: _nomController, decoration: InputDecoration(labelText: strings.nameLabel), validator: (v) => v!.isEmpty ? strings.fieldRequired : null),
+              TextFormField(controller: _nomController, inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Zà-üÀ-ÜñÑ\s]'))], decoration: InputDecoration(labelText: strings.nameLabel), validator: (v) => v!.isEmpty ? strings.fieldRequired : null),
               const SizedBox(height: 10),
-              TextFormField(controller: _cognomController, decoration: InputDecoration(labelText: strings.lastNameLabel), validator: (v) => v!.isEmpty ? strings.fieldRequired : null),
+              TextFormField(controller: _cognomController, inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Zà-üÀ-ÜñÑ\s]'))], decoration: InputDecoration(labelText: strings.lastNameLabel), validator: (v) => v!.isEmpty ? strings.fieldRequired : null),
               const SizedBox(height: 10),
-              TextFormField(controller: _nicknameController, decoration: InputDecoration(labelText: strings.usernameLabel), validator: (v) => v!.isEmpty ? strings.fieldRequired : null),
+              TextFormField(controller: _nicknameController, inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]'))], decoration: InputDecoration(labelText: strings.usernameLabel), validator: (v) => v!.isEmpty ? strings.fieldRequired : null),
               const SizedBox(height: 10),
-              TextFormField(controller: _emailController, decoration: InputDecoration(labelText: strings.emailLabel), keyboardType: TextInputType.emailAddress, validator: (v) => _validateEmail(v, strings)),
+              TextFormField(controller: _emailController, inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s')), FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@._\-]'))], decoration: InputDecoration(labelText: strings.emailLabel), keyboardType: TextInputType.emailAddress, validator: (v) => _validateEmail(v, strings)),
               const SizedBox(height: 10),
-
-              TextFormField(
-                  controller: _passwordController,
+              TextFormField(controller: _passwordController,
+                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s')), FilteringTextInputFormatter.allow(RegExp(r'[\x20-\x7E]'))],
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: strings.passwordLabel,
@@ -90,6 +165,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
+                    final hasConsented = await _showConsentDialog();
+                    if (!hasConsented) return;
+
                     try {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.creatingAccount)));
 

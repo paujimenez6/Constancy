@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'features/auth/data/models/user_model.dart';
 import 'features/auth/screens/mfa_challenge_screen.dart';
 import 'features/auth/screens/update_password_screen.dart';
 import 'features/navigation/screens/main_screen.dart';
@@ -31,11 +30,11 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        Provider(create: (_) => AuthRepository()),
+        Provider(create: (_) => SocialRepository()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => SocialProvider()),
-        Provider(create: (_) => AuthRepository()),
-        Provider(create: (_) => SocialRepository()),
       ],
       child: const ConstancyApp(),
     ),
@@ -56,11 +55,16 @@ class _ConstancyAppState extends State<ConstancyApp> {
   @override
   void initState() {
     super.initState();
+    _setupAuthListener();
+  }
+
+  void _setupAuthListener() {
+    final authProvider = context.read<AuthProvider>();
+    final authRepo = context.read<AuthRepository>();
 
     Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
-      final AuthChangeEvent event = data.event;
-      final Session? session = data.session;
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final event = data.event;
+      final session = data.session;
 
       if (session == null || event == AuthChangeEvent.signedOut) {
         authProvider.logout();
@@ -85,12 +89,8 @@ class _ConstancyAppState extends State<ConstancyApp> {
 
       if (authProvider.currentUser == null || authProvider.currentUser!.id != session.user.id) {
         try {
-          final userData = await Supabase.instance.client
-              .from('profiles')
-              .select()
-              .eq('id', session.user.id)
-              .single();
-          authProvider.setUser(UserModel.fromJson(userData));
+          final userProfile = await authRepo.getUserProfile(session.user.id);
+          authProvider.setUser(userProfile);
         } catch (e) {
           debugPrint("Error sincronitzant perfil: $e");
         }

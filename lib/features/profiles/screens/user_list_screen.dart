@@ -50,7 +50,8 @@ class _UserListScreenState extends State<UserListScreen> {
         confirmLabel: strings.remove,
         isDestructive: true,
         onConfirm: () async {
-          await SocialRepository().removeFollower(user['id']);
+          final socialRepo = context.read<SocialRepository>();
+          await socialRepo.removeFollower(user['id']);
           if (mounted) {
             setState(() => _currentUsers.removeWhere((u) => u['id'] == user['id']));
             final myId = context.read<AuthProvider>().currentUser!.id;

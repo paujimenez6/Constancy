@@ -15,7 +15,6 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  final SocialRepository _socialRepo = SocialRepository();
   List<Map<String, dynamic>> _requests = [];
   List<Map<String, dynamic>> _notifications = [];
   bool _isLoading = true;
@@ -24,13 +23,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadAll();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadAll());
   }
 
   Future<void> _loadAll() async {
     try {
-      final reqs = await _socialRepo.getPendingRequests();
-      final notifs = await _socialRepo.getFollowNotifications();
+      final socialRepo = context.read<SocialRepository>();
+
+      final reqs = await socialRepo.getPendingRequests();
+      final notifs = await socialRepo.getFollowNotifications();
       if (mounted) {
         setState(() {
           _requests = reqs;
@@ -38,7 +39,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           _isLoading = false;
           _refreshCounter++;
         });
-        _socialRepo.markNotificationsAsRead();
+        socialRepo.markNotificationsAsRead();
       }
     } catch (e) {
       debugPrint("Error: $e");
@@ -143,7 +144,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   height: 32,
                   child: ElevatedButton(
                     onPressed: () async {
-                      await _socialRepo.acceptFollowRequest(req['id'], req['sender_id']);
+                      await context.read<SocialRepository>().acceptFollowRequest(req['id'], req['sender_id']);
                       if (mounted) {
                         _loadAll();
                         final myId = context.read<AuthProvider>().currentUser!.id;
@@ -167,7 +168,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   height: 32,
                   child: OutlinedButton(
                     onPressed: () async {
-                      await _socialRepo.rejectFollowRequest(req['id']);
+                      await context.read<SocialRepository>().rejectFollowRequest(req['id']);
                       if (mounted) {
                         _loadAll();
                         final myId = context.read<AuthProvider>().currentUser!.id;
@@ -227,7 +228,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _buildAvatar(dynamic user, ThemeData theme) {
     return CircleAvatar(
-      radius: 20, // Abans era 24
+      radius: 20,
       backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
       backgroundImage: user['imatge_perfil'] != null ? NetworkImage(user['imatge_perfil']) : null,
       child: user['imatge_perfil'] == null ? Text(user['nickname'][0].toUpperCase(), style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 14)) : null,
@@ -244,7 +245,6 @@ class FollowToggleButton extends StatefulWidget {
 }
 
 class _FollowToggleButtonState extends State<FollowToggleButton> {
-  final SocialRepository _repo = SocialRepository();
   bool _isFollowing = false;
   bool _isPending = false;
   bool _loading = true;
@@ -252,11 +252,12 @@ class _FollowToggleButtonState extends State<FollowToggleButton> {
   @override
   void initState() {
     super.initState();
-    _checkStatus();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkStatus());
   }
 
   void _checkStatus() async {
-    final status = await _repo.getFollowStatus(widget.userData['id']);
+    final repo = context.read<SocialRepository>();
+    final status = await repo.getFollowStatus(widget.userData['id']);
     if (mounted) {
       setState(() {
         _isFollowing = status['isFollowing']!;
@@ -287,10 +288,11 @@ class _FollowToggleButtonState extends State<FollowToggleButton> {
     return TextButton(
       onPressed: () async {
         setState(() => _loading = true);
+        final repo = context.read<SocialRepository>();
         if (_isFollowing || _isPending) {
-          await _repo.unfollowOrCancel(widget.userData['id'], _isPending);
+          await repo.unfollowOrCancel(widget.userData['id'], _isPending);
         } else {
-          await _repo.followUser(widget.userData['id'], widget.userData['configuracio_privacitat'] ?? 'public');
+          await repo.followUser(widget.userData['id'], widget.userData['configuracio_privacitat'] ?? 'public');
         }
         _checkStatus();
         final myId = context.read<AuthProvider>().currentUser!.id;
@@ -299,7 +301,7 @@ class _FollowToggleButtonState extends State<FollowToggleButton> {
       style: TextButton.styleFrom(
         backgroundColor: _isFollowing ? theme.colorScheme.surfaceContainerHighest : theme.colorScheme.primary,
         foregroundColor: _isFollowing ? theme.colorScheme.onSurface : Colors.white,
-        minimumSize: const Size(90, 30), // Reduït d'amplada (105 a 90) i alçada (36 a 30)
+        minimumSize: const Size(90, 30),
         padding: const EdgeInsets.symmetric(horizontal: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       ),

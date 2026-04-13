@@ -17,6 +17,12 @@ class _MfaChallengeScreenState extends State<MfaChallengeScreen> {
   String? _errorMessage;
 
   @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final strings = S.of(context);
     final theme = Theme.of(context);

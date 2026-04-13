@@ -2,9 +2,9 @@ import 'package:Constancy/features/profiles/screens/settings_screen.dart';
 import 'package:Constancy/features/profiles/screens/user_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../generated/l10n.dart';
 import '../../auth/data/repositories/auth_provider.dart';
+import '../../auth/data/repositories/auth_repository.dart';
 import '../data/repositories/social_provider.dart';
 import '../data/repositories/social_repository.dart';
 import 'edit_profile_screen.dart';
@@ -79,7 +79,7 @@ class ProfileScreen extends StatelessWidget {
                             Expanded(
                               child: InkWell(
                                 onTap: () async {
-                                  final list = await SocialRepository().getFollowersList(user.id);
+                                  final list = await context.read<SocialRepository>().getFollowersList(user.id);
                                   Navigator.push(context, MaterialPageRoute(builder: (context) =>
                                       UserListScreen(title: strings.followers, users: list, isMyFollowersList: true, ownerNickname: user.nickname)));
                                 },
@@ -94,7 +94,7 @@ class ProfileScreen extends StatelessWidget {
                             Expanded(
                               child: InkWell(
                                 onTap: () async {
-                                  final list = await SocialRepository().getFollowingList(user.id);
+                                  final list = await context.read<SocialRepository>().getFollowingList(user.id);
                                   Navigator.push(context, MaterialPageRoute(builder: (context) =>
                                       UserListScreen(title: strings.following, users: list, ownerNickname: user.nickname)));
                                 },
@@ -223,7 +223,7 @@ class ProfileScreen extends StatelessWidget {
         description: strings.logoutConfirmMessage,
         confirmLabel: strings.logout,
         onConfirm: () async {
-          await Supabase.instance.client.auth.signOut();
+          await context.read<AuthRepository>().signOut();
           if (context.mounted) {
             context.read<AuthProvider>().logout();
             Navigator.pop(context);

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../generated/l10n.dart';
 import '../../auth/data/models/user_model.dart';
@@ -113,11 +112,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
             onChanged: (nouValor) async {
               if (nouValor != null) {
-                await Supabase.instance.client
-                    .from('profiles')
-                    .update({'configuracio_privacitat': nouValor.name})
-                    .eq('id', user.id);
-                context.read<AuthProvider>().updateProfilePrivacy(nouValor);
+                await context.read<AuthRepository>().updatePrivacy(user.id, nouValor);
+                if (mounted) {
+                  context.read<AuthProvider>().updateProfilePrivacy(nouValor);
+                }
               }
             },
           ),

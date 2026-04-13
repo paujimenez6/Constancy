@@ -1,5 +1,6 @@
 import 'package:Constancy/features/profiles/screens/user_list_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../generated/l10n.dart';
 import '../data/repositories/social_repository.dart';
 
@@ -12,7 +13,6 @@ class OtherProfileScreen extends StatefulWidget {
 }
 
 class _OtherProfileScreenState extends State<OtherProfileScreen> {
-  final SocialRepository _socialRepo = SocialRepository();
   bool _isFollowing = false;
   bool _isPending = false;
   bool _isLoadingStatus = true;
@@ -27,9 +27,11 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
 
   Future<void> _loadFollowStatus() async {
     try {
-      final status = await _socialRepo.getFollowStatus(widget.userData['id']);
-      final fers = await _socialRepo.getFollowersCount(widget.userData['id']);
-      final fing = await _socialRepo.getFollowingCount(widget.userData['id']);
+      final socialRepo = context.read<SocialRepository>();
+
+      final status = await socialRepo.getFollowStatus(widget.userData['id']);
+      final fers = await socialRepo.getFollowersCount(widget.userData['id']);
+      final fing = await socialRepo.getFollowingCount(widget.userData['id']);
 
       if (mounted) {
         setState(() {
@@ -99,9 +101,11 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
       return;
     }
 
+    final socialRepo = context.read<SocialRepository>();
+
     final list = isFollowers
-        ? await _socialRepo.getFollowersList(widget.userData['id'])
-        : await _socialRepo.getFollowingList(widget.userData['id']);
+        ? await socialRepo.getFollowersList(widget.userData['id'])
+        : await socialRepo.getFollowingList(widget.userData['id']);
 
     if (mounted) {
       Navigator.push(context, MaterialPageRoute(builder: (context) =>
@@ -116,10 +120,12 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     setState(() => _isLoadingStatus = true);
 
     try {
+      final socialRepo = context.read<SocialRepository>();
+
       if (_isFollowing || _isPending) {
-        await _socialRepo.unfollowOrCancel(targetId, _isPending);
+        await socialRepo.unfollowOrCancel(targetId, _isPending);
       } else {
-        await _socialRepo.followUser(targetId, privacy);
+        await socialRepo.followUser(targetId, privacy);
       }
       await _loadFollowStatus();
     } catch (e) {
@@ -250,7 +256,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
             else
               Column(
                 children: [
-                  // Aquí aniran els hàbits o dades que vulguem mostrar
+                  //HÀBITS
                   Text(strings.publicDataPlaceholder,
                       style: TextStyle(fontStyle: FontStyle.italic, color: theme.colorScheme.outline)),
                 ],

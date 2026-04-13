@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../generated/l10n.dart';
 import 'register_screen.dart';
 import 'package:provider/provider.dart';
@@ -215,6 +216,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 TextFormField(
                   controller: _emailController,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@._\-]')),
+                  ],
                   decoration: InputDecoration(
                     labelText: strings.emailLabel,
                     labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
@@ -227,6 +232,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 TextFormField(
                   controller: _passwordController,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                    FilteringTextInputFormatter.allow(RegExp(r'[\x20-\x7E]')),
+                  ],
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: strings.passwordLabel,

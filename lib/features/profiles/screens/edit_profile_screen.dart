@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../../generated/l10n.dart';
 import '../../auth/data/repositories/auth_provider.dart';
+import '../../auth/data/repositories/auth_repository.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -53,33 +54,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
-    final user = context.read<AuthProvider>().currentUser!;
+    final authProvider = context.read<AuthProvider>();
+    final authRepo = context.read<AuthRepository>();
+    final user = authProvider.currentUser!;
     final strings = S.of(context);
-    final supabase = Supabase.instance.client;
 
     try {
-      String? finalImageUrl = user.imatgePerfil;
-
-      if (_imagePreview != null) {
-        final String storagePath = '${user.id}/avatar.png';
-        await supabase.storage.from('avatars').upload(
-          storagePath,
-          _imagePreview!,
-          fileOptions: const FileOptions(upsert: true),
-        );
-        final String rawUrl = supabase.storage.from('avatars').getPublicUrl(storagePath);
-        finalImageUrl = "$rawUrl?t=${DateTime.now().millisecondsSinceEpoch}";
-      }
-
-      await supabase.from('profiles').update({
-        'nom': _nomController.text.trim(),
-        'cognom': _cognomController.text.trim(),
-        'imatge_perfil': finalImageUrl,
-      }).eq('id', user.id);
+      final String? finalImageUrl = await authRepo.updateProfile(
+        userId: user.id,
+        nom: _nomController.text.trim(),
+        cognom: _cognomController.text.trim(),
+        imageFile: _imagePreview,
+        currentImageUrl: user.imatgePerfil,
+      );
 
       if (mounted) {
-        if (finalImageUrl != null) context.read<AuthProvider>().updateProfileImage(finalImageUrl);
-        context.read<AuthProvider>().updateUserData(
+        if (finalImageUrl != null) authProvider.updateProfileImage(finalImageUrl);
+        authProvider.updateUserData(
           nom: _nomController.text.trim(),
           cognom: _cognomController.text.trim(),
         );
@@ -163,7 +154,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 40),
 
-              // --- CAMPS DE TEXT PREMIUM ---
+
               _buildTextField(
                 label: strings.usernameLabel,
                 initialValue: user.nickname,
@@ -191,7 +182,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 48),
 
-              // --- BOTÓ DE DESAR ---
               ElevatedButton(
                 onPressed: _isSaving ? null : _saveProfile,
                 style: ElevatedButton.styleFrom(
@@ -212,7 +202,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  // Giny d'ajuda per crear inputs consistents amb l'estil premium
   Widget _buildTextField({
     required String label,
     required ThemeData theme,
@@ -227,6 +216,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       controller: controller,
       initialValue: initialValue,
       enabled: enabled,
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Zà-üÀ-ÜñÑ\s]')),],
       validator: validator,
       style: TextStyle(fontWeight: FontWeight.w500, color: enabled ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant),
       decoration: InputDecoration(

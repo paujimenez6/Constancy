@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../generated/l10n.dart';
-import '../../auth/data/repositories/auth_provider.dart';
+import '../../profiles/data/repositories/social_repository.dart';
 import '../../profiles/screens/other_profile_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -24,21 +23,19 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     setState(() => _isLoading = true);
-    final currentUserId = context.read<AuthProvider>().currentUser?.id;
 
     try {
-      final data = await Supabase.instance.client
-          .from('profiles')
-          .select()
-          .ilike('nickname', '%$query%')
-          .neq('id', currentUserId!)
-          .limit(20);
+      final repo = context.read<SocialRepository>();
 
-      setState(() => _searchResults = data);
+      final results = await repo.searchUsers(query);
+
+      if (mounted) {
+        setState(() => _searchResults = results);
+      }
     } catch (e) {
-      debugPrint("Error cerca: $e");
+      debugPrint("Error cerca a la UI: $e");
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

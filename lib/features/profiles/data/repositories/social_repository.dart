@@ -153,4 +153,23 @@ class SocialRepository {
         .eq('follower_id', followerId)
         .eq('following_id', currentUserId);
   }
+
+  Future<List<Map<String, dynamic>>> searchUsers(String query, {int limit = 20}) async {
+    try {
+      final currentUserId = _supabase.auth.currentUser?.id;
+      if (currentUserId == null) return [];
+
+      final data = await _supabase
+          .from('profiles')
+          .select()
+          .ilike('nickname', '%$query%')
+          .neq('id', currentUserId)
+          .limit(limit);
+
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      print("Error a SocialRepository.searchUsers: $e");
+      return [];
+    }
+  }
 }

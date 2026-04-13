@@ -26,7 +26,7 @@ class UserModel {
     this.puntsXP = 0,
     this.nivellXP = 1,
     this.monedes = 0,
-    this.configuracioPrivacitat = TipusPrivacitat.public,
+    this.configuracioPrivacitat = TipusPrivacitat.privat,
     required this.dataRegistre,
     this.dobleFactorActiu = false,
     this.token,
@@ -75,12 +75,9 @@ class UserModel {
       nivellXP: json['nivell_xp'] ?? 1,
       monedes: json['monedes'] ?? 0,
       configuracioPrivacitat: TipusPrivacitat.values.firstWhere(
-            (e) => e.toString().split('.').last == json['configuracio_privacitat'],
-        orElse: () => TipusPrivacitat.public,
+            (e) => e.toString().split('.').last == json['configuracio_privacitat'], orElse: () => TipusPrivacitat.privat,
       ),
-      dataRegistre: json['data_registre'] != null
-          ? DateTime.parse(json['data_registre'])
-          : DateTime.now(),
+      dataRegistre: json['data_registre'] != null ? DateTime.parse(json['data_registre']) : DateTime.now(),
       dobleFactorActiu: json['doble_factor_actiu'] ?? false,
       token: json['token'],
     );

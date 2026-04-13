@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../generated/l10n.dart';
+import '../../auth/data/repositories/auth_provider.dart';
 import '../data/repositories/auth_repository.dart';
 
 class UpdatePasswordScreen extends StatefulWidget {
@@ -19,13 +20,18 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
   bool _isSaving = false;
   bool _obscurePassword = true;
 
-  final String? _userEmail = Supabase.instance.client.auth.currentUser?.email;
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final strings = S.of(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final userEmail = context.select<AuthProvider, String?>((auth) => auth.currentUser?.correu);
 
     return Scaffold(
       appBar: AppBar(
@@ -44,7 +50,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_userEmail != null) ...[
+                if (userEmail != null) ...[
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -58,7 +64,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            strings.updatingPasswordFor(_userEmail!),
+                            strings.updatingPasswordFor(userEmail),
                             style: TextStyle(fontSize: 14, color: colorScheme.primary, fontWeight: FontWeight.w500),
                           ),
                         ),
@@ -70,6 +76,10 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
 
                 TextFormField(
                   controller: _passwordController,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                    FilteringTextInputFormatter.allow(RegExp(r'[\x20-\x7E]')),
+                  ],
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: strings.newPasswordLabel,

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 import 'dart:convert';
+import 'dart:io';
 
 class AuthRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -205,6 +206,53 @@ class AuthRepository {
       print("Error decodificant JWT: $e");
       return 'aal1';
     }
+  }
+
+  Future<String?> updateProfile({required String userId, required String nom, required String cognom, File? imageFile, String? currentImageUrl,}) async {
+    try {
+      String? finalImageUrl = currentImageUrl;
+
+      if (imageFile != null) {
+        final String storagePath = '$userId/avatar.png';
+
+        await _supabase.storage.from('avatars').upload(
+          storagePath,
+          imageFile,
+          fileOptions: const FileOptions(upsert: true),
+        );
+
+        final String rawUrl = _supabase.storage.from('avatars').getPublicUrl(storagePath);
+        finalImageUrl = "$rawUrl?t=${DateTime.now().millisecondsSinceEpoch}";
+      }
+
+      await _supabase.from('profiles').update({'nom': nom, 'cognom': cognom, 'imatge_perfil': finalImageUrl,}).eq('id', userId);
+
+      return finalImageUrl;
+    } catch (e) {
+      debugPrint("Error a AuthRepository.updateProfile: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> updatePrivacy(String userId, TipusPrivacitat privacy) async {
+    try {
+      await _supabase
+          .from('profiles')
+          .update({'configuracio_privacitat': privacy.name})
+          .eq('id', userId);
+    } catch (e) {
+      debugPrint("Error a AuthRepository.updatePrivacy: $e");
+      rethrow;
+    }
+  }
+
+  Future<UserModel> getUserProfile(String userId) async {
+    final data = await _supabase
+        .from('profiles')
+        .select()
+        .eq('id', userId)
+        .single();
+    return UserModel.fromJson(data);
   }
 }
 

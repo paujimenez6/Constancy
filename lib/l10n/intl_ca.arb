@@ -118,5 +118,8 @@
   "confirmRemoveFollower": "Segur que vols eliminar a",
   "listFor": "Llista de",
   "totalCount1": "usuari",
-  "totalCount2": "usuaris"
+  "totalCount2": "usuaris",
+  "consentTitle": "Consentiment de dades",
+  "consentDescription": "Per poder crear el teu compte a Constancy, necessitem el teu permís per emmagatzemar el teu correu i dades de perfil als nostres servidors segurs. Aquestes dades s'utilitzen exclusivament per a la gestió dels teus hàbits i no seran compartides amb tercers. Pots eliminar el teu compte i les teves dades en qualsevol moment des de la configuració.",
+  "decline": "Denegar"
 }
