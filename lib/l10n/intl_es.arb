@@ -120,6 +120,6 @@
   "totalCount1": "usuario",
   "totalCount2": "usuarios",
   "consentTitle": "Consentimiento de datos",
-  "consentDescription": "Para poder crear tu cuenta en Constancy, necesitamos tu permiso para almacenar tu correo y datos de perfil en nuestros servidores seguros. Estos datos se utilizan exclusivamente para la gestión de tus hábitos y no serán compartidos con terceros. Puedes eliminar tu cuenta y tus datos en cualquier momento desde la configuración.",
+  "consentDescription": "Para poder crear tu cuenta en Constancy, necesitamos tu permiso para almacenar tus datos sensibles en nuestros servidores seguros. Estos datos se utilizan exclusivamente para la gestión de tus hábitos y no serán compartidos con terceros. Puedes eliminar tu cuenta y tus datos en cualquier momento desde la configuración.",
   "decline": "Denegar"
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../generated/l10n.dart';
-import '../../profiles/data/repositories/social_repository.dart';
-import '../../profiles/screens/other_profile_screen.dart';
+import '../../generated/l10n.dart';
+import '../providers/social_provider.dart';
+import 'other_profile_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -25,9 +25,9 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final repo = context.read<SocialRepository>();
+      final socialProvider = context.read<SocialProvider>();
 
-      final results = await repo.searchUsers(query);
+      final results = await socialProvider.searchUsers(query);
 
       if (mounted) {
         setState(() => _searchResults = results);

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../generated/l10n.dart';
-import '../data/repositories/auth_repository.dart';
+import '../../generated/l10n.dart';
+import '../providers/auth_provider.dart';
 
 class MfaChallengeScreen extends StatefulWidget {
   const MfaChallengeScreen({super.key});
@@ -146,7 +146,7 @@ class _MfaChallengeScreenState extends State<MfaChallengeScreen> {
               const SizedBox(height: 20),
 
               TextButton(
-                onPressed: () => context.read<AuthRepository>().signOut(),
+                onPressed: () => context.read<AuthProvider>().signOut(),
                 style: TextButton.styleFrom(
                   foregroundColor: colorScheme.secondary,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -172,7 +172,7 @@ class _MfaChallengeScreenState extends State<MfaChallengeScreen> {
     });
 
     try {
-      await context.read<AuthRepository>().loginMFAChallenge(_codeController.text.trim());
+      await context.read<AuthProvider>().loginMFAChallenge(_codeController.text.trim());
       await Future.delayed(const Duration(milliseconds: 200));
     } catch (e) {
       if (mounted) {

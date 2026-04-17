@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../home/screens/home_screen.dart';
-import '../../profiles/screens/notifications_screen.dart';
-import '../../profiles/screens/profile_screen.dart';
-import '../../../generated/l10n.dart';
-import '../../auth/data/repositories/auth_provider.dart';
-import '../../search/screens/search_screen.dart';
-import '../../profiles/data/repositories/social_provider.dart';
+import 'home_screen.dart';
+import 'notifications_screen.dart';
+import 'profile_screen.dart';
+import '../../generated/l10n.dart';
+import '../providers/auth_provider.dart';
+import 'search_screen.dart';
+import '../providers/social_provider.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});

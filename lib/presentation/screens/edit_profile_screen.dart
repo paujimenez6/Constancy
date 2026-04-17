@@ -3,9 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../../../generated/l10n.dart';
-import '../../auth/data/repositories/auth_provider.dart';
-import '../../auth/data/repositories/auth_repository.dart';
+import '../../generated/l10n.dart';
+import '../providers/auth_provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -55,25 +54,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     setState(() => _isSaving = true);
     final authProvider = context.read<AuthProvider>();
-    final authRepo = context.read<AuthRepository>();
-    final user = authProvider.currentUser!;
     final strings = S.of(context);
 
     try {
-      final String? finalImageUrl = await authRepo.updateProfile(
-        userId: user.id,
+      await authProvider.updateProfile(
         nom: _nomController.text.trim(),
         cognom: _cognomController.text.trim(),
         imageFile: _imagePreview,
-        currentImageUrl: user.imatgePerfil,
       );
 
       if (mounted) {
-        if (finalImageUrl != null) authProvider.updateProfileImage(finalImageUrl);
-        authProvider.updateUserData(
-          nom: _nomController.text.trim(),
-          cognom: _cognomController.text.trim(),
-        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(strings.changesSaved), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
         );
@@ -153,7 +143,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-
 
               _buildTextField(
                 label: strings.usernameLabel,

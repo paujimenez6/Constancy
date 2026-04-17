@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../../generated/l10n.dart';
-import '../../auth/data/repositories/auth_provider.dart';
-import '../data/repositories/social_provider.dart';
-import '../data/repositories/social_repository.dart';
+import '../../generated/l10n.dart';
+import '../providers/auth_provider.dart';
+import '../providers/social_provider.dart';
 import 'other_profile_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -28,10 +27,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _loadAll() async {
     try {
-      final socialRepo = context.read<SocialRepository>();
+      final socialProvider = context.read<SocialProvider>();
 
-      final reqs = await socialRepo.getPendingRequests();
-      final notifs = await socialRepo.getFollowNotifications();
+      final reqs = await socialProvider.getPendingRequests();
+      final notifs = await socialProvider.getFollowNotifications();
       if (mounted) {
         setState(() {
           _requests = reqs;
@@ -39,7 +38,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           _isLoading = false;
           _refreshCounter++;
         });
-        socialRepo.markNotificationsAsRead();
+        socialProvider.markNotificationsAsRead();
       }
     } catch (e) {
       debugPrint("Error: $e");
@@ -144,7 +143,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   height: 32,
                   child: ElevatedButton(
                     onPressed: () async {
-                      await context.read<SocialRepository>().acceptFollowRequest(req['id'], req['sender_id']);
+                      await context.read<SocialProvider>().acceptFollowRequest(req['id'], req['sender_id']);
                       if (mounted) {
                         _loadAll();
                         final myId = context.read<AuthProvider>().currentUser!.id;
@@ -168,7 +167,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   height: 32,
                   child: OutlinedButton(
                     onPressed: () async {
-                      await context.read<SocialRepository>().rejectFollowRequest(req['id']);
+                      await context.read<SocialProvider>().rejectFollowRequest(req['id']);
                       if (mounted) {
                         _loadAll();
                         final myId = context.read<AuthProvider>().currentUser!.id;
@@ -256,8 +255,8 @@ class _FollowToggleButtonState extends State<FollowToggleButton> {
   }
 
   void _checkStatus() async {
-    final repo = context.read<SocialRepository>();
-    final status = await repo.getFollowStatus(widget.userData['id']);
+    final provider = context.read<SocialProvider>();
+    final status = await provider.getFollowStatus(widget.userData['id']);
     if (mounted) {
       setState(() {
         _isFollowing = status['isFollowing']!;
@@ -288,15 +287,15 @@ class _FollowToggleButtonState extends State<FollowToggleButton> {
     return TextButton(
       onPressed: () async {
         setState(() => _loading = true);
-        final repo = context.read<SocialRepository>();
+        final provider = context.read<SocialProvider>();
         if (_isFollowing || _isPending) {
-          await repo.unfollowOrCancel(widget.userData['id'], _isPending);
+          await provider.unfollowOrCancel(widget.userData['id'], _isPending);
         } else {
-          await repo.followUser(widget.userData['id'], widget.userData['configuracio_privacitat'] ?? 'public');
+          await provider.followUser(widget.userData['id'], widget.userData['configuracio_privacitat'] ?? 'public');
         }
         _checkStatus();
         final myId = context.read<AuthProvider>().currentUser!.id;
-        context.read<SocialProvider>().refreshSocialStats(myId);
+        provider.refreshSocialStats(myId);
       },
       style: TextButton.styleFrom(
         backgroundColor: _isFollowing ? theme.colorScheme.surfaceContainerHighest : theme.colorScheme.primary,

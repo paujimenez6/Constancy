@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../generated/l10n.dart';
+import '../../generated/l10n.dart';
 import 'package:provider/provider.dart';
-import '../data/repositories/auth_repository.dart';
+import '../providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -171,7 +171,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     try {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.creatingAccount)));
 
-                      await context.read<AuthRepository>().signUp(
+                      await context.read<AuthProvider>().signUp(
                         email: _emailController.text.trim(),
                         password: _passwordController.text.trim(),
                         nickname: _nicknameController.text.trim(),

@@ -1,6 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/user_model.dart';
+import '../../domain/models/user_model.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -40,7 +39,7 @@ class AuthRepository {
       throw e.message;
     } catch (e) {
       if (e == 'NICKNAME_TAKEN') rethrow;
-      debugPrint("Error: $e");
+      print("Error: $e");
       throw 'UNKNOWN';
     }
   }
@@ -82,7 +81,7 @@ class AuthRepository {
 
       return res != null;
     } catch (e) {
-      debugPrint("Error checkEmailExists: $e");
+      print("Error checkEmailExists: $e");
       return false;
     }
   }
@@ -113,7 +112,7 @@ class AuthRepository {
 
       return res.all.firstWhere((f) => f.status == FactorStatus.verified).id;
     } catch (e) {
-      debugPrint("Error obtenint MFA Factor ID: $e");
+      print("Error obtenint MFA Factor ID: $e");
       return null;
     }
   }
@@ -229,7 +228,7 @@ class AuthRepository {
 
       return finalImageUrl;
     } catch (e) {
-      debugPrint("Error a AuthRepository.updateProfile: $e");
+      print("Error a AuthRepository.updateProfile: $e");
       rethrow;
     }
   }
@@ -241,7 +240,7 @@ class AuthRepository {
           .update({'configuracio_privacitat': privacy.name})
           .eq('id', userId);
     } catch (e) {
-      debugPrint("Error a AuthRepository.updatePrivacy: $e");
+      print("Error a AuthRepository.updatePrivacy: $e");
       rethrow;
     }
   }

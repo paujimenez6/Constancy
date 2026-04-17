@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../core/providers/settings_provider.dart';
-import '../../../generated/l10n.dart';
-import '../../auth/data/models/user_model.dart';
-import '../../auth/data/repositories/auth_provider.dart';
-import '../../auth/data/repositories/auth_repository.dart';
+import '../providers/settings_provider.dart';
+import '../../generated/l10n.dart';
+import '../../domain/models/user_model.dart';
+import '../providers/auth_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -25,7 +24,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadMFAStatus() async {
-    final enabled = await context.read<AuthRepository>().isMFAEnabled();
+    final enabled = await context.read<AuthProvider>().isMFAEnabled();
     if (mounted) {
       setState(() {
         _mfaEnabled = enabled;
@@ -112,10 +111,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
             onChanged: (nouValor) async {
               if (nouValor != null) {
-                await context.read<AuthRepository>().updatePrivacy(user.id, nouValor);
-                if (mounted) {
-                  context.read<AuthProvider>().updateProfilePrivacy(nouValor);
-                }
+                await context.read<AuthProvider>().updatePrivacy(user.id, nouValor);
               }
             },
           ),
@@ -157,12 +153,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _showMFAEnrollmentDialog() async {
     final strings = S.of(context);
-    final authRepo = context.read<AuthRepository>();
+    final authProvider = context.read<AuthProvider>();
     final theme = Theme.of(context);
     final codeController = TextEditingController();
 
     try {
-      final enrollData = await authRepo.enrollMFA();
+      final enrollData = await authProvider.enrollMFA();
       final String secret = enrollData.totp.secret;
       final String factorId = enrollData.id;
 
@@ -272,7 +268,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: ElevatedButton(
                         onPressed: () async {
                           try {
-                            await authRepo.verifyMFA(factorId, codeController.text);
+                            await authProvider.verifyMFA(factorId, codeController.text);
                             if (context.mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.mfaSuccess), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating));
@@ -313,10 +309,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         confirmLabel: strings.confirm,
         isDestructive: true,
         onConfirm: () async {
-          final authRepo = context.read<AuthRepository>();
-          final factorId = await authRepo.getMFAFactorId();
+          final authProvider = context.read<AuthProvider>();
+          final factorId = await authProvider.getMFAFactorId();
           if (factorId != null) {
-            await authRepo.unenrollMFA(factorId);
+            await authProvider.unenrollMFA(factorId);
             if (mounted) {
               Navigator.pop(context);
               _loadMFAStatus();
@@ -341,9 +337,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         confirmLabel: strings.confirm,
         isDestructive: true,
         onConfirm: () async {
-          await context.read<AuthRepository>().deleteAccount();
+          await context.read<AuthProvider>().deleteAccount();
           if (mounted) {
-            context.read<AuthProvider>().logout();
             Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/', (route) => false);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(strings.deletedAccount), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),

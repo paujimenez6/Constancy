@@ -1,8 +1,8 @@
-import 'package:Constancy/features/profiles/screens/user_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../generated/l10n.dart';
-import '../data/repositories/social_repository.dart';
+import '../../generated/l10n.dart';
+import '../providers/social_provider.dart';
+import 'user_list_screen.dart';
 
 class OtherProfileScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -27,11 +27,11 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
 
   Future<void> _loadFollowStatus() async {
     try {
-      final socialRepo = context.read<SocialRepository>();
+      final socialProvider = context.read<SocialProvider>();
 
-      final status = await socialRepo.getFollowStatus(widget.userData['id']);
-      final fers = await socialRepo.getFollowersCount(widget.userData['id']);
-      final fing = await socialRepo.getFollowingCount(widget.userData['id']);
+      final status = await socialProvider.getFollowStatus(widget.userData['id']);
+      final fers = await socialProvider.getFollowersCount(widget.userData['id']);
+      final fing = await socialProvider.getFollowingCount(widget.userData['id']);
 
       if (mounted) {
         setState(() {
@@ -101,11 +101,11 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
       return;
     }
 
-    final socialRepo = context.read<SocialRepository>();
+    final socialProvider = context.read<SocialProvider>();
 
     final list = isFollowers
-        ? await socialRepo.getFollowersList(widget.userData['id'])
-        : await socialRepo.getFollowingList(widget.userData['id']);
+        ? await socialProvider.getFollowersList(widget.userData['id'])
+        : await socialProvider.getFollowingList(widget.userData['id']);
 
     if (mounted) {
       Navigator.push(context, MaterialPageRoute(builder: (context) =>
@@ -120,12 +120,12 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     setState(() => _isLoadingStatus = true);
 
     try {
-      final socialRepo = context.read<SocialRepository>();
+      final socialProvider = context.read<SocialProvider>();
 
       if (_isFollowing || _isPending) {
-        await socialRepo.unfollowOrCancel(targetId, _isPending);
+        await socialProvider.unfollowOrCancel(targetId, _isPending);
       } else {
-        await socialRepo.followUser(targetId, privacy);
+        await socialProvider.followUser(targetId, privacy);
       }
       await _loadFollowStatus();
     } catch (e) {

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../generated/l10n.dart';
+import '../../generated/l10n.dart';
 import 'register_screen.dart';
 import 'package:provider/provider.dart';
-import '../data/repositories/auth_repository.dart';
-import '../data/repositories/auth_provider.dart';
+import '../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,7 +30,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final sheetFormKey = GlobalKey<FormState>();
     final strings = S.of(context);
     final theme = Theme.of(context);
-    final authRepo = context.read<AuthRepository>();
+
+    final authProvider = context.read<AuthProvider>();
 
     showModalBottomSheet(
       context: context,
@@ -103,10 +103,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               final email = emailController.text.trim();
 
                               try {
-                                final exists = await authRepo.checkEmailExists(email);
+                                final exists = await authProvider.checkEmailExists(email);
 
                                 if (exists) {
-                                  await authRepo.sendPasswordResetEmail(email);
+                                  await authProvider.sendPasswordResetEmail(email);
 
                                   if (sheetContext.mounted) {
                                     FocusScope.of(context).unfocus();
@@ -114,8 +114,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text(strings.resetEmailSent),
-                                        backgroundColor: Colors.green
+                                          content: Text(strings.resetEmailSent),
+                                          backgroundColor: Colors.green
                                       ),
                                     );
                                   }
@@ -264,19 +264,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       try {
-                        context.read<AuthProvider>().isManualLogin = true;
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.validatingData)));
 
-                        await context.read<AuthRepository>().signIn(
+                        await context.read<AuthProvider>().signIn(
                           _emailController.text.trim(),
                           _passwordController.text.trim(),
                         );
 
                       } catch (e) {
-                        if (mounted) context.read<AuthProvider>().isManualLogin = false;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(strings.loginError), backgroundColor: Colors.red)
-                        );
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(strings.loginError), backgroundColor: Colors.red)
+                          );
+                        }
                       }
                     }
                   },

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../generated/l10n.dart';
-import '../../auth/data/repositories/auth_provider.dart';
-import '../data/repositories/social_repository.dart';
-import '../data/repositories/social_provider.dart';
+import '../../generated/l10n.dart';
+import '../providers/auth_provider.dart';
+import '../providers/social_provider.dart';
 import 'profile_screen.dart';
 import 'other_profile_screen.dart';
 
@@ -50,12 +49,13 @@ class _UserListScreenState extends State<UserListScreen> {
         confirmLabel: strings.remove,
         isDestructive: true,
         onConfirm: () async {
-          final socialRepo = context.read<SocialRepository>();
-          await socialRepo.removeFollower(user['id']);
+          final socialProvider = context.read<SocialProvider>();
+          await socialProvider.removeFollower(user['id']);
+
           if (mounted) {
             setState(() => _currentUsers.removeWhere((u) => u['id'] == user['id']));
             final myId = context.read<AuthProvider>().currentUser!.id;
-            context.read<SocialProvider>().refreshSocialStats(myId);
+            socialProvider.refreshSocialStats(myId);
             Navigator.pop(context);
           }
         },

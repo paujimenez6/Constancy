@@ -2,17 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'features/auth/screens/mfa_challenge_screen.dart';
-import 'features/auth/screens/update_password_screen.dart';
-import 'features/navigation/screens/main_screen.dart';
-import 'features/auth/screens/login_screen.dart';
+import 'presentation/screens/mfa_challenge_screen.dart';
+import 'presentation/screens/update_password_screen.dart';
+import 'presentation/screens/main_screen.dart';
+import 'presentation/screens/login_screen.dart';
 import 'generated/l10n.dart';
-import 'features/auth/data/repositories/auth_provider.dart';
-import 'features/auth/data/repositories/auth_repository.dart';
-import 'core/providers/settings_provider.dart';
-import 'features/profiles/data/repositories/social_provider.dart';
-import 'features/profiles/data/repositories/social_repository.dart';
+import 'presentation/providers/auth_provider.dart';
+import 'persistence/repositories/auth_repository.dart';
+import 'presentation/providers/settings_provider.dart';
+import 'presentation/providers/social_provider.dart';
+import 'persistence/repositories/social_repository.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'domain/services/auth_service.dart';
+import 'domain/services/social_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,9 +34,21 @@ void main() async {
       providers: [
         Provider(create: (_) => AuthRepository()),
         Provider(create: (_) => SocialRepository()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ProxyProvider<AuthRepository, AuthService>(
+          update: (context, authRepo, previous) => AuthService(authRepo),
+        ),
+        ProxyProvider<SocialRepository, SocialService>(
+          update: (context, socialRepo, previous) => SocialService(socialRepo),
+        ),
+        ChangeNotifierProxyProvider<AuthService, AuthProvider>(
+          create: (context) => AuthProvider(context.read<AuthService>()),
+          update: (context, authService, previous) => previous ?? AuthProvider(authService),
+        ),
+        ChangeNotifierProxyProvider<SocialService, SocialProvider>(
+          create: (context) => SocialProvider(context.read<SocialService>()),
+          update: (context, socialService, previous) => previous ?? SocialProvider(socialService),
+        ),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => SocialProvider()),
       ],
       child: const ConstancyApp(),
     ),

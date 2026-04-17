@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../generated/l10n.dart';
-import '../../auth/data/repositories/auth_provider.dart';
-import '../data/repositories/auth_repository.dart';
+import '../../generated/l10n.dart';
+import '../providers/auth_provider.dart';
 
 class UpdatePasswordScreen extends StatefulWidget {
   final VoidCallback? onCancel;
@@ -99,7 +98,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                     if (_formKey.currentState!.validate()) {
                       setState(() => _isSaving = true);
                       try {
-                        await context.read<AuthRepository>().updatePassword(_passwordController.text);
+                        await context.read<AuthProvider>().updatePassword(_passwordController.text);
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text(strings.passwordUpdated), backgroundColor: Colors.green),
@@ -115,8 +114,8 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(errorMsg),
-                              backgroundColor: Colors.red
+                                content: Text(errorMsg),
+                                backgroundColor: Colors.red
                             ),
                           );
                         }

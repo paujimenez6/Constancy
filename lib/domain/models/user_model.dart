@@ -1,4 +1,3 @@
-// lib/features/auth/data/models/user_model.dart
 enum TipusPrivacitat { public, privat, amics }
 
 class UserModel {

@@ -1,12 +1,10 @@
-import 'package:Constancy/features/profiles/screens/settings_screen.dart';
-import 'package:Constancy/features/profiles/screens/user_list_screen.dart';
+import 'package:Constancy/presentation/screens/settings_screen.dart';
+import 'package:Constancy/presentation/screens/user_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../generated/l10n.dart';
-import '../../auth/data/repositories/auth_provider.dart';
-import '../../auth/data/repositories/auth_repository.dart';
-import '../data/repositories/social_provider.dart';
-import '../data/repositories/social_repository.dart';
+import '../../generated/l10n.dart';
+import '../providers/auth_provider.dart';
+import '../providers/social_provider.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -79,9 +77,11 @@ class ProfileScreen extends StatelessWidget {
                             Expanded(
                               child: InkWell(
                                 onTap: () async {
-                                  final list = await context.read<SocialRepository>().getFollowersList(user.id);
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                                      UserListScreen(title: strings.followers, users: list, isMyFollowersList: true, ownerNickname: user.nickname)));
+                                  final list = await context.read<SocialProvider>().getFollowersList(user.id);
+                                  if (context.mounted) {
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                                        UserListScreen(title: strings.followers, users: list, isMyFollowersList: true, ownerNickname: user.nickname)));
+                                  }
                                 },
                                 child: _buildStatItem(social.followersCount.toString(), strings.followers),
                               ),
@@ -94,9 +94,11 @@ class ProfileScreen extends StatelessWidget {
                             Expanded(
                               child: InkWell(
                                 onTap: () async {
-                                  final list = await context.read<SocialRepository>().getFollowingList(user.id);
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                                      UserListScreen(title: strings.following, users: list, ownerNickname: user.nickname)));
+                                  final list = await context.read<SocialProvider>().getFollowingList(user.id);
+                                  if (context.mounted) {
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                                        UserListScreen(title: strings.following, users: list, ownerNickname: user.nickname)));
+                                  }
                                 },
                                 child: _buildStatItem(social.followingCount.toString(), strings.following),
                               ),
@@ -223,9 +225,8 @@ class ProfileScreen extends StatelessWidget {
         description: strings.logoutConfirmMessage,
         confirmLabel: strings.logout,
         onConfirm: () async {
-          await context.read<AuthRepository>().signOut();
+          await context.read<AuthProvider>().signOut();
           if (context.mounted) {
-            context.read<AuthProvider>().logout();
             Navigator.pop(context);
           }
         },
