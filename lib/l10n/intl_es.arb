@@ -121,5 +121,22 @@
   "totalCount2": "usuarios",
   "consentTitle": "Consentimiento de datos",
   "consentDescription": "Para poder crear tu cuenta en Constancy, necesitamos tu permiso para almacenar tus datos sensibles en nuestros servidores seguros. Estos datos se utilizan exclusivamente para la gestión de tus hábitos y no serán compartidos con terceros. Puedes eliminar tu cuenta y tus datos en cualquier momento desde la configuración.",
-  "decline": "Denegar"
+  "decline": "Denegar",
+  "newHabitTitle": "Nuevo Hábito",
+  "editHabitTitle": "Editar Hábito",
+  "habitTitleLabel": "Título del hábito *",
+  "habitTitleHint": "Ej: Beber agua, Leer, Correr...",
+  "habitTitleRequired": "El título es obligatorio",
+  "habitDescLabel": "Descripción (Opcional)",
+  "habitGroupLabel": "Grupo / Categoría (Opcional)",
+  "habitGroupHint": "Ej: Salud, Estudios...",
+  "habitObjective": "Objetivo",
+  "habitQuantity": "Cantidad",
+  "requiredField": "Obligatorio",
+  "habitUnit": "Unidad",
+  "habitFrequency": "Frecuencia",
+  "habitIcon": "Icono",
+  "habitColor": "Color",
+  "saveHabit": "Guardar Hábito",
+  "errorSavingHabit": "Error guardando el hábito: {error}"
 }

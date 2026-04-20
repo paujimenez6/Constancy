@@ -121,5 +121,22 @@
   "totalCount2": "users",
   "consentTitle": "Data Consent",
   "consentDescription": "In order to create your account on Constancy, we need your permission to store your sensitive data on our secure servers. This data is used exclusively for the management of your habits and will not be shared with third parties. You can delete your account and your data at any time from the settings.",
-  "decline": "Deny"
+  "decline": "Deny",
+  "newHabitTitle": "New Habit",
+  "editHabitTitle": "Edit Habit",
+  "habitTitleLabel": "Habit Title *",
+  "habitTitleHint": "E.g.: Drink water, Read, Run...",
+  "habitTitleRequired": "Title is required",
+  "habitDescLabel": "Description (Optional)",
+  "habitGroupLabel": "Group / Category (Optional)",
+  "habitGroupHint": "E.g.: Health, Studies...",
+  "habitObjective": "Objective",
+  "habitQuantity": "Quantity",
+  "requiredField": "Required",
+  "habitUnit": "Unit",
+  "habitFrequency": "Frequency",
+  "habitIcon": "Icon",
+  "habitColor": "Color",
+  "saveHabit": "Save Habit",
+  "errorSavingHabit": "Error saving habit: {error}"
 }

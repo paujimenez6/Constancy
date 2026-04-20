@@ -2,19 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'generated/l10n.dart';
 import 'presentation/screens/mfa_challenge_screen.dart';
 import 'presentation/screens/update_password_screen.dart';
 import 'presentation/screens/main_screen.dart';
 import 'presentation/screens/login_screen.dart';
-import 'generated/l10n.dart';
 import 'presentation/providers/auth_provider.dart';
-import 'persistence/repositories/auth_repository.dart';
 import 'presentation/providers/settings_provider.dart';
 import 'presentation/providers/social_provider.dart';
-import 'persistence/repositories/social_repository.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'presentation/providers/habit_provider.dart';
 import 'domain/services/auth_service.dart';
 import 'domain/services/social_service.dart';
+import 'domain/services/habit_service.dart';
+import 'persistence/repositories/auth_repository.dart';
+import 'persistence/repositories/social_repository.dart';
+import 'persistence/repositories/habit_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,11 +37,15 @@ void main() async {
       providers: [
         Provider(create: (_) => AuthRepository()),
         Provider(create: (_) => SocialRepository()),
+        Provider(create: (_) => HabitRepository()),
         ProxyProvider<AuthRepository, AuthService>(
           update: (context, authRepo, previous) => AuthService(authRepo),
         ),
         ProxyProvider<SocialRepository, SocialService>(
           update: (context, socialRepo, previous) => SocialService(socialRepo),
+        ),
+        ProxyProvider<HabitRepository, HabitService>(
+          update: (context, habitRepo, previous) => HabitService(habitRepo),
         ),
         ChangeNotifierProxyProvider<AuthService, AuthProvider>(
           create: (context) => AuthProvider(context.read<AuthService>()),
@@ -47,6 +54,10 @@ void main() async {
         ChangeNotifierProxyProvider<SocialService, SocialProvider>(
           create: (context) => SocialProvider(context.read<SocialService>()),
           update: (context, socialService, previous) => previous ?? SocialProvider(socialService),
+        ),
+        ChangeNotifierProxyProvider<HabitService, HabitProvider>(
+          create: (context) => HabitProvider(context.read<HabitService>()),
+          update: (context, habitService, previous) => previous ?? HabitProvider(habitService),
         ),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],

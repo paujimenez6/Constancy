@@ -121,5 +121,22 @@
   "totalCount2": "usuaris",
   "consentTitle": "Consentiment de dades",
   "consentDescription": "Per poder crear el teu compte a Constancy, necessitem el teu permís per emmagatzemar les teves dades sensibles als nostres servidors segurs. Aquestes dades s'utilitzen exclusivament per a la gestió dels teus hàbits i no seran compartides amb tercers. Pots eliminar el teu compte i les teves dades en qualsevol moment des de la configuració.",
-  "decline": "Denegar"
+  "decline": "Denegar",
+  "newHabitTitle": "Nou Hàbit",
+  "editHabitTitle": "Editar Hàbit",
+  "habitTitleLabel": "Títol de l'hàbit *",
+  "habitTitleHint": "Ex: Beure aigua, Llegir, Córrer...",
+  "habitTitleRequired": "El títol és obligatori",
+  "habitDescLabel": "Descripció (Opcional)",
+  "habitGroupLabel": "Grup / Categoria (Opcional)",
+  "habitGroupHint": "Ex: Salut, Estudis...",
+  "habitObjective": "Objectiu",
+  "habitQuantity": "Quantitat",
+  "requiredField": "Obligatori",
+  "habitUnit": "Unitat",
+  "habitFrequency": "Freqüència",
+  "habitIcon": "Icona",
+  "habitColor": "Color",
+  "saveHabit": "Guardar Hàbit",
+  "errorSavingHabit": "Error guardant l'hàbit: {error}"
 }

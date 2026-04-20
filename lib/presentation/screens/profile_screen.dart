@@ -1,5 +1,5 @@
-import 'package:Constancy/presentation/screens/settings_screen.dart';
-import 'package:Constancy/presentation/screens/user_list_screen.dart';
+import 'settings_screen.dart';
+import 'user_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../generated/l10n.dart';
