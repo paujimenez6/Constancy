@@ -138,5 +138,21 @@
   "habitIcon": "Icon",
   "habitColor": "Color",
   "saveHabit": "Save Habit",
-  "errorSavingHabit": "Error saving habit: {error}"
+  "errorSavingHabit": "Error saving habit: {error}",
+  "habitDetails": "Habit Details",
+  "archive": "Archive",
+  "archiveHabitConfirm": "Are you sure you want to archive the habit?",
+  "archiveHabitMessage": "Archiving a habit will remove it from the main view but keep all data history.",
+  "deleteHabitConfirm": "Are you sure you want to delete the habit?",
+  "deleteHabitMessage": "This action is permanent and you will lose all associated data and history.",
+  "addProgress": "Add Progress",
+  "enterValue": "Enter Value",
+  "complete": "Complete",
+  "habitProgress": "Habit Progress",
+  "startDate": "Start Date",
+  "endDate": "End Date",
+  "none": "None",
+  "selectDate": "Select a date",
+  "todayComment": "Today's comment",
+  "commentHint": "Write how the habit went..."
 }

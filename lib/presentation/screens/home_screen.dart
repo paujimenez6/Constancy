@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../generated/l10n.dart';
 import '../providers/auth_provider.dart';
 import '../providers/habit_provider.dart';
+import 'habit_detail_screen.dart';
 import 'habit_form_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // En carregar la pantalla, demanem les dades d'avui
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HabitProvider>().loadDataForDate(DateTime.now());
     });
@@ -31,14 +33,34 @@ class _HomeScreenState extends State<HomeScreen> {
     final map = {
       'star': Icons.star_rounded,
       'fitness_center': Icons.fitness_center_rounded,
-      'water_drop': Icons.water_drop_rounded,
-      'book': Icons.menu_book_rounded,
       'directions_run': Icons.directions_run_rounded,
+      'directions_bike': Icons.directions_bike_rounded,
+      'pool': Icons.pool_rounded,
       'self_improvement': Icons.self_improvement_rounded,
-      'bedtime': Icons.bedtime_rounded,
-      'restaurant': Icons.restaurant_rounded,
       'monitor_heart': Icons.monitor_heart_rounded,
+      'water_drop': Icons.water_drop_rounded,
+      'restaurant': Icons.restaurant_rounded,
+      'apple': Icons.apple_rounded,
+      'book': Icons.menu_book_rounded,
+      'edit': Icons.edit_rounded,
       'lightbulb': Icons.lightbulb_rounded,
+      'laptop': Icons.laptop_mac_rounded,
+      'timer': Icons.timer_rounded,
+      'language': Icons.language_rounded,
+      'bedtime': Icons.bedtime_rounded,
+      'psychology': Icons.psychology_rounded,
+      'local_florist': Icons.local_florist_rounded,
+      'pets': Icons.pets_rounded,
+      'music_note': Icons.music_note_rounded,
+      'brush': Icons.brush_rounded,
+      'camera': Icons.camera_alt_rounded,
+      'home': Icons.home_rounded,
+      'cleaning_services': Icons.cleaning_services_rounded,
+      'shopping_cart': Icons.shopping_cart_rounded,
+      'attach_money': Icons.attach_money_rounded,
+      'commute': Icons.directions_bus_rounded,
+      'videogame_asset': Icons.videogame_asset_rounded,
+      'smoke_free': Icons.smoke_free_rounded,
     };
     return map[name] ?? Icons.star_rounded;
   }
@@ -54,7 +76,9 @@ class _HomeScreenState extends State<HomeScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final dataAvuiFormatada = DateFormat.yMMMMd(Intl.getCurrentLocale()).format(habitProvider.selectedDate);
+    // Obtenim només els hàbits vàlids per a la data seleccionada
+    final activeHabits = habitProvider.filteredHabits;
+    final dataSeleccionadaFormatada = DateFormat.yMMMMd(Intl.getCurrentLocale()).format(habitProvider.selectedDate);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -72,117 +96,146 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(strings.welcomeUser(user.nickname), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(dataAvuiFormatada, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                Text(dataSeleccionadaFormatada, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
               ],
             ),
           ],
         ),
       ),
-      body: habitProvider.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : habitProvider.habits.isEmpty
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.auto_awesome, size: 64, color: colorScheme.primary.withValues(alpha: 0.3)),
-            const SizedBox(height: 16),
-            Text(
-              strings.noHabits,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600], fontSize: 16),
-            ),
-          ],
-        ),
-      )
-          : ListView.separated(
-        padding: const EdgeInsets.all(20),
-        physics: const BouncingScrollPhysics(),
-        itemCount: habitProvider.habits.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 16),
-        itemBuilder: (context, index) {
-          final habit = habitProvider.habits[index];
-          final record = habitProvider.dailyRecords[habit.id];
+      body: Column(
+        children: [
+          // 1. SELECTOR DE DATA SUPERIOR
+          const DateSelectorWidget(),
 
-          final color = _hexToColor(habit.color);
-          final progresActual = record?.valorProgres ?? 0.0;
-          final estaCompletat = progresActual >= habit.valorObjectiu;
+          const SizedBox(height: 8),
 
-          return InkWell(
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(
-                  builder: (context) => HabitFormScreen(habitToEdit: habit)
-              ));
-            },
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: estaCompletat ? color.withValues(alpha: 0.1) : colorScheme.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: estaCompletat ? color : colorScheme.outlineVariant.withValues(alpha: 0.5),
-                  width: estaCompletat ? 2 : 1,
-                ),
-                boxShadow: estaCompletat ? [] : [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))
+          // 2. LLISTA D'HÀBITS (Expanded per ocupar la resta de pantalla)
+          Expanded(
+            child: habitProvider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : activeHabits.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.auto_awesome, size: 64, color: colorScheme.primary.withValues(alpha:0.3)),
+                  const SizedBox(height: 16),
+                  Text(
+                    strings.noHabits,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                  ),
                 ],
               ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(_getIcona(habit.icona), color: color, size: 28),
-                  ),
-                  const SizedBox(width: 16),
+            )
+                : ListView.separated(
+              padding: const EdgeInsets.all(20),
+              physics: const BouncingScrollPhysics(),
+              itemCount: activeHabits.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              itemBuilder: (context, index) {
+                final habit = activeHabits[index];
+                final record = habitProvider.dailyRecords[habit.id];
 
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                final color = _hexToColor(habit.color);
+                final progresActual = record?.valorProgres ?? 0.0;
+                final estaCompletat = progresActual >= habit.valorObjectiu;
+
+                return InkWell(
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(
+                        builder: (context) => HabitDetailScreen(habitId: habit.id)
+                    ));
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: estaCompletat ? color.withValues(alpha:0.1) : colorScheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: estaCompletat ? color : colorScheme.outlineVariant.withValues(alpha:0.5),
+                        width: estaCompletat ? 2 : 1,
+                      ),
+                      boxShadow: estaCompletat ? [] : [
+                        BoxShadow(color: Colors.black.withValues(alpha:0.03), blurRadius: 10, offset: const Offset(0, 4))
+                      ],
+                    ),
+                    child: Row(
                       children: [
-                        Text(
-                          habit.titol,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            decoration: estaCompletat ? TextDecoration.lineThrough : null,
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha:0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(_getIcona(habit.icona), color: color, size: 28),
+                        ),
+                        const SizedBox(width: 16),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      habit.titol,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                        decoration: estaCompletat ? TextDecoration.lineThrough : null,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (habit.ratxaActual > 0) ...[
+                                    const SizedBox(width: 8),
+                                    Icon(Icons.local_fire_department_rounded, color: Colors.orange[700], size: 20),
+                                    Text(
+                                      "${habit.ratxaActual}",
+                                      style: TextStyle(
+                                        color: Colors.orange[800],
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "${progresActual % 1 == 0 ? progresActual.toInt() : progresActual} / ${habit.valorObjectiu % 1 == 0 ? habit.valorObjectiu.toInt() : habit.valorObjectiu} ${habit.unitatMesura.name}",
+                                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "${progresActual == progresActual.toInt() ? progresActual.toInt() : progresActual} / ${habit.valorObjectiu == habit.valorObjectiu.toInt() ? habit.valorObjectiu.toInt() : habit.valorObjectiu} ${habit.unitatMesura.name}",
-                          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
-                        ),
+
+                        IconButton(
+                          onPressed: () async {
+                            double nouProgres = estaCompletat ? 0 : habit.valorObjectiu;
+                            await habitProvider.updateProgress(
+                              habitId: habit.id,
+                              valorProgres: nouProgres,
+                              completat: nouProgres >= habit.valorObjectiu,
+                            );
+                          },
+                          icon: Icon(
+                            estaCompletat ? Icons.check_circle_rounded : Icons.circle_outlined,
+                            color: estaCompletat ? color : colorScheme.outline,
+                            size: 32,
+                          ),
+                        )
                       ],
                     ),
                   ),
-
-                  IconButton(
-                    onPressed: () async {
-                      double nouProgres = estaCompletat ? 0 : (progresActual + 1);
-                      if (nouProgres > habit.valorObjectiu) nouProgres = habit.valorObjectiu;
-
-                      await context.read<HabitProvider>().updateProgress(
-                        habitId: habit.id,
-                        valorProgres: nouProgres,
-                        completat: nouProgres >= habit.valorObjectiu,
-                      );
-                    },
-                    icon: Icon(
-                      estaCompletat ? Icons.check_circle_rounded : Icons.circle_outlined,
-                      color: estaCompletat ? color : colorScheme.outline,
-                      size: 32,
-                    ),
-                  )
-                ],
-              ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
@@ -194,6 +247,153 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: const Icon(Icons.add),
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
+      ),
+    );
+  }
+}
+
+class DateSelectorWidget extends StatefulWidget {
+  const DateSelectorWidget({super.key});
+
+  @override
+  State<DateSelectorWidget> createState() => _DateSelectorWidgetState();
+}
+
+class _DateSelectorWidgetState extends State<DateSelectorWidget> {
+  late ScrollController _scrollController;
+  final double itemWidth = 50.0;
+  final double itemMargin = 5.0;
+  final double paddingLeft = 16.0;
+
+  // Generem 15 dies: 7 passats, avui (índex 7), i 7 futurs
+  final List<DateTime> dates = List.generate(15, (index) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return today.subtract(const Duration(days: 7)).add(Duration(days: index));
+  });
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+
+    // Centrem el dia d'avui (índex 7) després del primer renderitzat
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _centerToday();
+    });
+  }
+
+  void _centerToday() {
+    if (!_scrollController.hasClients) return;
+
+    // Amplada total de cada element incloent marges (5 esquerra + 5 dreta = 10)
+    final double fullItemWidth = itemWidth + (itemMargin * 2);
+
+    // El dia d'avui és l'índex 7 de la nostra llista de 15
+    const int todayIndex = 7;
+
+    // Calculem l'amplada del dispositiu
+    final double screenWidth = MediaQuery.of(context).size.width;
+
+    // Càlcul de l'offset per centrar l'element 7
+    // (Posició inici element) + (Meitat element) - (Meitat pantalla)
+    final double offset = (todayIndex * fullItemWidth) + paddingLeft + (fullItemWidth / 2) - (screenWidth / 2);
+
+    _scrollController.animateTo(
+      offset,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final habitProvider = context.watch<HabitProvider>();
+    final theme = Theme.of(context);
+    final now = DateTime.now();
+
+    return SizedBox(
+      height: 85,
+      child: ListView.builder(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: paddingLeft, vertical: 8),
+        itemCount: dates.length,
+        itemBuilder: (context, index) {
+          final date = dates[index];
+
+          final isSelected = date.day == habitProvider.selectedDate.day &&
+              date.month == habitProvider.selectedDate.month &&
+              date.year == habitProvider.selectedDate.year;
+
+          final isToday = date.day == now.day &&
+              date.month == now.month &&
+              date.year == now.year;
+
+          return GestureDetector(
+            onTap: () => habitProvider.changeDate(date),
+            child: Container(
+              width: itemWidth,
+              margin: EdgeInsets.symmetric(horizontal: itemMargin),
+              decoration: BoxDecoration(
+                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha:0.05),
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: isSelected
+                    ? [BoxShadow(color: theme.colorScheme.primary.withValues(alpha:0.3), blurRadius: 8, offset: const Offset(0, 4))]
+                    : [],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    DateFormat('E', Intl.getCurrentLocale()).format(date),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.white : Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          date.day.toString(),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        if (isToday)
+                          Container(
+                            width: 12,
+                            height: 2,
+                            decoration: BoxDecoration(
+                              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

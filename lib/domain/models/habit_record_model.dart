@@ -25,6 +25,7 @@ class HabitRecordModel {
     bool? completat,
     double? valorProgres,
     String? comentari,
+    bool updateComentari = false,
   }) {
     return HabitRecordModel(
       id: id,
@@ -33,7 +34,7 @@ class HabitRecordModel {
       dataRegistre: dataRegistre,
       completat: completat ?? this.completat,
       valorProgres: valorProgres ?? this.valorProgres,
-      comentari: comentari ?? this.comentari,
+      comentari: updateComentari ? comentari : (comentari ?? this.comentari),
       createdAt: createdAt,
       updatedAt: updatedAt,
     );

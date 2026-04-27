@@ -129,7 +129,7 @@ class HabitModel {
       'periode_objectiu': periodeObjectiu.name,
       'valor_objectiu': valorObjectiu,
       'unitat_mesura': unitatMesura.name,
-      'data_inici': dataInici.toIso8601String().split('T').first, //Format YYYY-MM-DD
+      'data_inici': dataInici.toIso8601String().split('T').first,
       'data_fi': dataFi?.toIso8601String().split('T').first,
       'recordatoris': recordatoris,
       'hores_recordatori': horesRecordatori,

@@ -37,4 +37,13 @@ class HabitService {
     completat: completat,
     comentari: comentari,
   );
+
+  Future<void> updateHabitRecordComment({
+    required String habitId,
+    required String userId,
+    required DateTime data,
+    required String comentari
+  }) async {
+    await _habitRepository.updateHabitRecordComment(habitId, userId, data, comentari);
+  }
 }

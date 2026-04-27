@@ -138,5 +138,21 @@
   "habitIcon": "Icona",
   "habitColor": "Color",
   "saveHabit": "Guardar Hàbit",
-  "errorSavingHabit": "Error guardant l'hàbit: {error}"
+  "errorSavingHabit": "Error guardant l'hàbit: {error}",
+  "habitDetails": "Detalls de l'Hàbit",
+  "archive": "Arxivar",
+  "archiveHabitConfirm": "Segur que vols arxivar l'hàbit?",
+  "archiveHabitMessage": "Arxivar un hàbit el traurà de la vista principal però mantindrà tot l'històric de dades.",
+  "deleteHabitConfirm": "Segur que vols eliminar l'hàbit?",
+  "deleteHabitMessage": "Aquesta acció és permanent i perdràs totes les dades i l'històric associat.",
+  "addProgress": "Afegir progrés",
+  "enterValue": "Introdueix el valor",
+  "complete": "Completar",
+  "habitProgress": "Progrés de l'hàbit",
+  "startDate": "Data d'inici",
+  "endDate": "Data de fi",
+  "none": "Cap",
+  "selectDate": "Selecciona una data",
+  "todayComment": "Comentari d'avui",
+  "commentHint": "Escriu com ha anat l'hàbit..."
 }

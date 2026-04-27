@@ -92,4 +92,19 @@ class HabitRepository {
       'updated_at': DateTime.now().toIso8601String(),
     }, onConflict: 'habit_id, data_registre');
   }
+
+  Future<void> updateHabitRecordComment(String habitId, String userId, DateTime date, String comentari) async {
+    try {
+      final dateStr = date.toIso8601String().split('T')[0];
+
+      await _supabase.from('habit_records').upsert({
+        'habit_id': habitId,
+        'user_id': userId,
+        'data_registre': dateStr,
+        'comentari': comentari,
+      }, onConflict: 'habit_id, data_registre');
+    } catch (e) {
+      throw Exception('Error al Repositori en actualitzar el comentari: $e');
+    }
+  }
 }

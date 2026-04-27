@@ -138,5 +138,21 @@
   "habitIcon": "Icono",
   "habitColor": "Color",
   "saveHabit": "Guardar Hábito",
-  "errorSavingHabit": "Error guardando el hábito: {error}"
+  "errorSavingHabit": "Error guardando el hábito: {error}",
+  "habitDetails": "Detalles del Hábito",
+  "archive": "Archivar",
+  "archiveHabitConfirm": "¿Seguro que quieres archivar el hábito?",
+  "archiveHabitMessage": "Archivar un hábito lo sacará de la vista principal pero mantendrá todo el histórico de datos.",
+  "deleteHabitConfirm": "¿Seguro que quieres eliminar el hábito?",
+  "deleteHabitMessage": "Esta acción es permanente y perderás todos los datos y el histórico asociado.",
+  "addProgress": "Añadir progreso",
+  "enterValue": "Introduce el valor",
+  "complete": "Completar",
+  "habitProgress": "Progreso del hábito",
+  "startDate": "Fecha de inicio",
+  "endDate": "Fecha de fin",
+  "none": "Ninguna",
+  "selectDate": "Selecciona una fecha",
+  "todayComment": "Comentario de hoy",
+  "commentHint": "Escribe cómo ha ido el hábito..."
 }
