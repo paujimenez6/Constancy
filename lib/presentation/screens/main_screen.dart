@@ -1,3 +1,4 @@
+import 'package:Constancy/presentation/screens/statistics_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'home_screen.dart';
@@ -18,6 +19,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = const [
     HomeScreen(),
+    StatisticsScreen(),
     SearchScreen(),
     NotificationsScreen(),
     ProfileScreen(),
@@ -66,21 +68,26 @@ class _MainScreenState extends State<MainScreen> {
           },
           selectedItemColor: theme.colorScheme.primary,
           unselectedItemColor: Colors.grey.shade400,
-          showSelectedLabels: true,
-          showUnselectedLabels: true,
+
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+
           type: BottomNavigationBarType.fixed,
           backgroundColor: theme.colorScheme.surface,
           elevation: 0,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+
+          iconSize: 28,
+
           items: [
             BottomNavigationBarItem(
-              icon: const Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: Icon(Icons.home_outlined),
-              ),
+              icon: const Icon(Icons.home_outlined),
               activeIcon: const Icon(Icons.home_rounded),
               label: strings.navHome,
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.calendar_month_outlined),
+              activeIcon: const Icon(Icons.calendar_month_rounded),
+              label: strings.navStats,
             ),
             BottomNavigationBarItem(
               icon: const Icon(Icons.search_outlined),
@@ -112,10 +119,7 @@ class _MainScreenState extends State<MainScreen> {
               label: strings.navNotifications,
             ),
             BottomNavigationBarItem(
-              icon: const Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: Icon(Icons.person_outline),
-              ),
+              icon: const Icon(Icons.person_outline),
               activeIcon: const Icon(Icons.person_rounded),
               label: strings.navProfile,
             ),

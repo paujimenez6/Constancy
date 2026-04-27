@@ -21,8 +21,13 @@ class HabitService {
   Future<List<HabitRecordModel>> getRecordsForDate(DateTime date) =>
       _habitRepository.getRecordsForDate(date);
 
+  Future<List<HabitRecordModel>> getRecordsForRange(DateTime start, DateTime end) =>
+      _habitRepository.getRecordsForRange(start, end);
+
   Future<List<HabitRecordModel>> getAllRecordsForHabit(String habitId) =>
       _habitRepository.getAllRecordsForHabit(habitId);
+
+  Future<List<HabitRecordModel>> getAllRecords() => _habitRepository.getAllRecords();
 
   Future<void> saveRecord({
     required String habitId,

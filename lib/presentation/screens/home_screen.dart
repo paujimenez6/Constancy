@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../generated/l10n.dart';
 import '../providers/auth_provider.dart';
 import '../providers/habit_provider.dart';
+import 'archived_habits_screen.dart';
 import 'habit_detail_screen.dart';
 import 'habit_form_screen.dart';
 
@@ -19,7 +20,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // En carregar la pantalla, demanem les dades d'avui
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HabitProvider>().loadDataForDate(DateTime.now());
     });
@@ -76,7 +76,6 @@ class _HomeScreenState extends State<HomeScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Obtenim només els hàbits vàlids per a la data seleccionada
     final activeHabits = habitProvider.filteredHabits;
     final dataSeleccionadaFormatada = DateFormat.yMMMMd(Intl.getCurrentLocale()).format(habitProvider.selectedDate);
 
@@ -101,15 +100,24 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.archive_outlined),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(
+                builder: (context) => const ArchivedHabitsScreen(),
+              ));
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Column(
         children: [
-          // 1. SELECTOR DE DATA SUPERIOR
           const DateSelectorWidget(),
 
           const SizedBox(height: 8),
 
-          // 2. LLISTA D'HÀBITS (Expanded per ocupar la resta de pantalla)
           Expanded(
             child: habitProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -265,11 +273,10 @@ class _DateSelectorWidgetState extends State<DateSelectorWidget> {
   final double itemMargin = 5.0;
   final double paddingLeft = 16.0;
 
-  // Generem 15 dies: 7 passats, avui (índex 7), i 7 futurs
-  final List<DateTime> dates = List.generate(15, (index) {
+  final List<DateTime> dates = List.generate(29, (index) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    return today.subtract(const Duration(days: 7)).add(Duration(days: index));
+    return today.subtract(const Duration(days: 14)).add(Duration(days: index));
   });
 
   @override
@@ -277,7 +284,6 @@ class _DateSelectorWidgetState extends State<DateSelectorWidget> {
     super.initState();
     _scrollController = ScrollController();
 
-    // Centrem el dia d'avui (índex 7) després del primer renderitzat
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _centerToday();
     });
@@ -286,17 +292,9 @@ class _DateSelectorWidgetState extends State<DateSelectorWidget> {
   void _centerToday() {
     if (!_scrollController.hasClients) return;
 
-    // Amplada total de cada element incloent marges (5 esquerra + 5 dreta = 10)
     final double fullItemWidth = itemWidth + (itemMargin * 2);
-
-    // El dia d'avui és l'índex 7 de la nostra llista de 15
-    const int todayIndex = 7;
-
-    // Calculem l'amplada del dispositiu
+    const int todayIndex = 14;
     final double screenWidth = MediaQuery.of(context).size.width;
-
-    // Càlcul de l'offset per centrar l'element 7
-    // (Posició inici element) + (Meitat element) - (Meitat pantalla)
     final double offset = (todayIndex * fullItemWidth) + paddingLeft + (fullItemWidth / 2) - (screenWidth / 2);
 
     _scrollController.animateTo(
@@ -379,8 +377,8 @@ class _DateSelectorWidgetState extends State<DateSelectorWidget> {
                         ),
                         if (isToday)
                           Container(
-                            width: 12,
-                            height: 2,
+                            width: 25,
+                            height: 5,
                             decoration: BoxDecoration(
                               color: isSelected ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(2),

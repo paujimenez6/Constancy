@@ -25,7 +25,6 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
   late TextEditingController _grupController;
   late TextEditingController _valorObjectiuController;
 
-  // Variables de data
   late DateTime _dataInici;
   DateTime? _dataFi;
 
@@ -164,6 +163,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
         dataInici: _dataInici,
         dataFi: _dataFi,
         createdAt: widget.habitToEdit?.createdAt ?? DateTime.now(),
+        arxivat: widget.habitToEdit?.arxivat ?? false,
       );
 
       if (widget.habitToEdit == null) {
@@ -192,7 +192,6 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
     final dateFormat = DateFormat.yMMMMd(Intl.getCurrentLocale());
 
     return GestureDetector(
-      // Aquesta és la clau: en tocar qualsevol lloc de la pantalla fora d'un camp, el teclat es tanca
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
@@ -227,7 +226,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
 
                 TextFormField(
                   controller: _titolController,
-                  textInputAction: TextInputAction.next, // Salta al següent camp
+                  textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
                     labelText: strings.habitTitleLabel,
                     hintText: strings.habitTitleHint,
@@ -280,7 +279,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                       child: TextFormField(
                         controller: _valorObjectiuController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        textInputAction: TextInputAction.done, // Tanca el teclat en acabar aquí
+                        textInputAction: TextInputAction.done,
                         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
                         decoration: InputDecoration(
                           labelText: strings.habitQuantity,
@@ -326,7 +325,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
 
                 InkWell(
                   onTap: () {
-                    FocusScope.of(context).unfocus(); // Tanquem el teclat abans d'obrir el calendari
+                    FocusScope.of(context).unfocus();
                     _selectStartDate(context);
                   },
                   child: InputDecorator(
@@ -341,7 +340,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                 const SizedBox(height: 16),
                 InkWell(
                   onTap: () {
-                    FocusScope.of(context).unfocus(); // Tanquem el teclat abans d'obrir el calendari
+                    FocusScope.of(context).unfocus();
                     _selectEndDate(context);
                   },
                   child: InputDecorator(

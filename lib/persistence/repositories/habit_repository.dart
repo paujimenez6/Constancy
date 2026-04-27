@@ -62,11 +62,38 @@ class HabitRepository {
     return data.map((json) => HabitRecordModel.fromJson(json)).toList();
   }
 
+  Future<List<HabitRecordModel>> getRecordsForRange(DateTime start, DateTime end) async {
+    final userId = _supabase.auth.currentUser!.id;
+    final startStr = start.toIso8601String().split('T').first;
+    final endStr = end.toIso8601String().split('T').first;
+
+    final data = await _supabase
+        .from('habit_records')
+        .select()
+        .eq('user_id', userId)
+        .gte('data_registre', startStr)
+        .lte('data_registre', endStr);
+
+    return data.map((json) => HabitRecordModel.fromJson(json)).toList();
+  }
+
   Future<List<HabitRecordModel>> getAllRecordsForHabit(String habitId) async {
     final data = await _supabase
         .from('habit_records')
         .select()
         .eq('habit_id', habitId)
+        .order('data_registre', ascending: false);
+
+    return data.map((json) => HabitRecordModel.fromJson(json)).toList();
+  }
+
+  Future<List<HabitRecordModel>> getAllRecords() async {
+    final userId = _supabase.auth.currentUser!.id;
+
+    final data = await _supabase
+        .from('habit_records')
+        .select()
+        .eq('user_id', userId)
         .order('data_registre', ascending: false);
 
     return data.map((json) => HabitRecordModel.fromJson(json)).toList();
