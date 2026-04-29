@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../domain/models/habit_model.dart';
 import '../../generated/l10n.dart';
 import '../providers/habit_provider.dart';
 import 'habit_form_screen.dart';
@@ -93,7 +94,7 @@ class ArchivedHabitsScreen extends StatelessWidget {
               ),
               title: Text(habit.titol, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               subtitle: Text(
-                habit.periodeObjectiu.name.toUpperCase(),
+                habit.periodeObjectiu.getLocalizedString(context).toUpperCase(),
                 style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
               ),
               trailing: PopupMenuButton<String>(

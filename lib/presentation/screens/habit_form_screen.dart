@@ -299,7 +299,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                         ),
                         items: UnitatMesura.values.map((u) => DropdownMenuItem(
                           value: u,
-                          child: Text(u.name.toUpperCase()),
+                          child: Text(u.getLocalizedString(context).toUpperCase()),
                         )).toList(),
                         onChanged: (val) => setState(() => _selectedUnitat = val!),
                       ),
@@ -317,7 +317,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                   ),
                   items: PeriodeObjectiu.values.map((p) => DropdownMenuItem(
                     value: p,
-                    child: Text(p.name.toUpperCase()),
+                    child: Text(p.getLocalizedString(context).toUpperCase()),
                   )).toList(),
                   onChanged: (val) => setState(() => _selectedPeriode = val!),
                 ),

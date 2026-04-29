@@ -231,7 +231,7 @@ class HabitDetailScreen extends StatelessWidget {
                           "${progresActual % 1 == 0 ? progresActual.toInt() : progresActual} / ${habit.valorObjectiu % 1 == 0 ? habit.valorObjectiu.toInt() : habit.valorObjectiu}",
                           style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
-                        Text(habit.unitatMesura.name, style: TextStyle(color: theme.colorScheme.outline, fontSize: 12)),
+                        Text(habit.unitatMesura.getLocalizedString(context), style: TextStyle(color: theme.colorScheme.outline, fontSize: 12)),
                       ],
                     ),
                   ],
@@ -432,7 +432,7 @@ class HabitDetailScreen extends StatelessWidget {
                       hintText: "0",
                       suffix: Padding(
                         padding: const EdgeInsets.only(left: 8.0),
-                        child: Text(habit.unitatMesura.name, style: TextStyle(fontSize: 16, color: theme.colorScheme.outline)),
+                        child: Text(habit.unitatMesura.getLocalizedString(context), style: TextStyle(fontSize: 16, color: theme.colorScheme.outline)),
                       ),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,

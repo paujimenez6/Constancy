@@ -181,5 +181,18 @@
   "totalAccumulated": "Total Accumulated",
   "currentStreakLabel": "Current Streak",
   "unarchiveDialog": "Do you want to unarchive the habit?",
-  "addComment": "Add Comment"
+  "addComment": "Add Comment",
+  "periodDaily": "Daily",
+  "periodWeekly": "Weekly",
+  "periodMonthly": "Monthly",
+  "unitTimes": "times",
+  "unitSteps": "steps",
+  "unitMeters": "m",
+  "unitKilometers": "km",
+  "unitMilliliters": "ml",
+  "unitGrams": "g",
+  "unitCalories": "cal",
+  "unitSeconds": "sec",
+  "unitMinutes": "min",
+  "unitHours": "hr"
 }

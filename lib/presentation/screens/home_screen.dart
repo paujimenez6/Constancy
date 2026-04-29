@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../domain/models/habit_model.dart';
 import '../../generated/l10n.dart';
 import '../providers/auth_provider.dart';
 import '../providers/habit_provider.dart';
@@ -214,7 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                "${progresActual % 1 == 0 ? progresActual.toInt() : progresActual} / ${habit.valorObjectiu % 1 == 0 ? habit.valorObjectiu.toInt() : habit.valorObjectiu} ${habit.unitatMesura.name}",
+                                "${progresActual % 1 == 0 ? progresActual.toInt() : progresActual} / ${habit.valorObjectiu % 1 == 0 ? habit.valorObjectiu.toInt() : habit.valorObjectiu} ${habit.unitatMesura.getLocalizedString(context)}",
                                 style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                               ),
                             ],

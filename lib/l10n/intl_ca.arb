@@ -181,5 +181,18 @@
   "totalAccumulated": "Total acumulat",
   "currentStreakLabel": "Ratxa actual",
   "unarchiveDialog": "Vols desarxivar l'hàbit?",
-  "addComment": "Afegir Comentari"
+  "addComment": "Afegir Comentari",
+  "periodDaily": "Diari",
+  "periodWeekly": "Setmanal",
+  "periodMonthly": "Mensual",
+  "unitTimes": "vegades",
+  "unitSteps": "passos",
+  "unitMeters": "m",
+  "unitKilometers": "km",
+  "unitMilliliters": "ml",
+  "unitGrams": "g",
+  "unitCalories": "cal",
+  "unitSeconds": "seg",
+  "unitMinutes": "min",
+  "unitHours": "hr"
 }

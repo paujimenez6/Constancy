@@ -1,6 +1,38 @@
+import 'package:flutter/material.dart';
+import '../../generated/l10n.dart';
+
 enum PeriodeObjectiu { diari, setmanal, mensual }
 
+extension PeriodeObjectiuExtension on PeriodeObjectiu {
+  String getLocalizedString(BuildContext context) {
+    final s = S.of(context);
+    switch (this) {
+      case PeriodeObjectiu.diari: return s.periodDaily;
+      case PeriodeObjectiu.setmanal: return s.periodWeekly;
+      case PeriodeObjectiu.mensual: return s.periodMonthly;
+    }
+  }
+}
+
 enum UnitatMesura { vegades, passos, m, km, ml, g, cal, seg, min, hr }
+
+extension UnitatMesuraExtension on UnitatMesura {
+  String getLocalizedString(BuildContext context) {
+    final s = S.of(context);
+    switch (this) {
+      case UnitatMesura.vegades: return s.unitTimes;
+      case UnitatMesura.passos: return s.unitSteps;
+      case UnitatMesura.m: return s.unitMeters;
+      case UnitatMesura.km: return s.unitKilometers;
+      case UnitatMesura.ml: return s.unitMilliliters;
+      case UnitatMesura.g: return s.unitGrams;
+      case UnitatMesura.cal: return s.unitCalories;
+      case UnitatMesura.seg: return s.unitSeconds;
+      case UnitatMesura.min: return s.unitMinutes;
+      case UnitatMesura.hr: return s.unitHours;
+    }
+  }
+}
 
 class HabitModel {
   final String id;

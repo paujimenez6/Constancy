@@ -181,5 +181,18 @@
   "totalAccumulated": "Total acumulado",
   "currentStreakLabel": "Racha actual",
   "unarchiveDialog": "¿Quieres desarchivar el hábito?",
-  "addComment": "Añadir Comentario"
+  "addComment": "Añadir Comentario",
+  "periodDaily": "Diario",
+  "periodWeekly": "Semanal",
+  "periodMonthly": "Mensual",
+  "unitTimes": "veces",
+  "unitSteps": "pasos",
+  "unitMeters": "m",
+  "unitKilometers": "km",
+  "unitMilliliters": "ml",
+  "unitGrams": "g",
+  "unitCalories": "cal",
+  "unitSeconds": "seg",
+  "unitMinutes": "min",
+  "unitHours": "hr"
 }
