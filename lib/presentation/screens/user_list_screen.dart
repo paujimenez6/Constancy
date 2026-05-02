@@ -228,7 +228,7 @@ class _UserListScreenState extends State<UserListScreen> {
                 return InkWell(
                   onTap: () {
                     if (isMe) {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen(isDirectTab: false)));
                     } else {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: user)));
                     }

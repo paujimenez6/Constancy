@@ -104,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildDropdown<TipusPrivacitat>(
             label: strings.privacy,
             value: user.configuracioPrivacitat,
-            items:  [
+            items: [
               DropdownMenuItem(value: TipusPrivacitat.public, child: Text(strings.public)),
               DropdownMenuItem(value: TipusPrivacitat.privat, child: Text(strings.private)),
               DropdownMenuItem(value: TipusPrivacitat.amics, child: Text(strings.friends)),
@@ -115,12 +115,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
             },
           ),
-
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Divider(height: 32),
           ),
-
           SwitchListTile(
             secondary: Icon(Icons.security_outlined, color: theme.colorScheme.primary),
             title: Text(strings.twoFactorAuth),
@@ -135,12 +133,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
             },
           ),
-
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Divider(height: 32),
           ),
-
           ListTile(
             leading: const Icon(Icons.delete_outlined, color: Colors.red),
             title: Text(strings.deleteAccount, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),

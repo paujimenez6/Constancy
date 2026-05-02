@@ -26,7 +26,6 @@ class _SearchScreenState extends State<SearchScreen> {
 
     try {
       final socialProvider = context.read<SocialProvider>();
-
       final results = await socialProvider.searchUsers(query);
 
       if (mounted) {
@@ -110,9 +109,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   CircleAvatar(
                     radius: 25,
                     backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    backgroundImage: (user['imatge_perfil'] != null)
-                        ? NetworkImage(user['imatge_perfil'])
-                        : null,
+                    backgroundImage: (user['imatge_perfil'] != null) ? NetworkImage(user['imatge_perfil']) : null,
                     child: (user['imatge_perfil'] == null)
                         ? Text(user['nickname'][0].toUpperCase(),
                         style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold))
