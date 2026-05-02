@@ -201,5 +201,7 @@
   "daysOfMonth": "Days of the month",
   "monthsOfYear": "Months of the year",
   "statsPunctual": "Punctual",
-  "statsCumulative": "Cumulative"
+  "statsCumulative": "Cumulative",
+  "habitsTitleOther": "Habits of {nickname}",
+  "noHabitsOther": "This user has no habits yet, or are private."
 }

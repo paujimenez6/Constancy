@@ -12,6 +12,7 @@ class HabitProvider extends ChangeNotifier {
   List<HabitRecordModel> _monthlyRecords = [];
   List<HabitRecordModel> _allTimeRecords = [];
   Map<String, HabitRecordModel> _dailyRecords = {};
+  List<HabitModel> _profileHabits = [];
 
   DateTime _selectedDate = DateTime.now();
   DateTime _focusedMonth = DateTime.now();
@@ -20,6 +21,8 @@ class HabitProvider extends ChangeNotifier {
   HabitProvider(this._habitService);
 
   List<HabitModel> get habits => _habits;
+
+  List<HabitModel> get profileHabits => _profileHabits;
 
   Map<String, HabitRecordModel> get dailyRecords => _dailyRecords;
 
@@ -44,11 +47,10 @@ class HabitProvider extends ChangeNotifier {
   List<ChartDataPoint> getStatisticsChartData({
     required bool isMensual,
     required HabitModel? selectedHabit,
-    required String? selectedCategory, // Afegim categoria
+    required String? selectedCategory,
     required DateTime viewDate,
     bool isCumulative = false,
   }) {
-    // Filtrem els registres segons la selecció
     List<HabitRecordModel> filteredRecords;
 
     if (selectedCategory != null) {
@@ -68,10 +70,11 @@ class HabitProvider extends ChangeNotifier {
       records: filteredRecords,
       isMensual: isMensual,
       referenceDate: viewDate,
-      selectedHabit: selectedHabit, // Si és null i hi ha categoria, la lògica serà la de "General"
+      selectedHabit: selectedHabit,
       isCumulative: isCumulative,
     );
   }
+
   Future<void> loadDataForDate(DateTime date) async {
     _isLoading = true;
     _selectedDate = date;
@@ -84,6 +87,22 @@ class HabitProvider extends ChangeNotifier {
       ]);
       _habits = results[0] as List<HabitModel>;
       _dailyRecords = {for (var r in (results[1] as List<HabitRecordModel>)) r.habitId: r};
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadProfileHabits(String targetUserId) async {
+    _isLoading = true;
+    _profileHabits = [];
+    notifyListeners();
+
+    try {
+      final result = await _habitService.getHabitsByUserId(targetUserId);
+      _profileHabits = result;
+    } catch (e) {
+      debugPrint("Error al Provider: $e");
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -186,7 +205,6 @@ class HabitProvider extends ChangeNotifier {
     DateTime end;
     List<HabitRecordModel> sourceRecords;
 
-    // 1. Decidir el rang de dates i la font de registres
     if (isMensual) {
       start = DateTime(_focusedMonth.year, _focusedMonth.month, 1);
       DateTime lastDay = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 0);
@@ -195,7 +213,6 @@ class HabitProvider extends ChangeNotifier {
     } else {
       if (_habits.isEmpty) return HabitStats();
 
-      // Si filtrem per categoria o hàbit, la data d'inici "global" hauria de ser la de l'hàbit més antic d'aquell grup
       List<HabitModel> habitsToCheck = _habits;
       if (habitId != null) {
         habitsToCheck = _habits.where((h) => h.id == habitId).toList();
@@ -210,14 +227,11 @@ class HabitProvider extends ChangeNotifier {
       sourceRecords = _allTimeRecords;
     }
 
-    // 2. Filtrar la llista d'hàbits a analitzar segons la categoria si és necessari
-    // Si hi ha una categoria seleccionada, només passem al servei els hàbits d'aquella categoria
     List<HabitModel> habitsForCalculation = _habits;
     if (categoryId != null) {
       habitsForCalculation = _habits.where((h) => h.grup == categoryId).toList();
     }
 
-    // 3. Cridar al servei amb la llista (potencialment filtrada) d'hàbits
     return _habitService.calculateStats(
       allHabits: habitsForCalculation,
       records: sourceRecords,

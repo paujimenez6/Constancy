@@ -6,6 +6,7 @@ import '../models/chart_data_model.dart';
 import '../models/habit_model.dart';
 import '../models/habit_record_model.dart';
 import '../models/stats_model.dart';
+import '../models/user_model.dart';
 
 class HabitService {
   final HabitRepository _habitRepository;
@@ -151,6 +152,22 @@ class HabitService {
     return monthsDiff <= 1;
   }
 
+  bool canSeeHabits({
+    required String currentUserId,
+    required String targetUserId,
+    required TipusPrivacitat privacitat,
+    required bool isFollowing,
+  }) {
+    if (currentUserId == targetUserId) return true;
+
+    if (privacitat == TipusPrivacitat.public) return true;
+
+    if (privacitat == TipusPrivacitat.amics) return isFollowing;
+
+    return false;
+  }
+
+
   List<String> getMonthLabels(BuildContext context) {
     final dateFormat = DateFormat.MMM(Intl.getCurrentLocale());
     return List.generate(12, (i) =>
@@ -163,7 +180,7 @@ class HabitService {
     required bool isMensual,
     required DateTime referenceDate,
     HabitModel? selectedHabit,
-    String? selectedCategory, // Nou filtre opcional
+    String? selectedCategory,
     bool isCumulative = false,
   }) {
     final now = DateTime.now();
@@ -173,7 +190,6 @@ class HabitService {
       final lastDayOfMonth = DateTime(referenceDate.year, referenceDate.month + 1, 0).day;
       double runningTotal = 0.0;
 
-      // Si és el mes actual, només calculem fins avui
       final int limitDay = isCurrentMonth ? now.day : lastDayOfMonth;
 
       return List.generate(limitDay, (index) {
@@ -202,9 +218,7 @@ class HabitService {
         }
       });
     } else {
-      // Lògica Global: acumulem per mesos
       double runningTotal = 0.0;
-      // Si és l'any actual, limitem fins al mes actual
       final int limitMonth = (referenceDate.year == now.year) ? now.month : 12;
 
       return List.generate(limitMonth, (index) {
@@ -235,9 +249,9 @@ class HabitService {
 
   List<String> getUniqueCategories(List<HabitModel> habits) {
     return habits
-        .map((h) => h.grup ?? '') // Utilitzem el camp de grup/categoria
+        .map((h) => h.grup ?? '')
         .where((g) => g.isNotEmpty)
-        .toSet() // Elimina duplicats
+        .toSet()
         .toList()
       ..sort();
   }
@@ -351,5 +365,10 @@ class HabitService {
       currentStreak: currentStreakFound,
       totalAccumulatedValue: totalAccumulatedValue,
     );
+  }
+
+  Future<List<HabitModel>> getHabitsByUserId(String targetUserId) async {
+    final habits = await _habitRepository.getHabitsByUserId(targetUserId);
+    return habits;
   }
 }

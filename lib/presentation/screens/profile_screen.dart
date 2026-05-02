@@ -1,3 +1,4 @@
+import '../providers/habit_provider.dart';
 import 'settings_screen.dart';
 import 'user_list_screen.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import '../../generated/l10n.dart';
 import '../providers/auth_provider.dart';
 import '../providers/social_provider.dart';
 import 'edit_profile_screen.dart';
+import 'profile_habits_list_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   final bool isDirectTab;
@@ -21,6 +23,7 @@ class ProfileScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final user = context.watch<AuthProvider>().currentUser;
     final social = context.watch<SocialProvider>();
+    final provider = context.watch<HabitProvider>();
 
     if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -139,6 +142,13 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(strings.homeTitle.toUpperCase(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.colorScheme.primary, letterSpacing: 1.2)),
+            ),
+            const SizedBox(height: 12),
+            buildHabitList(habits: provider.habits, isLoading: provider.isLoading, emptyMessage: strings.noHabits, strings: strings, theme: theme, context: context,),
+            const SizedBox(height: 40),
             Align(
               alignment: Alignment.centerLeft,
               child: Padding(

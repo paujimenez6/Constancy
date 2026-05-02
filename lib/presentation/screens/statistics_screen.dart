@@ -66,7 +66,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final strings = S.of(context);
     final theme = Theme.of(context);
 
-    // Mantenim l'hàbit seleccionat sincronitzat amb la llista actual del provider
     if (_selectedHabit != null) {
       _selectedHabit = provider.habits.cast<HabitModel?>().firstWhere(
             (h) => h?.id == _selectedHabit!.id,
@@ -263,7 +262,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             final date = DateTime(_currentMonth.year, _currentMonth.month, day);
             final expectedTotal = provider.getExpectedHabitsForDate(date);
 
-            // FILTRE: Només hàbits de la categoria/hàbit seleccionat
             List<HabitModel> filteredExpected = expectedTotal;
             if (_selectedHabit != null) {
               filteredExpected = expectedTotal.where((h) => h.id == _selectedHabit!.id).toList();

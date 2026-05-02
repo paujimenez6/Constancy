@@ -201,5 +201,7 @@
   "daysOfMonth": "Dies del mes",
   "monthsOfYear": "Mesos de l'any",
   "statsPunctual": "Puntual",
-  "statsCumulative": "Acumulat"
+  "statsCumulative": "Acumulat",
+  "habitsTitleOther": "Hàbits de {nickname}",
+  "noHabitsOther": "Aquest usuari encara no té hàbits, o són privats."
 }

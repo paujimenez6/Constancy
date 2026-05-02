@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/models/habit_model.dart';
 import '../../domain/models/habit_record_model.dart';
@@ -17,6 +18,22 @@ class HabitRepository {
     return data.map((json) => HabitModel.fromJson(json)).toList();
   }
 
+  Future<List<HabitModel>> getHabitsByUserId(String userId) async {
+
+    try {
+      final data = await _supabase
+          .from('habits')
+          .select()
+          .eq('user_id', userId)
+          .eq('arxivat', false)
+          .order('created_at');
+
+      return data.map((json) => HabitModel.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint("Error al repository: $e");
+      return [];
+    }
+  }
   Future<HabitModel> createHabit(HabitModel habit) async {
     final userId = _supabase.auth.currentUser!.id;
     final habitData = habit.toJson();

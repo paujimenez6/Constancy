@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import '../../generated/l10n.dart';
 import '../providers/social_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/habit_provider.dart';
 import 'user_list_screen.dart';
+import 'profile_habits_list_screen.dart';
 
 class OtherProfileScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -23,7 +25,17 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _loadFollowStatus();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    final String userId = widget.userData['id'];
+
+    await _loadFollowStatus();
+
+    if (mounted) {
+      await context.read<HabitProvider>().loadProfileHabits(userId);
+    }
   }
 
   Future<void> _loadFollowStatus() async {
@@ -114,10 +126,14 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
 
     try {
       final socialProvider = context.read<SocialProvider>();
-
       await socialProvider.toggleFollow(targetId, privacy);
 
       await _loadFollowStatus();
+
+      if (mounted) {
+        await context.read<HabitProvider>().loadProfileHabits(targetId);
+      }
+
       final myId = context.read<AuthProvider>().currentUser!.id;
       socialProvider.refreshSocialStats(myId);
     } catch (e) {
@@ -132,6 +148,9 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     final strings = S.of(context);
     final theme = Theme.of(context);
     final user = widget.userData;
+
+    final habitProvider = context.watch<HabitProvider>();
+
     final privacitat = user['configuracio_privacitat'] ?? 'public';
     bool canSeeDetails = privacitat == 'public' || _isFollowing;
 
@@ -170,6 +189,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                   const SizedBox(height: 16),
                   Text("${user['nom'] ?? ''} ${user['cognom'] ?? ''}", style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
+
                   Center(
                     child: SizedBox(
                       width: 280,
@@ -189,6 +209,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 24),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -200,7 +221,9 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                 ],
               ),
             ),
+
             const SizedBox(height: 40),
+
             if (!canSeeDetails)
               Column(
                 children: [
@@ -209,16 +232,33 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                   const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: Text(strings.privateProfileMessage, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 15, height: 1.4)),
+                    child: Text(
+                        strings.privateProfileMessage,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 15, height: 1.4)
+                    ),
                   ),
                 ],
               )
-            else
-              Column(
-                children: [
-                  Text(strings.publicDataPlaceholder, style: TextStyle(fontStyle: FontStyle.italic, color: theme.colorScheme.outline)),
-                ],
+            else ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                    strings.habitsTitleOther(user['nickname'] ?? ''),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.colorScheme.primary, letterSpacing: 1.2)
+                ),
               ),
+              const SizedBox(height: 12),
+
+              buildHabitList(
+                habits: habitProvider.profileHabits,
+                isLoading: habitProvider.isLoading,
+                emptyMessage: strings.noHabitsOther,
+                strings: strings,
+                theme: theme,
+                context: context,
+              ),
+            ],
           ],
         ),
       ),
