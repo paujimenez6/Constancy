@@ -30,7 +30,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final sheetFormKey = GlobalKey<FormState>();
     final strings = S.of(context);
     final theme = Theme.of(context);
-
     final authProvider = context.read<AuthProvider>();
 
     showModalBottomSheet(
@@ -41,13 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       builder: (sheetContext) {
         String? serverError;
-
         return StatefulBuilder(
           builder: (context, setSheetState) {
             return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
               child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
@@ -57,28 +53,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+                          width: 40, height: 4,
+                          decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
                         ),
                         const SizedBox(height: 24),
                         Icon(Icons.lock_reset_rounded, size: 48, color: theme.colorScheme.primary),
                         const SizedBox(height: 16),
-                        Text(
-                          strings.forgotPassword,
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
+                        Text(strings.forgotPassword, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        Text(
-                          strings.sendResetLinkSubTitle,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
+                        Text(strings.sendResetLinkSubTitle, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600])),
                         const SizedBox(height: 24),
-
                         TextFormField(
                           controller: emailController,
                           decoration: InputDecoration(
@@ -89,45 +73,28 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) => _validateEmail(value, strings),
-                          onChanged: (_) {
-                            if (serverError != null) {
-                              setSheetState(() => serverError = null);
-                            }
-                          },
+                          onChanged: (_) { if (serverError != null) setSheetState(() => serverError = null); },
                         ),
-
                         const SizedBox(height: 24),
                         ElevatedButton(
                           onPressed: () async {
                             if (sheetFormKey.currentState!.validate()) {
                               final email = emailController.text.trim();
-
                               try {
                                 final exists = await authProvider.checkEmailExists(email);
-
                                 if (exists) {
                                   await authProvider.sendPasswordResetEmail(email);
-
                                   if (sheetContext.mounted) {
-                                    FocusScope.of(context).unfocus();
                                     Navigator.pop(sheetContext);
-
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(strings.resetEmailSent),
-                                          backgroundColor: Colors.green
-                                      ),
+                                      SnackBar(content: Text(strings.resetEmailSent), backgroundColor: Colors.green),
                                     );
                                   }
                                 } else {
-                                  setSheetState(() {
-                                    serverError = strings.errorEmailNotExists;
-                                  });
+                                  setSheetState(() => serverError = strings.errorEmailNotExists);
                                 }
                               } catch (e) {
-                                setSheetState(() {
-                                  serverError = strings.errorUnknown;
-                                });
+                                setSheetState(() => serverError = strings.errorUnknown);
                               }
                             }
                           },
@@ -168,68 +135,39 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 16),
-
-                Container(
-                  width: 180,
-                  height: 180,
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: BorderRadius.circular(35),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.35),
-                        blurRadius: 20,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(35),
-                    child: Image.asset(
-                      'assets/images/Logo_Constancy.png',
-                      fit: BoxFit.cover,
+                Hero(
+                  tag: 'logo',
+                  child: Container(
+                    width: 180, height: 180,
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(35),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withValues(alpha:0.35), blurRadius: 20, offset: const Offset(0, 5)),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(35),
+                      child: Image.asset('assets/images/Logo_Constancy.png', fit: BoxFit.cover),
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
-                Text(
-                  strings.loginTitle,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
-                  ),
-                ),
-
+                Text(strings.loginTitle, textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: colorScheme.primary)),
                 const SizedBox(height: 8),
-
-                Text(
-                  strings.loginSubtitle,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
-                ),
-
+                Text(strings.loginSubtitle, textAlign: TextAlign.center, style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withValues(alpha:0.7))),
                 const SizedBox(height: 30),
-
                 TextFormField(
                   controller: _emailController,
                   inputFormatters: [
                     FilteringTextInputFormatter.deny(RegExp(r'\s')),
                     FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@._\-]')),
                   ],
-                  decoration: InputDecoration(
-                    labelText: strings.emailLabel,
-                    labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-                  ),
+                  decoration: InputDecoration(labelText: strings.emailLabel, labelStyle: TextStyle(color: colorScheme.onSurfaceVariant)),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) => _validateEmail(value, strings),
                 ),
-
                 const SizedBox(height: 20),
-
                 TextFormField(
                   controller: _passwordController,
                   inputFormatters: [
@@ -240,42 +178,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: InputDecoration(
                     labelText: strings.passwordLabel,
                     suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        color: colorScheme.primary,
-                      ),
+                      icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: colorScheme.primary),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                   validator: (value) => (value == null || value.isEmpty) ? strings.fieldRequired : null,
                 ),
-
                 Align(
                   alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => _showForgotPasswordSheet(context),
-                    child: Text(strings.forgotPassword),
-                  ),
+                  child: TextButton(onPressed: () => _showForgotPasswordSheet(context), child: Text(strings.forgotPassword)),
                 ),
-
                 const SizedBox(height: 20),
-
                 ElevatedButton(
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       try {
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.validatingData)));
-
-                        await context.read<AuthProvider>().signIn(
-                          _emailController.text.trim(),
-                          _passwordController.text.trim(),
-                        );
-
+                        await context.read<AuthProvider>().signIn(_emailController.text.trim(), _passwordController.text.trim());
                       } catch (e) {
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(strings.loginError), backgroundColor: Colors.red)
-                          );
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.loginError), backgroundColor: Colors.red));
                         }
                       }
                     }
@@ -287,19 +209,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     elevation: 2,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text(
-                    strings.loginButton,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  child: Text(strings.loginButton, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
-
                 const SizedBox(height: 16),
-
                 TextButton(
-                  onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const RegisterScreen())
-                  ),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterScreen())),
                   style: TextButton.styleFrom(foregroundColor: colorScheme.secondary),
                   child: Text(strings.noAccount),
                 ),

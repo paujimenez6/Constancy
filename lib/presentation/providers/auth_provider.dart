@@ -49,18 +49,6 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
-  Future<bool> checkEmailExists(String email) async {
-    return await _authService.checkEmailExists(email);
-  }
-
-  Future<void> sendPasswordResetEmail(String email) async {
-    await _authService.sendPasswordResetEmail(email);
-  }
-
-  Future<void> loginMFAChallenge(String code) async {
-    await _authService.loginMFAChallenge(code);
-  }
-
   Future<void> signOut() async {
     await _authService.signOut();
     logout();
@@ -71,9 +59,9 @@ class AuthProvider extends ChangeNotifier {
     required String cognom,
     File? imageFile,
   }) async {
-    if (_currentUser == null) throw Exception("No hi ha cap usuari loguejat");
+    if (_currentUser == null) return;
 
-    final String? finalImageUrl = await _authService.updateProfile(
+    final updatedUser = await _authService.updateFullProfile(
       userId: _currentUser!.id,
       nom: nom,
       cognom: cognom,
@@ -81,26 +69,14 @@ class AuthProvider extends ChangeNotifier {
       currentImageUrl: _currentUser!.imatgePerfil,
     );
 
-    _currentUser = _currentUser!.copyWith(
-      nom: nom,
-      cognom: cognom,
-      imatgePerfil: finalImageUrl ?? _currentUser!.imatgePerfil,
-    );
+    _currentUser = updatedUser;
     notifyListeners();
   }
 
-  void updateProfileImage(String newUrl) {
-    if (_currentUser != null) {
-      _currentUser = _currentUser!.copyWith(imatgePerfil: newUrl);
-      notifyListeners();
-    }
-  }
-
-  void updateUserData({required String nom, required String cognom}) {
-    if (_currentUser != null) {
-      _currentUser = _currentUser!.copyWith(nom: nom, cognom: cognom);
-      notifyListeners();
-    }
+  Future<void> updatePrivacy(String userId, TipusPrivacitat nouValor) async {
+    final updatedUser = await _authService.updateUserPrivacy(userId, nouValor);
+    _currentUser = updatedUser;
+    notifyListeners();
   }
 
   void logout() {
@@ -115,41 +91,32 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updatePrivacy(String userId, TipusPrivacitat nouValor) async {
-    await _authService.updatePrivacy(userId, nouValor);
-
-    if (_currentUser != null) {
-      _currentUser = _currentUser!.copyWith(configuracioPrivacitat: nouValor);
-      notifyListeners();
-    }
-  }
-
-  Future<bool> isMFAEnabled() async {
-    return await _authService.isMFAEnabled();
-  }
-
-  Future<dynamic> enrollMFA() async {
-    return await _authService.enrollMFA();
-  }
-
-  Future<void> verifyMFA(String factorId, String code) async {
-    await _authService.verifyMFA(factorId, code);
-  }
-
-  Future<String?> getMFAFactorId() async {
-    return await _authService.getMFAFactorId();
-  }
-
-  Future<void> unenrollMFA(String factorId) async {
-    await _authService.unenrollMFA(factorId);
-  }
+  Future<bool> checkEmailExists(String email) => _authService.checkEmailExists(email);
+  Future<void> sendPasswordResetEmail(String email) => _authService.sendPasswordResetEmail(email);
+  Future<void> updatePassword(String newPassword) => _authService.updatePassword(newPassword);
+  Future<void> loginMFAChallenge(String code) => _authService.loginMFAChallenge(code);
+  Future<bool> isMFAEnabled() => _authService.isMFAEnabled();
+  Future<dynamic> enrollMFA() => _authService.enrollMFA();
+  Future<void> verifyMFA(String factorId, String code) => _authService.verifyMFA(factorId, code);
+  Future<String?> getMFAFactorId() => _authService.getMFAFactorId();
+  Future<void> unenrollMFA(String factorId) => _authService.unenrollMFA(factorId);
 
   Future<void> deleteAccount() async {
     await _authService.deleteAccount();
     logout();
   }
 
-  Future<void> updatePassword(String newPassword) async {
-    await _authService.updatePassword(newPassword);
+  void updateProfileImage(String newUrl) {
+    if (_currentUser != null) {
+      _currentUser = _currentUser!.copyWith(imatgePerfil: newUrl);
+      notifyListeners();
+    }
+  }
+
+  void updateUserData({required String nom, required String cognom}) {
+    if (_currentUser != null) {
+      _currentUser = _currentUser!.copyWith(nom: nom, cognom: cognom);
+      notifyListeners();
+    }
   }
 }

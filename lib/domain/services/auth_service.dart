@@ -7,40 +7,8 @@ class AuthService {
 
   AuthService(this._authRepository);
 
-  Future<String?> updateProfile({
-    required String userId,
-    required String nom,
-    required String cognom,
-    File? imageFile,
-    String? currentImageUrl,
-  }) async {
-    return await _authRepository.updateProfile(
-      userId: userId,
-      nom: nom,
-      cognom: cognom,
-      imageFile: imageFile,
-      currentImageUrl: currentImageUrl,
-    );
-  }
-
   Future<UserModel> signIn(String email, String password) async {
     return await _authRepository.signIn(email, password);
-  }
-
-  Future<bool> checkEmailExists(String email) async {
-    return await _authRepository.checkEmailExists(email);
-  }
-
-  Future<void> sendPasswordResetEmail(String email) async {
-    return await _authRepository.sendPasswordResetEmail(email);
-  }
-
-  Future<void> loginMFAChallenge(String code) async {
-    return await _authRepository.loginMFAChallenge(code);
-  }
-
-  Future<void> signOut() async {
-    return await _authRepository.signOut();
   }
 
   Future<void> signUp({
@@ -50,7 +18,7 @@ class AuthService {
     required String nom,
     required String cognom,
   }) async {
-    return await _authRepository.signUp(
+    await _authRepository.signUp(
       email: email,
       password: password,
       nickname: nickname,
@@ -59,35 +27,51 @@ class AuthService {
     );
   }
 
-  Future<void> updatePrivacy(String userId, TipusPrivacitat nouValor) async {
-    return await _authRepository.updatePrivacy(userId, nouValor);
+  Future<void> signOut() => _authRepository.signOut();
+
+
+
+
+  Future<UserModel> updateFullProfile({
+    required String userId,
+    required String nom,
+    required String cognom,
+    File? imageFile,
+    String? currentImageUrl,
+  }) async {
+    await _authRepository.updateProfile(
+      userId: userId,
+      nom: nom,
+      cognom: cognom,
+      imageFile: imageFile,
+      currentImageUrl: currentImageUrl,
+    );
+
+    return await _authRepository.getUserProfile(userId);
   }
 
-  Future<bool> isMFAEnabled() async {
-    return await _authRepository.isMFAEnabled();
+  Future<UserModel> updateUserPrivacy(String userId, TipusPrivacitat privacy) async {
+    await _authRepository.updatePrivacy(userId, privacy);
+    return await _authRepository.getUserProfile(userId);
   }
 
-  Future<dynamic> enrollMFA() async {
-    return await _authRepository.enrollMFA();
-  }
+  Future<bool> checkEmailExists(String email) => _authRepository.checkEmailExists(email);
 
-  Future<void> verifyMFA(String factorId, String code) async {
-    return await _authRepository.verifyMFA(factorId, code);
-  }
+  Future<void> sendPasswordResetEmail(String email) => _authRepository.sendPasswordResetEmail(email);
 
-  Future<String?> getMFAFactorId() async {
-    return await _authRepository.getMFAFactorId();
-  }
+  Future<void> updatePassword(String newPassword) => _authRepository.updatePassword(newPassword);
 
-  Future<void> unenrollMFA(String factorId) async {
-    return await _authRepository.unenrollMFA(factorId);
-  }
+  Future<bool> isMFAEnabled() => _authRepository.isMFAEnabled();
 
-  Future<void> deleteAccount() async {
-    return await _authRepository.deleteAccount();
-  }
+  Future<dynamic> enrollMFA() => _authRepository.enrollMFA();
 
-  Future<void> updatePassword(String newPassword) async {
-    return await _authRepository.updatePassword(newPassword);
-  }
+  Future<void> verifyMFA(String factorId, String code) => _authRepository.verifyMFA(factorId, code);
+
+  Future<String?> getMFAFactorId() => _authRepository.getMFAFactorId();
+
+  Future<void> unenrollMFA(String factorId) => _authRepository.unenrollMFA(factorId);
+
+  Future<void> loginMFAChallenge(String code) => _authRepository.loginMFAChallenge(code);
+
+  Future<void> deleteAccount() => _authRepository.deleteAccount();
 }

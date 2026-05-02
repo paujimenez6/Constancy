@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../domain/models/habit_model.dart';
+import '../../domain/models/habit_assets.dart';
 import '../../generated/l10n.dart';
 import '../providers/auth_provider.dart';
 import '../providers/habit_provider.dart';
@@ -24,46 +25,6 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HabitProvider>().loadDataForDate(DateTime.now());
     });
-  }
-
-  Color _hexToColor(String hex) {
-    return Color(int.parse(hex.replaceFirst('#', '0xff')));
-  }
-
-  IconData _getIcona(String name) {
-    final map = {
-      'star': Icons.star_rounded,
-      'fitness_center': Icons.fitness_center_rounded,
-      'directions_run': Icons.directions_run_rounded,
-      'directions_bike': Icons.directions_bike_rounded,
-      'pool': Icons.pool_rounded,
-      'self_improvement': Icons.self_improvement_rounded,
-      'monitor_heart': Icons.monitor_heart_rounded,
-      'water_drop': Icons.water_drop_rounded,
-      'restaurant': Icons.restaurant_rounded,
-      'apple': Icons.apple_rounded,
-      'book': Icons.menu_book_rounded,
-      'edit': Icons.edit_rounded,
-      'lightbulb': Icons.lightbulb_rounded,
-      'laptop': Icons.laptop_mac_rounded,
-      'timer': Icons.timer_rounded,
-      'language': Icons.language_rounded,
-      'bedtime': Icons.bedtime_rounded,
-      'psychology': Icons.psychology_rounded,
-      'local_florist': Icons.local_florist_rounded,
-      'pets': Icons.pets_rounded,
-      'music_note': Icons.music_note_rounded,
-      'brush': Icons.brush_rounded,
-      'camera': Icons.camera_alt_rounded,
-      'home': Icons.home_rounded,
-      'cleaning_services': Icons.cleaning_services_rounded,
-      'shopping_cart': Icons.shopping_cart_rounded,
-      'attach_money': Icons.attach_money_rounded,
-      'commute': Icons.directions_bus_rounded,
-      'videogame_asset': Icons.videogame_asset_rounded,
-      'smoke_free': Icons.smoke_free_rounded,
-    };
-    return map[name] ?? Icons.star_rounded;
   }
 
   @override
@@ -116,9 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           const DateSelectorWidget(),
-
           const SizedBox(height: 8),
-
           Expanded(
             child: habitProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -146,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 final habit = activeHabits[index];
                 final record = habitProvider.dailyRecords[habit.id];
 
-                final color = _hexToColor(habit.color);
+                final color = HabitAssets.hexToColor(habit.color);
                 final progresActual = record?.valorProgres ?? 0.0;
                 final estaCompletat = progresActual >= habit.valorObjectiu;
 
@@ -166,9 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: estaCompletat ? color : colorScheme.outlineVariant.withValues(alpha:0.5),
                         width: estaCompletat ? 2 : 1,
                       ),
-                      boxShadow: estaCompletat ? [] : [
-                        BoxShadow(color: Colors.black.withValues(alpha:0.03), blurRadius: 10, offset: const Offset(0, 4))
-                      ],
                     ),
                     child: Row(
                       children: [
@@ -178,10 +134,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: color.withValues(alpha:0.2),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(_getIcona(habit.icona), color: color, size: 28),
+                          child: Icon(HabitAssets.getIconByName(habit.icona), color: color, size: 28),
                         ),
                         const SizedBox(width: 16),
-
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,11 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Icon(Icons.local_fire_department_rounded, color: Colors.orange[700], size: 20),
                                     Text(
                                       "${habit.ratxaActual}",
-                                      style: TextStyle(
-                                        color: Colors.orange[800],
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
+                                      style: TextStyle(color: Colors.orange[800], fontWeight: FontWeight.bold),
                                     ),
                                   ],
                                 ],
@@ -221,7 +172,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-
                         IconButton(
                           onPressed: () async {
                             double nouProgres = estaCompletat ? 0 : habit.valorObjectiu;

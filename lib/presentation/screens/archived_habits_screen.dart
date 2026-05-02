@@ -50,7 +50,7 @@ class ArchivedHabitsScreen extends StatelessWidget {
     final strings = S.of(context);
     final theme = Theme.of(context);
 
-    final archivedHabits = habitProvider.habits.where((h) => h.arxivat).toList();
+    final archivedHabits = habitProvider.archivedHabits;
 
     return Scaffold(
       appBar: AppBar(

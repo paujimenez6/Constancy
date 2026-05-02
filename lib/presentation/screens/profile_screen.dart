@@ -8,7 +8,12 @@ import '../providers/social_provider.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final bool isDirectTab;
+
+  const ProfileScreen({
+    super.key,
+    this.isDirectTab = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -188,22 +193,23 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 24),
-
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.red.withValues(alpha: 0.1)),
+            if (isDirectTab) ...[
+              const SizedBox(height: 24),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.1)),
+                ),
+                child: _buildProfileOption(
+                  context: context,
+                  icon: Icons.logout_rounded,
+                  title: strings.logout,
+                  isDestructive: true,
+                  onTap: () => _confirmLogout(context),
+                ),
               ),
-              child: _buildProfileOption(
-                context: context,
-                icon: Icons.logout_rounded,
-                title: strings.logout,
-                isDestructive: true,
-                onTap: () => _confirmLogout(context),
-              ),
-            ),
+            ],
           ],
         ),
       ),

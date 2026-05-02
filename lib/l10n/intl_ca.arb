@@ -194,5 +194,12 @@
   "unitCalories": "cal",
   "unitSeconds": "seg",
   "unitMinutes": "min",
-  "unitHours": "hr"
+  "unitHours": "hr",
+  "habitTrend": "Tendència de l'hàbit",
+  "generalTrend": "Tendència de progrés general",
+  "day": "Dia",
+  "daysOfMonth": "Dies del mes",
+  "monthsOfYear": "Mesos de l'any",
+  "statsPunctual": "Puntual",
+  "statsCumulative": "Acumulat"
 }

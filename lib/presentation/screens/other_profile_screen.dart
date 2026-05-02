@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../generated/l10n.dart';
 import '../providers/social_provider.dart';
+import '../providers/auth_provider.dart';
 import 'user_list_screen.dart';
 
 class OtherProfileScreen extends StatefulWidget {
@@ -28,22 +29,23 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   Future<void> _loadFollowStatus() async {
     try {
       final socialProvider = context.read<SocialProvider>();
+      final String userId = widget.userData['id'];
 
-      final status = await socialProvider.getFollowStatus(widget.userData['id']);
-      final fers = await socialProvider.getFollowersCount(widget.userData['id']);
-      final fing = await socialProvider.getFollowingCount(widget.userData['id']);
+      final status = await socialProvider.getFollowStatus(userId);
+      final stats = await socialProvider.getOtherUserStats(userId);
 
       if (mounted) {
         setState(() {
           _isFollowing = status['isFollowing']!;
           _isPending = status['isPending']!;
-          _followersCount = fers;
-          _followingCount = fing;
+          _followersCount = stats.followersCount;
+          _followingCount = stats.followingCount;
           _isLoadingStatus = false;
         });
       }
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("Error carregant dades d'usuari: $e");
+      if (mounted) setState(() => _isLoadingStatus = false);
     }
   }
 
@@ -68,17 +70,9 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                   BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 4))
                 ],
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(width: 10),
-                  Flexible(
-                    child: Text(
-                      message,
-                      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ],
+              child: Text(
+                message,
+                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
               ),
             ),
           ),
@@ -102,7 +96,6 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     }
 
     final socialProvider = context.read<SocialProvider>();
-
     final list = isFollowers
         ? await socialProvider.getFollowersList(widget.userData['id'])
         : await socialProvider.getFollowingList(widget.userData['id']);
@@ -122,12 +115,11 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     try {
       final socialProvider = context.read<SocialProvider>();
 
-      if (_isFollowing || _isPending) {
-        await socialProvider.unfollowOrCancel(targetId, _isPending);
-      } else {
-        await socialProvider.followUser(targetId, privacy);
-      }
+      await socialProvider.toggleFollow(targetId, privacy);
+
       await _loadFollowStatus();
+      final myId = context.read<AuthProvider>().currentUser!.id;
+      socialProvider.refreshSocialStats(myId);
     } catch (e) {
       debugPrint("Error en acció social: $e");
     } finally {
@@ -141,7 +133,6 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     final theme = Theme.of(context);
     final user = widget.userData;
     final privacitat = user['configuracio_privacitat'] ?? 'public';
-
     bool canSeeDetails = privacitat == 'public' || _isFollowing;
 
     return Scaffold(
@@ -169,22 +160,16 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                     child: CircleAvatar(
                       radius: 55,
                       backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      backgroundImage: (user['imatge_perfil'] != null)
-                          ? NetworkImage(user['imatge_perfil'])
-                          : null,
+                      backgroundImage: (user['imatge_perfil'] != null) ? NetworkImage(user['imatge_perfil']) : null,
                       child: (user['imatge_perfil'] == null)
-                          ? Text(
-                        user['nickname'] != null ? user['nickname'][0].toUpperCase() : '?',
-                        style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
-                      )
+                          ? Text(user['nickname'] != null ? user['nickname'][0].toUpperCase() : '?',
+                          style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: theme.colorScheme.primary))
                           : null,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Text("${user['nom'] ?? ''} ${user['cognom'] ?? ''}",
-                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                  Text("${user['nom'] ?? ''} ${user['cognom'] ?? ''}", style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
-
                   Center(
                     child: SizedBox(
                       width: 280,
@@ -193,21 +178,11 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             Expanded(
-                              child: InkWell(
-                                onTap: () => _openUserList(true),
-                                child: _buildStatItem(_followersCount.toString(), strings.followers),
-                              ),
+                              child: InkWell(onTap: () => _openUserList(true), child: _buildStatItem(_followersCount.toString(), strings.followers)),
                             ),
-                            VerticalDivider(
-                              width: 1,
-                              thickness: 1,
-                              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-                            ),
+                            VerticalDivider(width: 1, thickness: 1, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
                             Expanded(
-                              child: InkWell(
-                                onTap: () => _openUserList(false),
-                                child: _buildStatItem(_followingCount.toString(), strings.following),
-                              ),
+                              child: InkWell(onTap: () => _openUserList(false), child: _buildStatItem(_followingCount.toString(), strings.following)),
                             ),
                           ],
                         ),
@@ -215,28 +190,17 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Text(
-                      strings.xpLevel(user['nivell_xp'] ?? 0),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
+                    decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(30)),
+                    child: Text(strings.xpLevel(user['nivell_xp'] ?? 0), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
-
                   const SizedBox(height: 24),
-
                   _buildActionButtons(privacitat, theme, strings),
                 ],
               ),
             ),
-
             const SizedBox(height: 40),
-
             if (!canSeeDetails)
               Column(
                 children: [
@@ -245,20 +209,14 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                   const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: Text(
-                      strings.privateProfileMessage,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 15, height: 1.4),
-                    ),
+                    child: Text(strings.privateProfileMessage, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 15, height: 1.4)),
                   ),
                 ],
               )
             else
               Column(
                 children: [
-                  //HÀBITS
-                  Text(strings.publicDataPlaceholder,
-                      style: TextStyle(fontStyle: FontStyle.italic, color: theme.colorScheme.outline)),
+                  Text(strings.publicDataPlaceholder, style: TextStyle(fontStyle: FontStyle.italic, color: theme.colorScheme.outline)),
                 ],
               ),
           ],
@@ -269,10 +227,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
 
   Widget _buildActionButtons(String privacitat, ThemeData theme, S strings) {
     if (_isLoadingStatus) {
-      return const SizedBox(
-        height: 48,
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      );
+      return const SizedBox(height: 48, child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
     }
 
     String label;

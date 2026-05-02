@@ -28,9 +28,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _loadAll() async {
     try {
       final socialProvider = context.read<SocialProvider>();
-
       final reqs = await socialProvider.getPendingRequests();
       final notifs = await socialProvider.getFollowNotifications();
+
       if (mounted) {
         setState(() {
           _requests = reqs;
@@ -41,7 +41,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         socialProvider.markNotificationsAsRead();
       }
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("Error carregant notificacions: $e");
     }
   }
 
@@ -155,7 +155,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       elevation: 0,
-                      padding: EdgeInsets.zero,
                     ),
                     child: Text(strings.accept, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
@@ -177,7 +176,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     style: OutlinedButton.styleFrom(
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       side: BorderSide(color: theme.colorScheme.outlineVariant),
-                      padding: EdgeInsets.zero,
                     ),
                     child: Text(strings.reject, style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
@@ -288,11 +286,10 @@ class _FollowToggleButtonState extends State<FollowToggleButton> {
       onPressed: () async {
         setState(() => _loading = true);
         final provider = context.read<SocialProvider>();
-        if (_isFollowing || _isPending) {
-          await provider.unfollowOrCancel(widget.userData['id'], _isPending);
-        } else {
-          await provider.followUser(widget.userData['id'], widget.userData['configuracio_privacitat'] ?? 'public');
-        }
+        final privacy = widget.userData['configuracio_privacitat'] ?? 'public';
+
+        await provider.toggleFollow(widget.userData['id'], privacy);
+
         _checkStatus();
         final myId = context.read<AuthProvider>().currentUser!.id;
         provider.refreshSocialStats(myId);
