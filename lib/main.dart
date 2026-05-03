@@ -2,18 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'features/auth/data/models/user_model.dart';
-import 'features/auth/screens/mfa_challenge_screen.dart';
-import 'features/auth/screens/update_password_screen.dart';
-import 'features/navigation/screens/main_screen.dart';
-import 'features/auth/screens/login_screen.dart';
-import 'generated/l10n.dart';
-import 'features/auth/data/repositories/auth_provider.dart';
-import 'features/auth/data/repositories/auth_repository.dart';
-import 'core/providers/settings_provider.dart';
-import 'features/profiles/data/repositories/social_provider.dart';
-import 'features/profiles/data/repositories/social_repository.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'generated/l10n.dart';
+import 'presentation/screens/mfa_challenge_screen.dart';
+import 'presentation/screens/update_password_screen.dart';
+import 'presentation/screens/main_screen.dart';
+import 'presentation/screens/login_screen.dart';
+import 'presentation/providers/auth_provider.dart';
+import 'presentation/providers/settings_provider.dart';
+import 'presentation/providers/social_provider.dart';
+import 'presentation/providers/habit_provider.dart';
+import 'domain/services/auth_service.dart';
+import 'domain/services/social_service.dart';
+import 'domain/services/habit_service.dart';
+import 'persistence/repositories/auth_repository.dart';
+import 'persistence/repositories/social_repository.dart';
+import 'persistence/repositories/habit_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,11 +35,31 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => SocialProvider()),
         Provider(create: (_) => AuthRepository()),
         Provider(create: (_) => SocialRepository()),
+        Provider(create: (_) => HabitRepository()),
+        ProxyProvider<AuthRepository, AuthService>(
+          update: (context, authRepo, previous) => AuthService(authRepo),
+        ),
+        ProxyProvider<SocialRepository, SocialService>(
+          update: (context, socialRepo, previous) => SocialService(socialRepo),
+        ),
+        ProxyProvider<HabitRepository, HabitService>(
+          update: (context, habitRepo, previous) => HabitService(habitRepo),
+        ),
+        ChangeNotifierProxyProvider<AuthService, AuthProvider>(
+          create: (context) => AuthProvider(context.read<AuthService>()),
+          update: (context, authService, previous) => previous ?? AuthProvider(authService),
+        ),
+        ChangeNotifierProxyProvider<SocialService, SocialProvider>(
+          create: (context) => SocialProvider(context.read<SocialService>()),
+          update: (context, socialService, previous) => previous ?? SocialProvider(socialService),
+        ),
+        ChangeNotifierProxyProvider<HabitService, HabitProvider>(
+          create: (context) => HabitProvider(context.read<HabitService>()),
+          update: (context, habitService, previous) => previous ?? HabitProvider(habitService),
+        ),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],
       child: const ConstancyApp(),
     ),
@@ -56,11 +80,16 @@ class _ConstancyAppState extends State<ConstancyApp> {
   @override
   void initState() {
     super.initState();
+    _setupAuthListener();
+  }
+
+  void _setupAuthListener() {
+    final authProvider = context.read<AuthProvider>();
+    final authRepo = context.read<AuthRepository>();
 
     Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
-      final AuthChangeEvent event = data.event;
-      final Session? session = data.session;
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final event = data.event;
+      final session = data.session;
 
       if (session == null || event == AuthChangeEvent.signedOut) {
         authProvider.logout();
@@ -85,12 +114,8 @@ class _ConstancyAppState extends State<ConstancyApp> {
 
       if (authProvider.currentUser == null || authProvider.currentUser!.id != session.user.id) {
         try {
-          final userData = await Supabase.instance.client
-              .from('profiles')
-              .select()
-              .eq('id', session.user.id)
-              .single();
-          authProvider.setUser(UserModel.fromJson(userData));
+          final userProfile = await authRepo.getUserProfile(session.user.id);
+          authProvider.setUser(userProfile);
         } catch (e) {
           debugPrint("Error sincronitzant perfil: $e");
         }

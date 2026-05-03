@@ -49,10 +49,15 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Confirmar contraseña"),
         "confirmRemoveFollower": MessageLookupByLibrary.simpleMessage(
             "¿Seguro que quieres eliminar a"),
+        "consentDescription": MessageLookupByLibrary.simpleMessage(
+            "Para poder crear tu cuenta en Constancy, necesitamos tu permiso para almacenar tu correo y datos de perfil en nuestros servidores seguros. Estos datos se utilizan exclusivamente para la gestión de tus hábitos y no serán compartidos con terceros. Puedes eliminar tu cuenta y tus datos en cualquier momento desde la configuración."),
+        "consentTitle":
+            MessageLookupByLibrary.simpleMessage("Consentimiento de datos"),
         "copySecret":
             MessageLookupByLibrary.simpleMessage("Copiar código secreto"),
         "creatingAccount":
             MessageLookupByLibrary.simpleMessage("Creando cuenta..."),
+        "decline": MessageLookupByLibrary.simpleMessage("Denegar"),
         "deleteAccount":
             MessageLookupByLibrary.simpleMessage("Eliminar cuenta"),
         "deleteAccountConfirm": MessageLookupByLibrary.simpleMessage(
