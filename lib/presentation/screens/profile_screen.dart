@@ -24,12 +24,11 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _isNavigating = false; // Guard per evitar obertures múltiples de llistes
+  bool _isNavigating = false;
 
   @override
   void initState() {
     super.initState();
-    // Inicialitzem l'escolta en temps real del perfil (XP, dades)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = context.read<AuthProvider>().currentUser;
       if (user != null) {
@@ -38,7 +37,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  // Funció de navegació segura amb bloqueig de spam
   void _navigateToUserList(String userId, String nickname, String title, bool isFollowers) async {
     if (_isNavigating) return;
 
@@ -70,7 +68,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final strings = S.of(context);
     final theme = Theme.of(context);
 
-    // Escoltadors (watch) per actualitzar la UI automàticament
     final user = context.watch<AuthProvider>().currentUser;
     final social = context.watch<SocialProvider>();
     final habitProv = context.watch<HabitProvider>();
@@ -96,35 +93,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Center(
               child: Column(
                 children: [
-                  // 1. Avatar de l'usuari
                   _buildAvatar(user, theme),
                   const SizedBox(height: 16),
 
-                  // 2. Nickname i Correu
                   Text(user.nickname, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   Text(user.correu, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 20),
 
-                  // 3. Badge de la Lliga Actual
                   if (leagueProv.currentLeague != null)
                     _buildLeagueBadge(theme, leagueProv.currentLeague!, strings),
 
                   const SizedBox(height: 12),
 
-                  // 4. XP Total (Disseny de píndola)
                   _buildXpDisplay(theme, user.puntsXP),
 
                   const SizedBox(height: 24),
 
-                  // 5. Estadístiques Socials (Seguidors/Seguint)
                   _buildStatRow(user, social, strings, theme),
                 ],
               ),
             ),
             const SizedBox(height: 40),
 
-            // 6. Secció d'Hàbits propis
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -144,7 +135,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 40),
 
-            // 7. Secció de Configuració
             Align(
               alignment: Alignment.centerLeft,
               child: Padding(
@@ -157,20 +147,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             _buildSettingsContainer(context, strings, theme),
-
-            // 8. Botó de tancar sessió (si s'accedeix des del Tab principal)
             if (widget.isDirectTab) ...[
               const SizedBox(height: 24),
               _buildLogoutButton(context, strings, theme),
             ],
-            const SizedBox(height: 80), // Espai extra inferior
+            const SizedBox(height: 80),
           ],
         ),
       ),
     );
   }
-
-  // --- WIDGETS PRIVATS DE SUPORT ---
 
   Widget _buildAvatar(user, theme) {
     return Container(

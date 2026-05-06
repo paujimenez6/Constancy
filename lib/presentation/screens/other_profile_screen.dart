@@ -21,7 +21,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   bool _isFollowing = false;
   bool _isPending = false;
   bool _isLoadingStatus = true;
-  bool _isNavigating = false; // Prevenció de clics múltiples
+  bool _isNavigating = false;
   int _followersCount = 0;
   int _followingCount = 0;
   LeagueModel? _otherUserLeague;
@@ -37,7 +37,6 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     await _loadFollowStatus();
 
     if (mounted) {
-      // Carreguem la lliga de l'altre usuari delegant al provider
       final leagueProv = context.read<LeagueProvider>();
       final leagueData = await leagueProv.loadAnyUserLeague(userId);
 
@@ -110,7 +109,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   }
 
   void _openUserList(bool isFollowers) async {
-    if (_isNavigating) return; // Bloqueig si ja s'està navegant
+    if (_isNavigating) return;
 
     final strings = S.of(context);
     final privacitat = widget.userData['configuracio_privacitat'] ?? 'public';
@@ -173,7 +172,6 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     final theme = Theme.of(context);
     final user = widget.userData;
 
-    // PROTECCIÓ CRÍTICA contra Nulls i tipus incorrectes
     final int xpTotal = (user['punts_xp'] is int) ? user['punts_xp'] : 0;
 
     final habitProvider = context.watch<HabitProvider>();
@@ -202,13 +200,11 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                       style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
 
-                  // BADGE DE LA LLIGA
                   if (_otherUserLeague != null)
                     _buildLeagueBadge(theme, _otherUserLeague!, strings),
 
                   const SizedBox(height: 12),
 
-                  // XP TOTAL (Píndola millorada)
                   _buildXpDisplay(theme, xpTotal),
 
                   const SizedBox(height: 24),
@@ -217,7 +213,6 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Botó d'acció de seguiment
                   _buildActionButtons(privacitat, theme, strings),
                 ],
               ),

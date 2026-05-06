@@ -22,7 +22,7 @@ class _SearchScreenState extends State<SearchScreen> {
   List<dynamic> _searchResults = [];
   bool _isSearchingUsers = false;
   bool _isLoadingResults = false;
-  bool _isDialogShowing = false; // Control per evitar duplicats del diàleg
+  bool _isDialogShowing = false;
 
   @override
   void initState() {
@@ -34,7 +34,6 @@ class _SearchScreenState extends State<SearchScreen> {
       });
     });
 
-    // Inicialització de lliga i listeners
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = context.read<AuthProvider>().currentUser;
       if (user != null) {
@@ -46,7 +45,6 @@ class _SearchScreenState extends State<SearchScreen> {
     });
   }
 
-  // Gestiona l'aparició del diàleg de final de temporada
   void _handleLeagueResults() {
     final leagueProv = context.read<LeagueProvider>();
 
@@ -58,7 +56,6 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   void dispose() {
-    // Netegem el listener per evitar fugues de memòria
     context.read<LeagueProvider>().removeListener(_handleLeagueResults);
     _searchController.dispose();
     _focusNode.dispose();
@@ -104,7 +101,6 @@ class _SearchScreenState extends State<SearchScreen> {
                 : _buildLeagueView(strings, theme),
           ),
         ),
-        // Animació de celebració
         Align(
           alignment: Alignment.topCenter,
           child: ConfettiWidget(
@@ -313,7 +309,6 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   Text(p.nickname ?? "Usuari", style: TextStyle(fontWeight: isMe ? FontWeight.bold : FontWeight.w600)),
 
-                  // Zona d'ascens: No es mostra si ja som a la lliga màxima
                   if (p.posicioActual <= 3 && !league.isMaxLevel)
                     Row(
                       children: [
@@ -323,7 +318,6 @@ class _SearchScreenState extends State<SearchScreen> {
                       ],
                     ),
 
-                  // Zona de descens: No es mostra si ja som a la lliga mínima
                   if (p.posicioActual >= 8 && !league.isMinLevel)
                     Row(
                       children: [
@@ -365,7 +359,6 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildUserResultItem(ThemeData theme, dynamic user) {
     return InkWell(
       onTap: () {
-        // Assegurem que punts_xp no sigui null per la pantalla de destí
         final userData = Map<String, dynamic>.from(user);
         userData['punts_xp'] = user['punts_xp'] ?? 0;
 
