@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import '../../domain/models/user_model.dart';
@@ -9,6 +10,7 @@ class AuthProvider extends ChangeNotifier {
   UserModel? _currentUser;
   bool isManualLogin = false;
   int _currentTabIndex = 0;
+  StreamSubscription? _profileSubscription;
 
   AuthProvider(this._authService);
 
@@ -20,6 +22,14 @@ class AuthProvider extends ChangeNotifier {
     _currentUser = user;
     isManualLogin = false;
     notifyListeners();
+  }
+
+  void initProfileListener(String userId) {
+    _profileSubscription?.cancel();
+    _profileSubscription = _authService.listenToProfile(userId).listen((updatedUser) {
+      _currentUser = updatedUser;
+      notifyListeners();
+    });
   }
 
   Future<void> signIn(String email, String password) async {
@@ -118,5 +128,11 @@ class AuthProvider extends ChangeNotifier {
       _currentUser = _currentUser!.copyWith(nom: nom, cognom: cognom);
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _profileSubscription?.cancel();
+    super.dispose();
   }
 }

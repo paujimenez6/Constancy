@@ -6,6 +6,8 @@ import '../providers/auth_provider.dart';
 import '../providers/habit_provider.dart';
 import 'user_list_screen.dart';
 import 'profile_habits_list_screen.dart';
+import '../providers/league_provider.dart';
+import '../../domain/models/league_model.dart';
 
 class OtherProfileScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -19,8 +21,10 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   bool _isFollowing = false;
   bool _isPending = false;
   bool _isLoadingStatus = true;
+  bool _isNavigating = false; // Prevenció de clics múltiples
   int _followersCount = 0;
   int _followingCount = 0;
+  LeagueModel? _otherUserLeague;
 
   @override
   void initState() {
@@ -30,10 +34,17 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
 
   Future<void> _loadInitialData() async {
     final String userId = widget.userData['id'];
-
     await _loadFollowStatus();
 
     if (mounted) {
+      // Carreguem la lliga de l'altre usuari delegant al provider
+      final leagueProv = context.read<LeagueProvider>();
+      final leagueData = await leagueProv.loadAnyUserLeague(userId);
+
+      setState(() {
+        _otherUserLeague = leagueData;
+      });
+
       await context.read<HabitProvider>().loadProfileHabits(userId);
     }
   }
@@ -99,6 +110,8 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   }
 
   void _openUserList(bool isFollowers) async {
+    if (_isNavigating) return; // Bloqueig si ja s'està navegant
+
     final strings = S.of(context);
     final privacitat = widget.userData['configuracio_privacitat'] ?? 'public';
 
@@ -107,14 +120,25 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
       return;
     }
 
+    setState(() => _isNavigating = true);
+
     final socialProvider = context.read<SocialProvider>();
     final list = isFollowers
         ? await socialProvider.getFollowersList(widget.userData['id'])
         : await socialProvider.getFollowingList(widget.userData['id']);
 
     if (mounted) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) =>
-          UserListScreen(title: isFollowers ? strings.followers : strings.following, users: list, ownerNickname: widget.userData['nickname'])));
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => UserListScreen(
+            title: isFollowers ? strings.followers : strings.following,
+            users: list,
+            ownerNickname: widget.userData['nickname'],
+          ),
+        ),
+      );
+      if (mounted) setState(() => _isNavigating = false);
     }
   }
 
@@ -149,8 +173,10 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     final theme = Theme.of(context);
     final user = widget.userData;
 
-    final habitProvider = context.watch<HabitProvider>();
+    // PROTECCIÓ CRÍTICA contra Nulls i tipus incorrectes
+    final int xpTotal = (user['punts_xp'] is int) ? user['punts_xp'] : 0;
 
+    final habitProvider = context.watch<HabitProvider>();
     final privacitat = user['configuracio_privacitat'] ?? 'public';
     bool canSeeDetails = privacitat == 'public' || _isFollowing;
 
@@ -170,53 +196,28 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
             Center(
               child: Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2), width: 3),
-                    ),
-                    child: CircleAvatar(
-                      radius: 55,
-                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      backgroundImage: (user['imatge_perfil'] != null) ? NetworkImage(user['imatge_perfil']) : null,
-                      child: (user['imatge_perfil'] == null)
-                          ? Text(user['nickname'] != null ? user['nickname'][0].toUpperCase() : '?',
-                          style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: theme.colorScheme.primary))
-                          : null,
-                    ),
-                  ),
+                  _buildAvatar(user, theme),
                   const SizedBox(height: 16),
-                  Text("${user['nom'] ?? ''} ${user['cognom'] ?? ''}", style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                  Text("${user['nom'] ?? ''} ${user['cognom'] ?? ''}",
+                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
 
-                  Center(
-                    child: SizedBox(
-                      width: 280,
-                      child: IntrinsicHeight(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Expanded(
-                              child: InkWell(onTap: () => _openUserList(true), child: _buildStatItem(_followersCount.toString(), strings.followers)),
-                            ),
-                            VerticalDivider(width: 1, thickness: 1, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
-                            Expanded(
-                              child: InkWell(onTap: () => _openUserList(false), child: _buildStatItem(_followingCount.toString(), strings.following)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  // BADGE DE LA LLIGA
+                  if (_otherUserLeague != null)
+                    _buildLeagueBadge(theme, _otherUserLeague!, strings),
+
+                  const SizedBox(height: 12),
+
+                  // XP TOTAL (Píndola millorada)
+                  _buildXpDisplay(theme, xpTotal),
 
                   const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(30)),
-                    child: Text(strings.xpLevel(user['nivell_xp'] ?? 0), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
+
+                  _buildStatRow(strings, theme),
+
                   const SizedBox(height: 24),
+
+                  // Botó d'acció de seguiment
                   _buildActionButtons(privacitat, theme, strings),
                 ],
               ),
@@ -225,29 +226,9 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
             const SizedBox(height: 40),
 
             if (!canSeeDetails)
-              Column(
-                children: [
-                  const SizedBox(height: 20),
-                  Icon(Icons.lock_outline_rounded, size: 60, color: theme.colorScheme.outline),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: Text(
-                        strings.privateProfileMessage,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 15, height: 1.4)
-                    ),
-                  ),
-                ],
-              )
+              _buildPrivateMessage(theme, strings)
             else ...[
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                    strings.habitsTitleOther(user['nickname'] ?? ''),
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.colorScheme.primary, letterSpacing: 1.2)
-                ),
-              ),
+              _buildHabitsHeader(strings, theme, user['nickname'] ?? ''),
               const SizedBox(height: 12),
 
               buildHabitList(
@@ -260,6 +241,96 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatar(Map<String, dynamic> user, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2), width: 3),
+      ),
+      child: CircleAvatar(
+        radius: 55,
+        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+        backgroundImage: (user['imatge_perfil'] != null) ? NetworkImage(user['imatge_perfil']) : null,
+        child: (user['imatge_perfil'] == null)
+            ? Text(user['nickname'] != null ? user['nickname'][0].toUpperCase() : '?',
+            style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: theme.colorScheme.primary))
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildXpDisplay(ThemeData theme, int xp) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.bolt_rounded, size: 20, color: theme.colorScheme.primary),
+          const SizedBox(width: 4),
+          Text(
+            "$xp XP",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              letterSpacing: 0.5,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLeagueBadge(ThemeData theme, LeagueModel league, S strings) {
+    final color = Color(int.parse(league.color.replaceFirst('#', '0xff')));
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.emoji_events_rounded, size: 18, color: color),
+          const SizedBox(width: 8),
+          Text(
+            league.getLocalizedName(strings).toUpperCase(),
+            style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatRow(S strings, ThemeData theme) {
+    return Center(
+      child: SizedBox(
+        width: 280,
+        child: IntrinsicHeight(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Expanded(
+                child: InkWell(onTap: () => _openUserList(true), child: _buildStatItem(_followersCount.toString(), strings.followers)),
+              ),
+              VerticalDivider(width: 1, thickness: 1, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+              Expanded(
+                child: InkWell(onTap: () => _openUserList(false), child: _buildStatItem(_followingCount.toString(), strings.following)),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -312,6 +383,39 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
         Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
+    );
+  }
+
+  Widget _buildPrivateMessage(ThemeData theme, S strings) {
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        Icon(Icons.lock_outline_rounded, size: 60, color: theme.colorScheme.outline),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Text(
+              strings.privateProfileMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 15, height: 1.4)
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHabitsHeader(S strings, ThemeData theme, String nickname) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+          strings.habitsTitleOther(nickname),
+          style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              letterSpacing: 1.2
+          )
+      ),
     );
   }
 }

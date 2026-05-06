@@ -87,4 +87,17 @@ class LeagueProvider extends ChangeNotifier {
     _resultsSubscription?.cancel();
     super.dispose();
   }
+
+  Future<LeagueModel?> loadAnyUserLeague(String userId) async {
+    try {
+      final data = await _leagueService.getUserLeague(userId);
+      if (data != null) {
+        return LeagueModel.fromJson(data['lligues']);
+      }
+      return null;
+    } catch (e) {
+      debugPrint("Error carregant lliga d'usuari extern: $e");
+      return null;
+    }
+  }
 }

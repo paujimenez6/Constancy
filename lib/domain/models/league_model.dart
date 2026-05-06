@@ -76,6 +76,8 @@ class LeagueParticipationModel {
   final int posicioActual;
   final String? nickname;
   final String? imatgePerfil;
+  final String? nom;
+  final String? cognom;
 
   LeagueParticipationModel({
     required this.userId,
@@ -84,16 +86,21 @@ class LeagueParticipationModel {
     required this.posicioActual,
     this.nickname,
     this.imatgePerfil,
+    this.nom,
+    this.cognom,
   });
 
   factory LeagueParticipationModel.fromJson(Map<String, dynamic> json) {
+    final profile = json['profiles'] as Map<String, dynamic>?;
     return LeagueParticipationModel(
       userId: json['user_id'],
       leagueId: json['league_id'],
       xpTemporada: json['xp_temporada'] ?? 0,
       posicioActual: json['posicio_actual'] ?? 1,
-      nickname: json['profiles']?['nickname'],
-      imatgePerfil: json['profiles']?['imatge_perfil'],
+      nickname: profile?['nickname'],
+      imatgePerfil: profile?['imatge_perfil'],
+      nom: profile?['nom'],
+      cognom: profile?['cognom'],
     );
   }
 }

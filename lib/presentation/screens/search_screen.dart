@@ -22,7 +22,7 @@ class _SearchScreenState extends State<SearchScreen> {
   List<dynamic> _searchResults = [];
   bool _isSearchingUsers = false;
   bool _isLoadingResults = false;
-  bool _isDialogShowing = false;
+  bool _isDialogShowing = false; // Control per evitar duplicats del diàleg
 
   @override
   void initState() {
@@ -34,7 +34,7 @@ class _SearchScreenState extends State<SearchScreen> {
       });
     });
 
-    // Carreguem la lliga de l'usuari en entrar a la pantalla
+    // Inicialització de lliga i listeners
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = context.read<AuthProvider>().currentUser;
       if (user != null) {
@@ -46,6 +46,7 @@ class _SearchScreenState extends State<SearchScreen> {
     });
   }
 
+  // Gestiona l'aparició del diàleg de final de temporada
   void _handleLeagueResults() {
     final leagueProv = context.read<LeagueProvider>();
 
@@ -57,6 +58,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   void dispose() {
+    // Netegem el listener per evitar fugues de memòria
     context.read<LeagueProvider>().removeListener(_handleLeagueResults);
     _searchController.dispose();
     _focusNode.dispose();
@@ -86,7 +88,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final theme = Theme.of(context);
     final strings = S.of(context);
 
-    return Stack( // Usem Stack per posar el confeti a sobre de tot
+    return Stack(
       children: [
         Scaffold(
           backgroundColor: theme.colorScheme.surface,
@@ -97,10 +99,12 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           body: AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
-            child: _isSearchingUsers ? _buildSearchResults(strings, theme) : _buildLeagueView(strings, theme),
+            child: _isSearchingUsers
+                ? _buildSearchResults(strings, theme)
+                : _buildLeagueView(strings, theme),
           ),
         ),
-        // Widget del confeti
+        // Animació de celebració
         Align(
           alignment: Alignment.topCenter,
           child: ConfettiWidget(
@@ -114,7 +118,6 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // BARRA DE CERCA SUPERIOR
   Widget _buildSearchBar(ThemeData theme, S strings) {
     return Container(
       height: 45,
@@ -148,7 +151,6 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // VISTA DE LA LLIGA ACTUAL
   Widget _buildLeagueView(S strings, ThemeData theme) {
     final leagueProv = context.watch<LeagueProvider>();
 
@@ -175,7 +177,7 @@ class _SearchScreenState extends State<SearchScreen> {
         const SizedBox(height: 8),
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 80), // Padding inferior per al FAB o Nav
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
             physics: const BouncingScrollPhysics(),
             itemCount: leagueProv.ranking.length,
             separatorBuilder: (context, index) => const SizedBox(height: 10),
@@ -189,7 +191,6 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // CAPÇALERA DINÀMICA DE LA LLIGA
   Widget _buildLeagueHeader(ThemeData theme, LeagueModel league) {
     final leagueColor = Color(int.parse(league.color.replaceFirst('#', '0xff')));
     final strings = S.of(context);
@@ -203,11 +204,8 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       child: Column(
         children: [
-          // 1. Icona de la Lliga
           Icon(Icons.emoji_events_rounded, size: 60, color: leagueColor),
           const SizedBox(height: 12),
-
-          // 2. Nom de la Lliga (Ex: OR, RUBÍ...)
           Text(
             league.getLocalizedName(strings).toUpperCase(),
             style: TextStyle(
@@ -218,8 +216,6 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
           const SizedBox(height: 10),
-
-          // 3. Badge del Nivell (Ex: Nivell 1)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
@@ -228,17 +224,10 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             child: Text(
               strings.xpLevel(league.nivellLliga),
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12
-              ),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ),
-
-          const SizedBox(height: 10), // Espai entre el nivell i el temps
-
-          // 4. Indicador de Temps Restant (Sota el nivell)
+          const SizedBox(height: 12),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -259,7 +248,6 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // ELEMENT DEL RÀNQUING (10 PERSONES)
   Widget _buildRankingItem(ThemeData theme, LeagueParticipationModel p, LeagueModel league) {
     final auth = context.read<AuthProvider>();
     final isMe = p.userId == auth.currentUser?.id;
@@ -274,9 +262,16 @@ class _SearchScreenState extends State<SearchScreen> {
           final userData = {
             'id': p.userId,
             'nickname': p.nickname ?? "Usuari",
+            'nom': p.nom ?? '',
+            'cognom': p.cognom ?? '',
             'imatge_perfil': p.imatgePerfil,
+            'punts_xp': 0,
+            'configuracio_privacitat': 'public',
           };
-          Navigator.push(context, MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: userData)));
+          Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: userData))
+          );
         }
       },
       borderRadius: BorderRadius.circular(16),
@@ -292,7 +287,6 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         child: Row(
           children: [
-            // Posició
             SizedBox(
               width: 35,
               child: Text(
@@ -304,7 +298,6 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
             ),
-            // Avatar
             CircleAvatar(
               radius: 22,
               backgroundColor: leagueColor.withValues(alpha: 0.1),
@@ -320,6 +313,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   Text(p.nickname ?? "Usuari", style: TextStyle(fontWeight: isMe ? FontWeight.bold : FontWeight.w600)),
 
+                  // Zona d'ascens: No es mostra si ja som a la lliga màxima
                   if (p.posicioActual <= 3 && !league.isMaxLevel)
                     Row(
                       children: [
@@ -329,6 +323,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       ],
                     ),
 
+                  // Zona de descens: No es mostra si ja som a la lliga mínima
                   if (p.posicioActual >= 8 && !league.isMinLevel)
                     Row(
                       children: [
@@ -347,7 +342,6 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // RESULTATS DE CERCA D'USUARIS
   Widget _buildSearchResults(S strings, ThemeData theme) {
     if (_isLoadingResults) return const Center(child: CircularProgressIndicator());
 
@@ -368,13 +362,18 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // ELEMENT INDIVIDUAL DE CERCA
   Widget _buildUserResultItem(ThemeData theme, dynamic user) {
     return InkWell(
-      onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: user))
-      ),
+      onTap: () {
+        // Assegurem que punts_xp no sigui null per la pantalla de destí
+        final userData = Map<String, dynamic>.from(user);
+        userData['punts_xp'] = user['punts_xp'] ?? 0;
+
+        Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: userData))
+        );
+      },
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(12),

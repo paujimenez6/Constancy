@@ -16,12 +16,12 @@ class LeagueRepository {
   }
 
   Future<List<Map<String, dynamic>>> getLeagueRanking(String leagueId) async {
-    final res = await _supabase
+    final response = await _supabase
         .from('participacio_lliga')
-        .select('*, profiles(nickname, imatge_perfil)')
+        .select('''*,profiles:user_id (nickname, nom, cognom, imatge_perfil, punts_xp, configuracio_privacitat)''')
         .eq('league_id', leagueId)
         .order('posicio_actual', ascending: true);
-    return List<Map<String, dynamic>>.from(res);
+    return List<Map<String, dynamic>>.from(response);
   }
 
   Stream<List<Map<String, dynamic>>> listenToRanking(String leagueId) {
