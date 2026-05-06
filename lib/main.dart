@@ -1,8 +1,11 @@
+import 'package:Constancy/persistence/repositories/league_repository.dart';
+import 'package:Constancy/presentation/providers/league_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'domain/services/league_service.dart';
 import 'generated/l10n.dart';
 import 'presentation/screens/mfa_challenge_screen.dart';
 import 'presentation/screens/update_password_screen.dart';
@@ -38,6 +41,7 @@ void main() async {
         Provider(create: (_) => AuthRepository()),
         Provider(create: (_) => SocialRepository()),
         Provider(create: (_) => HabitRepository()),
+        Provider(create: (_) => LeagueRepository()),
         ProxyProvider<AuthRepository, AuthService>(
           update: (context, authRepo, previous) => AuthService(authRepo),
         ),
@@ -46,6 +50,9 @@ void main() async {
         ),
         ProxyProvider<HabitRepository, HabitService>(
           update: (context, habitRepo, previous) => HabitService(habitRepo),
+        ),
+        ProxyProvider<LeagueRepository, LeagueService>(
+          update: (context, leagueRepo, previous) => LeagueService(leagueRepo),
         ),
         ChangeNotifierProxyProvider<AuthService, AuthProvider>(
           create: (context) => AuthProvider(context.read<AuthService>()),
@@ -58,6 +65,10 @@ void main() async {
         ChangeNotifierProxyProvider<HabitService, HabitProvider>(
           create: (context) => HabitProvider(context.read<HabitService>()),
           update: (context, habitService, previous) => previous ?? HabitProvider(habitService),
+        ),
+        ChangeNotifierProxyProvider<LeagueService, LeagueProvider>(
+          create: (context) => LeagueProvider(context.read<LeagueService>()),
+          update: (context, leagueService, previous) => previous ?? LeagueProvider(leagueService),
         ),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],

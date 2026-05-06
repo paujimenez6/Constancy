@@ -90,8 +90,8 @@ class _MainScreenState extends State<MainScreen> {
               label: strings.navStats,
             ),
             BottomNavigationBarItem(
-              icon: const Icon(Icons.search_outlined),
-              activeIcon: const Icon(Icons.search_rounded),
+              icon: const Icon(Icons.hub_outlined),
+              activeIcon: const Icon(Icons.hub_rounded),
               label: strings.navSearch,
             ),
             BottomNavigationBarItem(
