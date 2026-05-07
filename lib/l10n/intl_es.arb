@@ -224,5 +224,21 @@
   "leagueResultPromoted": "¡Has ascendido a la liga {level}!",
   "leagueResultStayed": "Te mantienes en la liga {level}.",
   "leagueResultDemoted": "Has descendido a la liga {level}.",
-  "leagueResultDismiss": "Entendido"
+  "leagueResultDismiss": "Entendido",
+  "navMisiones": "Misiones",
+  "dailyMisiones": "Misiones Diarias",
+  "missionsSubtitle": "Complétalas para ganar XP y monedas",
+  "claimReward": "Recoger recompensa",
+  "rewardClaimed": "¡Recompensa recogida!",
+  "noMisiones": "No hay misiones disponibles para hoy.",
+  "missionProgress": "{current} de {total}",
+  "missionHabitsTitle": "Maestro de la constancia",
+  "missionHabitsDesc": "Completa {goal} hábitos hoy",
+  "missionSocialTitle": "Explorador social",
+  "missionSocialDesc": "Sigue a {goal} usuarios nuevos",
+  "missionXpTitle": "Ambición pura",
+  "missionXpDesc": "Gana {goal} XP en un solo día",
+  "missionRewardTitle": "¡Enhorabuena!",
+  "missionRewardSubtitle": "Has completado la misión y has ganado:",
+  "awesome": "¡Genial!"
 }

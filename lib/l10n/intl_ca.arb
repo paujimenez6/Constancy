@@ -224,5 +224,21 @@
   "leagueResultPromoted": "Has ascendit a la lliga {level}!",
   "leagueResultStayed": "Et mantens a la lliga {level}.",
   "leagueResultDemoted": "Has descendit a la lliga {level}.",
-  "leagueResultDismiss": "Entesos"
+  "leagueResultDismiss": "Entesos",
+  "navMissions": "Missions",
+  "dailyMissions": "Missions Diàries",
+  "missionsSubtitle": "Completa-les per guanyar XP i monedes",
+  "claimReward": "Recollir recompensa",
+  "rewardClaimed": "Recompensa recollida!",
+  "noMissions": "No hi ha missions disponibles per avui.",
+  "missionProgress": "{current} de {total}",
+  "missionHabitsTitle": "Mestre de la constància",
+  "missionHabitsDesc": "Completa {goal} hàbits avui",
+  "missionSocialTitle": "Explorador social",
+  "missionSocialDesc": "Segueix a {goal} usuaris nous",
+  "missionXpTitle": "Ambició pura",
+  "missionXpDesc": "Guanya {goal} XP en un sol dia",
+  "missionRewardTitle": "Enhorabona!",
+  "missionRewardSubtitle": "Has completat la missió i has guanyat:",
+  "awesome": "Genial!"
 }

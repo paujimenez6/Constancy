@@ -224,5 +224,21 @@
   "leagueResultPromoted": "You've been promoted to {level} league!",
   "leagueResultStayed": "You stay in {level} league.",
   "leagueResultDemoted": "You've been demoted to {level} league.",
-  "leagueResultDismiss": "Got it"
+  "leagueResultDismiss": "Got it",
+  "navMissions": "Missions",
+  "dailyMissions": "Daily Missions",
+  "missionsSubtitle": "Complete them to earn XP and coins",
+  "claimReward": "Claim Reward",
+  "rewardClaimed": "Reward Claimed!",
+  "noMissions": "There are no missions available for today.",
+  "missionProgress": "{current} of {total}",
+  "missionHabitsTitle": "Master of Constancy",
+  "missionHabitsDesc": "Complete {goal} habits today",
+  "missionSocialTitle": "Social Explorer",
+  "missionSocialDesc": "Follow {goal} new users",
+  "missionXpTitle": "Pure Ambition",
+  "missionXpDesc": "Earn {goal} XP in a single day",
+  "missionRewardTitle": "Congratulations!",
+  "missionRewardSubtitle": "You completed the mission and won:",
+  "awesome": "Awesome!"
 }

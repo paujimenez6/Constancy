@@ -261,7 +261,8 @@ class _SearchScreenState extends State<SearchScreen> {
             'nom': p.nom ?? '',
             'cognom': p.cognom ?? '',
             'imatge_perfil': p.imatgePerfil,
-            'punts_xp': 0,
+            'punts_xp': p.puntsXP,
+            'monedes': p.monedes,
             'configuracio_privacitat': 'public',
           };
           Navigator.push(
@@ -361,6 +362,7 @@ class _SearchScreenState extends State<SearchScreen> {
       onTap: () {
         final userData = Map<String, dynamic>.from(user);
         userData['punts_xp'] = user['punts_xp'] ?? 0;
+        userData['monedes'] = user['monedes'] ?? 0;
 
         Navigator.push(
             context,

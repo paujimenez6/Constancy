@@ -2,12 +2,12 @@ import 'package:Constancy/presentation/screens/statistics_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'home_screen.dart';
-import 'notifications_screen.dart';
 import 'profile_screen.dart';
 import '../../generated/l10n.dart';
 import '../providers/auth_provider.dart';
 import 'search_screen.dart';
 import '../providers/social_provider.dart';
+import 'missions_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -21,7 +21,7 @@ class _MainScreenState extends State<MainScreen> {
     HomeScreen(),
     StatisticsScreen(),
     SearchScreen(),
-    NotificationsScreen(),
+    MissionsScreen(),
     ProfileScreen(),
   ];
 
@@ -41,7 +41,6 @@ class _MainScreenState extends State<MainScreen> {
     final strings = S.of(context);
     final theme = Theme.of(context);
     final authProvider = context.watch<AuthProvider>();
-    final hasNotifications = context.watch<SocialProvider>().hasPendingRequests;
 
     return Scaffold(
       body: IndexedStack(
@@ -95,28 +94,9 @@ class _MainScreenState extends State<MainScreen> {
               label: strings.navSearch,
             ),
             BottomNavigationBarItem(
-              icon: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  const Icon(Icons.notifications_none_rounded),
-                  if (hasNotifications)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Container(
-                        padding: const EdgeInsets.all(1),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: theme.colorScheme.surface, width: 1.5),
-                        ),
-                        constraints: const BoxConstraints(minWidth: 10, minHeight: 10),
-                      ),
-                    ),
-                ],
-              ),
-              activeIcon: const Icon(Icons.notifications_rounded),
-              label: strings.navNotifications,
+              icon: const Icon(Icons.assignment_outlined),
+              activeIcon: const Icon(Icons.assignment_rounded),
+              label: strings.navMissions,
             ),
             BottomNavigationBarItem(
               icon: const Icon(Icons.person_outline),

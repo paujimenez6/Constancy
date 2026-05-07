@@ -106,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 12),
 
-                  _buildXpDisplay(theme, user.puntsXP),
+                  _buildBalanceRow(theme, user.puntsXP, user.monedes),
 
                   const SizedBox(height: 24),
 
@@ -181,24 +181,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildXpDisplay(ThemeData theme, int xp) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.bolt_rounded, size: 20, color: theme.colorScheme.primary),
-          const SizedBox(width: 4),
-          Text(
-            "$xp XP",
-            style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, letterSpacing: 0.5, fontSize: 13),
+  Widget _buildBalanceRow(ThemeData theme, int xp, int monedes) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // XP Badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
-      ),
+          child: Row(
+            children: [
+              Icon(Icons.bolt_rounded, size: 20, color: theme.colorScheme.primary),
+              const SizedBox(width: 4),
+              Text(
+                "$xp XP",
+                style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, letterSpacing: 0.5, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Monedes Badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.amber.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.monetization_on_rounded, size: 18, color: Colors.amber),
+              const SizedBox(width: 6),
+              Text(
+                "$monedes",
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

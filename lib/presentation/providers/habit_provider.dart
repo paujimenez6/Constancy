@@ -4,9 +4,11 @@ import '../../domain/models/habit_model.dart';
 import '../../domain/models/habit_record_model.dart';
 import '../../domain/models/stats_model.dart';
 import '../../domain/services/habit_service.dart';
+import '../../domain/services/mission_service.dart';
 
 class HabitProvider extends ChangeNotifier {
   final HabitService _habitService;
+  final MissionService _missionService;
 
   List<HabitModel> _habits = [];
   List<HabitRecordModel> _monthlyRecords = [];
@@ -18,7 +20,7 @@ class HabitProvider extends ChangeNotifier {
   DateTime _focusedMonth = DateTime.now();
   bool _isLoading = false;
 
-  HabitProvider(this._habitService);
+  HabitProvider(this._habitService, this._missionService);
 
   List<HabitModel> get habits => _habits;
 
@@ -111,7 +113,9 @@ class HabitProvider extends ChangeNotifier {
 
   Future<void> updateProgress({required String habitId, required double valorProgres, required bool completat}) async {
     try {
+      final bool wasCompleted = _dailyRecords[habitId]?.completat ?? false;
       final existingComment = _dailyRecords[habitId]?.comentari;
+
       await _habitService.processProgressUpdate(
         habitId: habitId,
         date: _selectedDate,
@@ -119,6 +123,18 @@ class HabitProvider extends ChangeNotifier {
         completat: completat,
         comentari: existingComment,
       );
+
+      final now = DateTime.now();
+      bool isToday = _selectedDate.year == now.year &&
+          _selectedDate.month == now.month &&
+          _selectedDate.day == now.day;
+
+      if (completat && !wasCompleted && isToday) {
+        final myId = _habitService.currentUserId;
+        if (myId != null) {
+          await _missionService.updateProgress(myId, 'habits', 1.0, habitId);
+        }
+      }
 
       await loadDataForDate(_selectedDate);
       await loadMonthlyData(_focusedMonth);

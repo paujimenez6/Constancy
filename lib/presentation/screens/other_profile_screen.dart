@@ -173,6 +173,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     final user = widget.userData;
 
     final int xpTotal = (user['punts_xp'] is int) ? user['punts_xp'] : 0;
+    final int monedes = (user['monedes'] != null) ? int.parse(user['monedes'].toString()) : 0;
 
     final habitProvider = context.watch<HabitProvider>();
     final privacitat = user['configuracio_privacitat'] ?? 'public';
@@ -205,7 +206,14 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
 
                   const SizedBox(height: 12),
 
-                  _buildXpDisplay(theme, xpTotal),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildXpDisplay(theme, xpTotal),
+                      const SizedBox(width: 12),
+                      _buildCoinsDisplay(theme, monedes),
+                    ],
+                  ),
 
                   const SizedBox(height: 24),
 
@@ -280,6 +288,27 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
               letterSpacing: 0.5,
               fontSize: 13,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCoinsDisplay(ThemeData theme, int monedes) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.monetization_on_rounded, size: 18, color: Colors.amber),
+          const SizedBox(width: 6),
+          Text(
+            "$monedes",
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber, fontSize: 13),
           ),
         ],
       ),

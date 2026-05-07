@@ -78,6 +78,8 @@ class LeagueParticipationModel {
   final String? imatgePerfil;
   final String? nom;
   final String? cognom;
+  final int puntsXP;
+  final int monedes;
 
   LeagueParticipationModel({
     required this.userId,
@@ -88,6 +90,8 @@ class LeagueParticipationModel {
     this.imatgePerfil,
     this.nom,
     this.cognom,
+    this.puntsXP = 0,
+    this.monedes = 0,
   });
 
   factory LeagueParticipationModel.fromJson(Map<String, dynamic> json) {
@@ -101,6 +105,8 @@ class LeagueParticipationModel {
       imatgePerfil: profile?['imatge_perfil'],
       nom: profile?['nom'],
       cognom: profile?['cognom'],
+      puntsXP: profile?['punts_xp'] ?? 0,
+      monedes: profile?['monedes'] ?? 0,
     );
   }
 }

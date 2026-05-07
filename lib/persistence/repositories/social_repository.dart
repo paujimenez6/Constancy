@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class SocialRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  String? get currentUserId => _supabase.auth.currentUser?.id;
+
   Future<Map<String, bool>> getFollowStatus(String targetUserId) async {
     final currentUserId = _supabase.auth.currentUser!.id;
 
@@ -65,7 +67,7 @@ class SocialRepository {
 
     final res = await _supabase
         .from('follow_requests')
-        .select('*, profiles:sender_id(id, nickname, nom, cognom, imatge_perfil, punts_xp, configuracio_privacitat)')
+        .select('*, profiles:sender_id(id, nickname, nom, cognom, imatge_perfil, punts_xp, monedes, configuracio_privacitat)')
         .eq('receiver_id', currentUserId);
 
     return List<Map<String, dynamic>>.from(res);
@@ -114,7 +116,7 @@ class SocialRepository {
   Future<List<Map<String, dynamic>>> getFollowersList(String userId) async {
     final res = await _supabase
         .from('follows')
-        .select('profiles:follower_id(id, nickname, nom, cognom, imatge_perfil, punts_xp, configuracio_privacitat)')
+        .select('profiles:follower_id(id, nickname, nom, cognom, imatge_perfil, punts_xp, monedes, configuracio_privacitat)')
         .eq('following_id', userId);
     return (res as List).map((e) => e['profiles'] as Map<String, dynamic>).toList();
   }
@@ -122,7 +124,7 @@ class SocialRepository {
   Future<List<Map<String, dynamic>>> getFollowingList(String userId) async {
     final res = await _supabase
         .from('follows')
-        .select('profiles:following_id(id, nickname, nom, cognom, imatge_perfil, punts_xp, configuracio_privacitat)')
+        .select('profiles:follower_id(id, nickname, nom, cognom, imatge_perfil, punts_xp, monedes, configuracio_privacitat)')
         .eq('follower_id', userId);
     return (res as List).map((e) => e['profiles'] as Map<String, dynamic>).toList();
   }
@@ -161,7 +163,7 @@ class SocialRepository {
 
       final data = await _supabase
           .from('profiles')
-          .select('id, nickname, nom, cognom, imatge_perfil, punts_xp, configuracio_privacitat')
+          .select('id, nickname, nom, cognom, imatge_perfil, punts_xp, monedes, configuracio_privacitat')
           .ilike('nickname', '%$query%')
           .neq('id', currentUserId)
           .limit(limit);

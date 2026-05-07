@@ -6,6 +6,8 @@ import '../../domain/models/habit_record_model.dart';
 class HabitRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  String? get currentUserId => _supabase.auth.currentUser?.id;
+
   Future<List<HabitModel>> getHabits() async {
     final userId = _supabase.auth.currentUser!.id;
 

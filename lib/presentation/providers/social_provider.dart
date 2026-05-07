@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../domain/services/social_service.dart';
+import '../../domain/services/mission_service.dart';
 import '../../domain/models/social_stats_model.dart';
 
 class SocialProvider extends ChangeNotifier {
   final SocialService _socialService;
+  final MissionService _missionService;
 
   SocialStats? _stats;
 
-  SocialProvider(this._socialService);
+  SocialProvider(this._socialService, this._missionService);
 
   int get followersCount => _stats?.followersCount ?? 0;
   int get followingCount => _stats?.followingCount ?? 0;
@@ -23,24 +25,51 @@ class SocialProvider extends ChangeNotifier {
   }
 
   Future<void> toggleFollow(String targetId, String privacy) async {
-    await _socialService.toggleFollow(targetId, privacy);
-    notifyListeners();
+    try {
+      final status = await _socialService.getFollowStatus(targetId);
+      final bool wasNotFollowing = !status['isFollowing']! && !status['isPending']!;
+
+      await _socialService.toggleFollow(targetId, privacy);
+
+      if (wasNotFollowing) {
+        final myId = _socialService.currentUserId;
+        if (myId != null) {
+          await _missionService.updateProgress(myId, 'social', 1.0, targetId);
+        }
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error a toggleFollow: $e");
+      rethrow;
+    }
   }
 
   Future<SocialStats> getOtherUserStats(String userId) {
     return _socialService.getSocialOverview(userId);
   }
 
-  Future<List<Map<String, dynamic>>> getPendingRequests() => _socialService.getPendingRequests();
-  Future<List<Map<String, dynamic>>> getFollowNotifications() => _socialService.getFollowNotifications();
-  Future<void> markNotificationsAsRead() => _socialService.markNotificationsAsRead();
   Future<void> acceptFollowRequest(String reqId, String followerId) => _socialService.acceptFollowRequest(reqId, followerId);
+
+  Future<List<Map<String, dynamic>>> getPendingRequests() => _socialService.getPendingRequests();
+
+  Future<List<Map<String, dynamic>>> getFollowNotifications() => _socialService.getFollowNotifications();
+
+  Future<void> markNotificationsAsRead() => _socialService.markNotificationsAsRead();
+
   Future<void> rejectFollowRequest(String reqId) => _socialService.rejectFollowRequest(reqId);
+
   Future<Map<String, bool>> getFollowStatus(String targetId) => _socialService.getFollowStatus(targetId);
+
   Future<void> unfollowOrCancel(String targetId, bool isPending) => _socialService.unfollowOrCancel(targetId, isPending);
+
   Future<void> followUser(String targetId, String privacy) => _socialService.followUser(targetId, privacy);
+
   Future<List<Map<String, dynamic>>> getFollowersList(String userId) => _socialService.getFollowersList(userId);
+
   Future<List<Map<String, dynamic>>> getFollowingList(String userId) => _socialService.getFollowingList(userId);
+
   Future<List<Map<String, dynamic>>> searchUsers(String query, {int limit = 20}) => _socialService.searchUsers(query, limit: limit);
+
   Future<void> removeFollower(String followerId) => _socialService.removeFollower(followerId);
 }

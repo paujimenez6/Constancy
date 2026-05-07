@@ -13,6 +13,7 @@ class HabitService {
 
   HabitService(this._habitRepository);
 
+  String? get currentUserId => _habitRepository.currentUserId;
   Future<List<HabitModel>> getHabits() => _habitRepository.getHabits();
   Future<HabitModel> createHabit(HabitModel habit) => _habitRepository.createHabit(habit);
   Future<void> deleteHabit(String habitId) => _habitRepository.deleteHabit(habitId);
