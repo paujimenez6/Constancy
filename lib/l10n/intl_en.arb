@@ -218,7 +218,7 @@
   "timeLeftDays": "{days} days left",
   "timeLeftHoursMinutes": "{hours} hours and {minutes} minutes left",
   "timeLeftMinutes": "{minutes} minutes left",
-  "leagueResultCongratulation": "🎉 Congratulations!",
+  "leagueResultCongratulation": "Congratulations!",
   "leagueResultFinished": "Season Ended",
   "leagueResultPosition": "You finished in position {pos}.",
   "leagueResultPromoted": "You've been promoted to {level} league!",
@@ -240,5 +240,9 @@
   "missionXpDesc": "Earn {goal} XP in a single day",
   "missionRewardTitle": "Congratulations!",
   "missionRewardSubtitle": "You completed the mission and won:",
-  "awesome": "Awesome!"
+  "awesome": "Awesome!",
+  "missionPerfectDayTitle": "Perfect Day",
+  "missionPerfectDayDesc": "Complete all your planned habits for today",
+  "missionTopLeagueTitle": "League Elite",
+  "missionTopLeagueDesc": "Be in the top 3 in your league"
 }

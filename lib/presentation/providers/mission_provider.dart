@@ -55,6 +55,12 @@ class MissionProvider extends ChangeNotifier {
   Future<bool> claimMission(UserMissionModel mission, String userId) async {
     try {
       await _service.claimReward(mission, userId);
+      await notifyAction(
+          userId,
+          'xp',
+          'claim_${mission.id}',
+          amount: mission.definicio.recompensaXp.toDouble()
+      );
       return true;
     } catch (e) {
       debugPrint("Error al reclamar: $e");

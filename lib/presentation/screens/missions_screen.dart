@@ -158,8 +158,7 @@ class _MissionsScreenState extends State<MissionsScreen> {
                           final success = await missionProv
                               .claimMission(mission, userId!);
                           if (success && mounted) {
-                            _showRewardEffect(
-                                context, mission.definicio);
+                            _showRewardEffect(context, mission.definicio);
                           }
                         },
                       );
@@ -400,8 +399,7 @@ class _MissionCard extends StatelessWidget {
                     minHeight: 8,
                     backgroundColor:
                     theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                        isDone ? Colors.green : theme.colorScheme.primary),
+                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                   ),
                 ),
               ),
@@ -446,54 +444,46 @@ class _MissionCard extends StatelessWidget {
 
   IconData _getIcon(String tipus) {
     switch (tipus) {
-      case 'habits':
-        return Icons.task_alt_rounded;
-      case 'social':
-        return Icons.people_rounded;
-      case 'xp':
-        return Icons.bolt_rounded;
-      default:
-        return Icons.star_rounded;
+      case 'habits': return Icons.task_alt_rounded;
+      case 'social': return Icons.people_rounded;
+      case 'xp': return Icons.bolt_rounded;
+      case 'perfect_day': return Icons.local_fire_department;
+      case 'league': return Icons.emoji_events_rounded;
+      default: return Icons.star_rounded;
     }
   }
 
   Color _getIconColor(String tipus) {
     switch (tipus) {
-      case 'habits':
-        return Colors.green;
-      case 'social':
-        return Colors.blue;
-      case 'xp':
-        return Colors.orange;
-      default:
-        return Colors.purple;
+      case 'habits': return Colors.green;
+      case 'social': return Colors.blue;
+      case 'xp': return Colors.orange;
+      case 'perfect_day': return Colors.red;
+      case 'league': return Colors.purpleAccent;
+      default: return Colors.grey;
     }
   }
 
   String _getLocalizedTitle(String clau, S strings) {
     switch (clau) {
-      case 'mission_habits_title':
-        return strings.missionHabitsTitle;
-      case 'mission_social_title':
-        return strings.missionSocialTitle;
-      case 'mission_xp_title':
-        return strings.missionXpTitle;
-      default:
-        return clau;
+      case 'mission_habits_title': return strings.missionHabitsTitle;
+      case 'mission_social_title': return strings.missionSocialTitle;
+      case 'mission_xp_title': return strings.missionXpTitle;
+      case 'mission_perfect_day_title': return strings.missionPerfectDayTitle;
+      case 'mission_top_league_title': return strings.missionTopLeagueTitle;
+      default: return clau;
     }
   }
 
   String _getLocalizedDesc(String clau, S strings, double goal) {
     final g = goal.toInt().toString();
     switch (clau) {
-      case 'mission_habits_desc':
-        return strings.missionHabitsDesc(g);
-      case 'mission_social_desc':
-        return strings.missionSocialDesc(g);
-      case 'mission_xp_desc':
-        return strings.missionXpDesc(g);
-      default:
-        return clau;
+      case 'mission_habits_desc': return strings.missionHabitsDesc(g);
+      case 'mission_social_desc': return strings.missionSocialDesc(g);
+      case 'mission_xp_desc': return strings.missionXpDesc(g);
+      case 'mission_perfect_day_desc': return strings.missionPerfectDayDesc;
+      case 'mission_top_league_desc': return strings.missionTopLeagueDesc;
+      default: return clau;
     }
   }
 }

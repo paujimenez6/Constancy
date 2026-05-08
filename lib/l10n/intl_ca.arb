@@ -218,7 +218,7 @@
   "timeLeftDays": "Queden {days} dies",
   "timeLeftHoursMinutes": "Queden {hours}h i {minutes}minuts",
   "timeLeftMinutes": "Queden {minutes} minuts",
-  "leagueResultCongratulation": "🎉 Felicitats! ",
+  "leagueResultCongratulation": "Felicitats! ",
   "leagueResultFinished": "Temporada acabada",
   "leagueResultPosition": "Has quedat en posició {pos}.",
   "leagueResultPromoted": "Has ascendit a la lliga {level}!",
@@ -240,5 +240,9 @@
   "missionXpDesc": "Guanya {goal} XP en un sol dia",
   "missionRewardTitle": "Enhorabona!",
   "missionRewardSubtitle": "Has completat la missió i has guanyat:",
-  "awesome": "Genial!"
+  "awesome": "Genial!",
+  "missionPerfectDayTitle": "Dia Perfecte",
+  "missionPerfectDayDesc": "Completa tots els teus hàbits previstos per avui",
+  "missionTopLeagueTitle": "L'èlit de la lliga",
+  "missionTopLeagueDesc": "Estigues entre els 3 millors de la teva lliga"
 }

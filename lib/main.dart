@@ -73,9 +73,9 @@ void main() async {
           create: (context) => HabitProvider(context.read<HabitService>(), context.read<MissionService>(),),
           update: (context, habitService, missionService, previous) => previous ?? HabitProvider(habitService, missionService),
         ),
-        ChangeNotifierProxyProvider<LeagueService, LeagueProvider>(
-          create: (context) => LeagueProvider(context.read<LeagueService>()),
-          update: (context, leagueService, previous) => previous ?? LeagueProvider(leagueService),
+        ChangeNotifierProxyProvider2<LeagueService, MissionService, LeagueProvider>(
+          create: (context) => LeagueProvider(context.read<LeagueService>(), context.read<MissionService>(),),
+          update: (context, leagueService, missionService, previous) => previous ?? LeagueProvider(leagueService, missionService),
         ),
         ChangeNotifierProxyProvider<MissionService, MissionProvider>(
           create: (context) => MissionProvider(context.read<MissionService>()),

@@ -133,6 +133,16 @@ class HabitProvider extends ChangeNotifier {
         final myId = _habitService.currentUserId;
         if (myId != null) {
           await _missionService.updateProgress(myId, 'habits', 1.0, habitId);
+
+          await loadDataForDate(_selectedDate);
+
+          final habitsAvui = filteredHabits;
+          if (habitsAvui.isNotEmpty) {
+            bool totsComplets = habitsAvui.every((h) => _dailyRecords[h.id]?.completat ?? false);
+            if (totsComplets) {
+              await _missionService.updateProgress(myId, 'perfect_day', 1.0, 'perfect_${now.day}${now.month}');
+            }
+          }
         }
       }
 

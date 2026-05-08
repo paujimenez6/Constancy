@@ -2,9 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../domain/models/league_model.dart';
 import '../../domain/services/league_service.dart';
+import '../../domain/services/mission_service.dart';
 
 class LeagueProvider extends ChangeNotifier {
   final LeagueService _leagueService;
+  final MissionService _missionService;
+
   StreamSubscription? _rankingSubscription;
   StreamSubscription? _participationSubscription;
   StreamSubscription? _resultsSubscription;
@@ -14,7 +17,7 @@ class LeagueProvider extends ChangeNotifier {
   LeagueResultModel? _pendingResult;
   bool _isLoading = false;
 
-  LeagueProvider(this._leagueService);
+  LeagueProvider(this._leagueService, this._missionService);
 
   LeagueModel? get currentLeague => _currentLeague;
   List<LeagueParticipationModel> get ranking => _ranking;
@@ -46,6 +49,7 @@ class LeagueProvider extends ChangeNotifier {
         await _rankingSubscription?.cancel();
         _rankingSubscription = _leagueService.getRankingStream(_currentLeague!.id).listen((newList) {
           _ranking = newList;
+          _checkLeagueMission(userId);
           notifyListeners();
         });
       } else {
@@ -55,6 +59,15 @@ class LeagueProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  void _checkLeagueMission(String userId) {
+    final meIndex = _ranking.indexWhere((p) => p.userId == userId);
+    final position = meIndex + 1;
+
+    if (position > 0 && position <= 3) {
+      _missionService.updateProgress(userId, 'league', 1.0, 'top3_${DateTime.now().day}');
     }
   }
 
