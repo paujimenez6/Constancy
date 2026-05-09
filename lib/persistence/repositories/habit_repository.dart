@@ -153,4 +153,22 @@ class HabitRepository {
       throw Exception('Error al Repositori en actualitzar el comentari: $e');
     }
   }
+
+  Future<void> applyStreakShield(String userId, DateTime date, String inventoryId) async {
+    await _supabase.rpc('aplicar_protector_ratxa', params: {
+      'p_user_id': userId,
+      'p_date': date.toIso8601String().split('T')[0],
+      'p_inventory_id': inventoryId,
+    });
+  }
+
+  Future<void> unshieldDate(String userId, DateTime date) async {
+    final dateStr = date.toIso8601String().split('T')[0];
+
+    await _supabase
+        .from('habit_records')
+        .update({'is_shielded': false, 'completat': false,})
+        .eq('user_id', userId)
+        .eq('data_registre', dateStr);
+  }
 }

@@ -6,6 +6,7 @@ class HabitRecordModel {
   final bool completat;
   final double valorProgres;
   final String? comentari;
+  final bool isShielded;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -17,6 +18,7 @@ class HabitRecordModel {
     this.completat = false,
     this.valorProgres = 0.0,
     this.comentari,
+    this.isShielded = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -25,6 +27,7 @@ class HabitRecordModel {
     bool? completat,
     double? valorProgres,
     String? comentari,
+    bool? isShielded,
     bool updateComentari = false,
   }) {
     return HabitRecordModel(
@@ -35,6 +38,7 @@ class HabitRecordModel {
       completat: completat ?? this.completat,
       valorProgres: valorProgres ?? this.valorProgres,
       comentari: updateComentari ? comentari : (comentari ?? this.comentari),
+      isShielded: isShielded ?? this.isShielded,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
@@ -49,6 +53,7 @@ class HabitRecordModel {
       completat: json['completat'] ?? false,
       valorProgres: (json['valor_progres'] ?? 0).toDouble(),
       comentari: json['comentari'],
+      isShielded: json['is_shielded'] ?? false,
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
     );

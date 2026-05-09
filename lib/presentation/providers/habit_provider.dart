@@ -113,6 +113,14 @@ class HabitProvider extends ChangeNotifier {
 
   Future<void> updateProgress({required String habitId, required double valorProgres, required bool completat}) async {
     try {
+      final myId = _habitService.currentUserId;
+      if (myId == null) return;
+
+      bool isShieldedToday = _dailyRecords.values.any((r) => r.isShielded);
+      if (isShieldedToday) {
+        await _habitService.removeShieldFromDate(myId, _selectedDate);
+      }
+
       final bool wasCompleted = _dailyRecords[habitId]?.completat ?? false;
       final existingComment = _dailyRecords[habitId]?.comentari;
 
@@ -265,5 +273,22 @@ class HabitProvider extends ChangeNotifier {
       endDate: end,
       selectedHabitId: habitId,
     );
+  }
+
+  Future<void> useStreakShield(String userId, DateTime date, String inventoryId) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _habitService.applyShield(userId, date, inventoryId);
+      await loadDataForDate(date);
+      await loadAllTimeData();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> isDateShielded(DateTime date) async {
+    return await _habitService.isDateShielded(date);
   }
 }

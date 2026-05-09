@@ -13,6 +13,7 @@ class UserModel {
   final DateTime dataRegistre;
   final bool dobleFactorActiu;
   final String? token;
+  final DateTime? multiplicadorXpFins;
 
   UserModel({
     required this.id,
@@ -27,6 +28,7 @@ class UserModel {
     required this.dataRegistre,
     this.dobleFactorActiu = false,
     this.token,
+    this.multiplicadorXpFins,
   });
 
   UserModel copyWith({
@@ -41,6 +43,7 @@ class UserModel {
     DateTime? dataRegistre,
     bool? dobleFactorActiu,
     String? token,
+    DateTime? multiplicadorXpFins,
   }) {
     return UserModel(
       id: id,
@@ -55,6 +58,7 @@ class UserModel {
       dataRegistre: dataRegistre ?? this.dataRegistre,
       dobleFactorActiu: dobleFactorActiu ?? this.dobleFactorActiu,
       token: token ?? this.token,
+      multiplicadorXpFins: multiplicadorXpFins ?? this.multiplicadorXpFins,
     );
   }
 
@@ -74,6 +78,9 @@ class UserModel {
       dataRegistre: json['data_registre'] != null ? DateTime.parse(json['data_registre']) : DateTime.now(),
       dobleFactorActiu: json['doble_factor_actiu'] ?? false,
       token: json['token'],
+      multiplicadorXpFins: json['multiplicador_xp_fins'] != null ? DateTime.parse(json['multiplicador_xp_fins']) : null,
     );
   }
+
+  bool get isMultiplierActive => multiplicadorXpFins != null && multiplicadorXpFins!.isAfter(DateTime.now());
 }

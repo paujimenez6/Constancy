@@ -18,7 +18,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   @override
   void initState() {
     super.initState();
@@ -27,10 +26,91 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<bool?> _showShieldWarning(BuildContext context) async {
+    final strings = S.of(context);
+    final theme = Theme.of(context);
+
+    return await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Icon(Icons.shield_outlined, size: 45, color: theme.colorScheme.primary),
+            const SizedBox(height: 16),
+            Text(
+              strings.shieldWarningTitle,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              strings.shieldWarningDesc,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 15,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(
+                      strings.cancel,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      strings.confirm,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final strings = S.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final user = context.watch<AuthProvider>().currentUser;
     final habitProvider = context.watch<HabitProvider>();
 
@@ -40,6 +120,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final activeHabits = habitProvider.filteredHabits;
     final dataSeleccionadaFormatada = DateFormat.yMMMMd(Intl.getCurrentLocale()).format(habitProvider.selectedDate);
+
+    final bool isShieldedToday = habitProvider.dailyRecords.values.any((r) => r.isShielded);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -66,9 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.archive_outlined),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(
-                builder: (context) => const ArchivedHabitsScreen(),
-              ));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const ArchivedHabitsScreen()));
             },
           ),
           const SizedBox(width: 8),
@@ -77,6 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           const DateSelectorWidget(),
+          if (isShieldedToday) _buildShieldBanner(strings),
           const SizedBox(height: 8),
           Expanded(
             child: habitProvider.isLoading
@@ -107,23 +188,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 final color = HabitAssets.hexToColor(habit.color);
                 final progresActual = record?.valorProgres ?? 0.0;
-                final estaCompletat = progresActual >= habit.valorObjectiu;
+                final estaCompletat = record?.completat ?? false;
+                final isItemShielded = record?.isShielded ?? false;
 
                 return InkWell(
-                  onTap: () {
-                    Navigator.push(context, MaterialPageRoute(
-                        builder: (context) => HabitDetailScreen(habitId: habit.id)
-                    ));
+                  onTap: () async {
+                    if (isShieldedToday) {
+                      final proceed = await _showShieldWarning(context);
+                      if (proceed != true) return;
+                    }
+                    if (context.mounted) {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => HabitDetailScreen(habitId: habit.id)));
+                    }
                   },
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: estaCompletat ? color.withValues(alpha:0.1) : colorScheme.surface,
+                      color: estaCompletat ? color.withValues(alpha: 0.1) : colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: estaCompletat ? color : colorScheme.outlineVariant.withValues(alpha:0.5),
-                        width: estaCompletat ? 2 : 1,
+                        color: isItemShielded ? Colors.blueGrey : (estaCompletat ? color : colorScheme.outlineVariant.withValues(alpha: 0.5)), width: estaCompletat ? 2 : 1,
                       ),
                     ),
                     child: Row(
@@ -131,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: color.withValues(alpha:0.2),
+                            color: color.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(HabitAssets.getIconByName(habit.icona), color: color, size: 28),
@@ -157,16 +242,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                   if (habit.ratxaActual > 0) ...[
                                     const SizedBox(width: 8),
                                     Icon(Icons.local_fire_department_rounded, color: Colors.orange[700], size: 20),
-                                    Text(
-                                      "${habit.ratxaActual}",
-                                      style: TextStyle(color: Colors.orange[800], fontWeight: FontWeight.bold),
-                                    ),
+                                    Text("${habit.ratxaActual}", style: TextStyle(color: Colors.orange[800], fontWeight: FontWeight.bold),),
                                   ],
                                 ],
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                "${progresActual % 1 == 0 ? progresActual.toInt() : progresActual} / ${habit.valorObjectiu % 1 == 0 ? habit.valorObjectiu.toInt() : habit.valorObjectiu} ${habit.unitatMesura.getLocalizedString(context)}",
+                                isItemShielded ? strings.shieldDayTag : "${progresActual % 1 == 0 ? progresActual.toInt() : progresActual} / ${habit.valorObjectiu % 1 == 0 ? habit.valorObjectiu.toInt() : habit.valorObjectiu} ${habit.unitatMesura.getLocalizedString(context)}",
                                 style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                               ),
                             ],
@@ -174,6 +256,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         IconButton(
                           onPressed: () async {
+                            if (isShieldedToday) {
+                              final proceed = await _showShieldWarning(context);
+                              if (proceed != true) return;
+                            }
+
                             double nouProgres = estaCompletat ? 0 : habit.valorObjectiu;
                             await habitProvider.updateProgress(
                               habitId: habit.id,
@@ -182,8 +269,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           },
                           icon: Icon(
-                            estaCompletat ? Icons.check_circle_rounded : Icons.circle_outlined,
-                            color: estaCompletat ? color : colorScheme.outline,
+                            isItemShielded
+                                ? Icons.shield_rounded
+                                : (estaCompletat
+                                ? Icons.check_circle_rounded
+                                : Icons.circle_outlined),
+                            color: isItemShielded
+                                ? Colors.blueGrey
+                                : (estaCompletat ? color : colorScheme.outline),
                             size: 32,
                           ),
                         )
@@ -198,14 +291,50 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          Navigator.push(context, MaterialPageRoute(
-              builder: (context) => const HabitFormScreen()
-          ));
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => const HabitFormScreen()));
         },
         label: Text(strings.addHabit),
         icon: const Icon(Icons.add),
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
+      ),
+    );
+  }
+
+  Widget _buildShieldBanner(S strings) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.blueGrey.shade400, Colors.blueGrey.shade700],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.shield_rounded, color: Colors.white, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(strings.shieldDayTag.toUpperCase(),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        letterSpacing: 1)),
+                Text(strings.shieldActivated,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -246,7 +375,8 @@ class _DateSelectorWidgetState extends State<DateSelectorWidget> {
     final double fullItemWidth = itemWidth + (itemMargin * 2);
     const int todayIndex = 14;
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double offset = (todayIndex * fullItemWidth) + paddingLeft + (fullItemWidth / 2) - (screenWidth / 2);
+    final double offset =
+        (todayIndex * fullItemWidth) + paddingLeft + (fullItemWidth / 2) - (screenWidth / 2);
 
     _scrollController.animateTo(
       offset,
@@ -292,10 +422,17 @@ class _DateSelectorWidgetState extends State<DateSelectorWidget> {
               width: itemWidth,
               margin: EdgeInsets.symmetric(horizontal: itemMargin),
               decoration: BoxDecoration(
-                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha:0.05),
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.primary.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: isSelected
-                    ? [BoxShadow(color: theme.colorScheme.primary.withValues(alpha:0.3), blurRadius: 8, offset: const Offset(0, 4))]
+                    ? [
+                  BoxShadow(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4))
+                ]
                     : [],
               ),
               child: Column(

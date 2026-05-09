@@ -1,7 +1,9 @@
 import 'package:Constancy/persistence/repositories/league_repository.dart';
 import 'package:Constancy/persistence/repositories/mission_repository.dart';
+import 'package:Constancy/persistence/repositories/shop_repository.dart';
 import 'package:Constancy/presentation/providers/league_provider.dart';
 import 'package:Constancy/presentation/providers/mission_provider.dart';
+import 'package:Constancy/presentation/providers/shop_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'domain/services/league_service.dart';
 import 'domain/services/mission_service.dart';
+import 'domain/services/shop_service.dart';
 import 'generated/l10n.dart';
 import 'presentation/screens/mfa_challenge_screen.dart';
 import 'presentation/screens/update_password_screen.dart';
@@ -46,6 +49,7 @@ void main() async {
         Provider(create: (_) => HabitRepository()),
         Provider(create: (_) => LeagueRepository()),
         Provider(create: (_) => MissionRepository()),
+        Provider(create: (_) => ShopRepository()),
         ProxyProvider<AuthRepository, AuthService>(
           update: (context, authRepo, previous) => AuthService(authRepo),
         ),
@@ -60,6 +64,9 @@ void main() async {
         ),
         ProxyProvider<MissionRepository, MissionService>(
           update: (context, missionRepo, previous) => previous ?? MissionService(missionRepo),
+        ),
+        ProxyProvider<ShopRepository, ShopService>(
+          update: (context, shopRepo, previous) => ShopService(shopRepo),
         ),
         ChangeNotifierProxyProvider<AuthService, AuthProvider>(
           create: (context) => AuthProvider(context.read<AuthService>()),
@@ -80,6 +87,10 @@ void main() async {
         ChangeNotifierProxyProvider<MissionService, MissionProvider>(
           create: (context) => MissionProvider(context.read<MissionService>()),
           update: (context, missionService, previous) => previous ?? MissionProvider(missionService),
+        ),
+        ChangeNotifierProxyProvider<ShopService, ShopProvider>(
+          create: (context) => ShopProvider(context.read<ShopService>()),
+          update: (context, shopService, previous) => previous ?? ShopProvider(shopService),
         ),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],

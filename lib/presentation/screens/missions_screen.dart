@@ -42,7 +42,9 @@ class _MissionsScreenState extends State<MissionsScreen> {
 
     final missionProv = context.watch<MissionProvider>();
     final hasNotifications = context.watch<SocialProvider>().hasPendingRequests;
-    final userId = context.read<AuthProvider>().currentUser?.id;
+    final user = context.watch<AuthProvider>().currentUser;
+    final userId = user?.id;
+    final bool isMultiplierActive = user?.isMultiplierActive ?? false;
 
     return Stack(
       children: [
@@ -154,11 +156,12 @@ class _MissionsScreenState extends State<MissionsScreen> {
                       final mission = missionProv.missions[index];
                       return _MissionCard(
                         mission: mission,
+                        isMultiplierActive: isMultiplierActive,
                         onClaim: () async {
                           final success = await missionProv
-                              .claimMission(mission, userId!);
+                              .claimMission(mission, userId!, isMultiplierActive);
                           if (success && mounted) {
-                            _showRewardEffect(context, mission.definicio);
+                            _showRewardEffect(context, mission.definicio, isMultiplierActive);
                           }
                         },
                       );
@@ -201,9 +204,10 @@ class _MissionsScreenState extends State<MissionsScreen> {
     );
   }
 
-  void _showRewardEffect(BuildContext context, dynamic missionDef) {
+  void _showRewardEffect(BuildContext context, dynamic missionDef, bool isMultiplierActive) {
     final strings = S.of(context);
     final theme = Theme.of(context);
+    final int xpFinal = isMultiplierActive ? (missionDef.recompensaXp * 2) : missionDef.recompensaXp;
 
     _confettiController.play();
 
@@ -243,8 +247,10 @@ class _MissionsScreenState extends State<MissionsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildRewardItem("${missionDef.recompensaXp} XP",
-                          Icons.bolt_rounded, theme.colorScheme.primary),
+                      _buildRewardItem(
+                          "$xpFinal XP ${isMultiplierActive ? '(x2)' : ''}",
+                          Icons.bolt_rounded, theme.colorScheme.primary
+                      ),
                       const SizedBox(width: 20),
                       _buildRewardItem("${missionDef.recompensaMonedes}",
                           Icons.monetization_on_rounded, Colors.amber),
@@ -289,8 +295,13 @@ class _MissionsScreenState extends State<MissionsScreen> {
 class _MissionCard extends StatelessWidget {
   final dynamic mission;
   final VoidCallback onClaim;
+  final bool isMultiplierActive;
 
-  const _MissionCard({required this.mission, required this.onClaim});
+  const _MissionCard({
+    required this.mission,
+    required this.onClaim,
+    required this.isMultiplierActive
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -309,7 +320,7 @@ class _MissionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isDone && !isClaimed
-              ? theme.colorScheme.primary
+              ? (theme.colorScheme.primary)
               : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           width: isDone && !isClaimed ? 2 : 1,
         ),
@@ -361,12 +372,17 @@ class _MissionCard extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text("+${mission.definicio.recompensaXp}",
+                      Text(
+                          isMultiplierActive
+                              ? "+${mission.definicio.recompensaXp * 2} XP"
+                              : "+${mission.definicio.recompensaXp} XP",
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                               color: theme.colorScheme.primary)),
                       const SizedBox(width: 4),
+                      if (isMultiplierActive)
+                        Text("x2", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 10)),
                       Icon(Icons.bolt_rounded,
                           size: 14, color: theme.colorScheme.primary),
                     ],

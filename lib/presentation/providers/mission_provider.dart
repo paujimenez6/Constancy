@@ -52,14 +52,20 @@ class MissionProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> claimMission(UserMissionModel mission, String userId) async {
+  Future<bool> claimMission(UserMissionModel mission, String userId, bool hasMultiplier) async {
     try {
       await _service.claimReward(mission, userId);
+
+      double xpGuanyada = mission.definicio.recompensaXp.toDouble();
+      if (hasMultiplier) {
+        xpGuanyada *= 2;
+      }
+
       await notifyAction(
           userId,
           'xp',
           'claim_${mission.id}',
-          amount: mission.definicio.recompensaXp.toDouble()
+          amount: xpGuanyada
       );
       return true;
     } catch (e) {
