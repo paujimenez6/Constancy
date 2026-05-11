@@ -283,5 +283,9 @@
   "rerollConfirmTitle": "Cambiar Misión",
   "rerollConfirmDesc": "¿Quieres utilizar un Reroll para cambiar esta misión? El progreso actual se perderá.",
   "noRerollAvailable": "¡No tienes objetos de Reroll!",
-  "rerollSuccess": "Misión cambiada correctamente"
+  "rerollSuccess": "Misión cambiada correctamente",
+  "mission_shop_buy_title": "Consumista",
+  "mission_shop_buy_desc": "Compra 1 objeto cualquiera en la tienda.",
+  "mission_inventory_use_title": "Preparado para todo",
+  "mission_inventory_use_desc": "Utiliza 1 objeto de tu inventario."
 }

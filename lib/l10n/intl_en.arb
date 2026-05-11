@@ -283,5 +283,9 @@
   "rerollConfirmTitle": "Change Mission",
   "rerollConfirmDesc": "Do you want to use a Reroll to change this mission? Current progress will be lost.",
   "noRerollAvailable": "You have no Reroll items!",
-  "rerollSuccess": "Mission changed successfully"
+  "rerollSuccess": "Mission changed successfully",
+  "mission_shop_buy_title": "Consumer",
+  "mission_shop_buy_desc": "Buy 1 any item in the shop.",
+  "mission_inventory_use_title": "Ready for everything",
+  "mission_inventory_use_desc": "Use 1 item from your inventory."
 }

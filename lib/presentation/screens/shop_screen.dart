@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../generated/l10n.dart';
+import '../providers/mission_provider.dart';
 import '../providers/shop_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/habit_provider.dart';
@@ -72,6 +73,11 @@ class _ShopScreenState extends State<ShopScreen> {
       try {
         await context.read<ShopProvider>().buyItem(item.id, user.id);
         if (mounted) {
+          await context.read<MissionProvider>().notifyAction(
+              user.id,
+              'shop_buy',
+              'buy_${item.id}_${DateTime.now().millisecondsSinceEpoch}'
+          );
           messenger.showSnackBar(SnackBar(content: Text(strings.purchaseSuccess)));
         }
       } catch (e) {
@@ -114,6 +120,7 @@ class _ShopScreenState extends State<ShopScreen> {
           await habitProv.useStreakShield(user.id, picked, invItem.id);
           if (mounted) {
             await context.read<ShopProvider>().loadShopAndInventory(user.id);
+            await _notifyInventoryUse(user.id, invItem.id);
             messenger.showSnackBar(SnackBar(content: Text(strings.shieldActivated)));
           }
         } catch (e) {
@@ -141,6 +148,7 @@ class _ShopScreenState extends State<ShopScreen> {
           await context.read<ShopProvider>().activateXpMultiplier(user.id, invItem.id);
           if (mounted) {
             await context.read<ShopProvider>().loadShopAndInventory(user.id);
+            await _notifyInventoryUse(user.id, invItem.id);
             messenger.showSnackBar(SnackBar(content: Text(strings.multiplierActive)));
           }
         } catch (e) {
@@ -168,6 +176,7 @@ class _ShopScreenState extends State<ShopScreen> {
           await context.read<ShopProvider>().activateCoinMagnet(user.id, invItem.id);
           if (mounted) {
             await context.read<ShopProvider>().loadShopAndInventory(user.id);
+            await _notifyInventoryUse(user.id, invItem.id);
             messenger.showSnackBar(SnackBar(content: Text(strings.coinMultiplierLabel)));
           }
         } catch (e) {
@@ -181,6 +190,15 @@ class _ShopScreenState extends State<ShopScreen> {
       Navigator.pop(context);
       context.read<AuthProvider>().setTabIndex(3);
     }
+  }
+
+  Future<void> _notifyInventoryUse(String userId, String itemId) async {
+    if (!mounted) return;
+    await context.read<MissionProvider>().notifyAction(
+        userId,
+        'inventory_use',
+        'use_${itemId}_${DateTime.now().millisecondsSinceEpoch}'
+    );
   }
 
   Future<bool?> _showStyledConfirm({required String title, required String desc, required IconData icon}) {

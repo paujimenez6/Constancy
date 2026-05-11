@@ -108,6 +108,11 @@ class _MissionsScreenState extends State<MissionsScreen> {
       await context.read<MissionProvider>().reroll(user.id, userMissionId, inventoryId);
 
       if (mounted) {
+        await context.read<MissionProvider>().notifyAction(
+            user.id,
+            'inventory_use',
+            'reroll_${userMissionId}_${DateTime.now().millisecondsSinceEpoch}'
+        );
         await context.read<ShopProvider>().loadShopAndInventory(user.id);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.rerollSuccess)));
       }
@@ -423,9 +428,7 @@ class _MissionCard extends StatelessWidget {
                     value: mission.percentatge,
                     minHeight: 8,
                     backgroundColor: theme.colorScheme.outlineVariant.withValues(alpha:0.3),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      isDone ? Colors.green : (isMultiplierActive ? Colors.orange : theme.colorScheme.primary),
-                    ),
+                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                   ),
                 ),
               ),
@@ -499,6 +502,8 @@ class _MissionCard extends StatelessWidget {
       case 'xp': return Icons.bolt_rounded;
       case 'perfect_day': return Icons.local_fire_department;
       case 'league': return Icons.emoji_events_rounded;
+      case 'shop_buy': return Icons.shopping_cart;
+      case 'inventory_use': return Icons.inventory_2_rounded;
       default: return Icons.star_rounded;
     }
   }
@@ -510,6 +515,8 @@ class _MissionCard extends StatelessWidget {
       case 'xp': return Colors.orange;
       case 'perfect_day': return Colors.red;
       case 'league': return Colors.purpleAccent;
+      case 'shop_buy': return Colors.teal;
+      case 'inventory_use': return Colors.indigo;
       default: return Colors.grey;
     }
   }
@@ -521,6 +528,8 @@ class _MissionCard extends StatelessWidget {
       case 'mission_xp_title': return strings.missionXpTitle;
       case 'mission_perfect_day_title': return strings.missionPerfectDayTitle;
       case 'mission_top_league_title': return strings.missionTopLeagueTitle;
+      case 'mission_shop_buy_title': return strings.mission_shop_buy_title;
+      case 'mission_inventory_use_title': return strings.mission_inventory_use_title;
       default: return clau;
     }
   }
@@ -533,6 +542,8 @@ class _MissionCard extends StatelessWidget {
       case 'mission_xp_desc': return strings.missionXpDesc(g);
       case 'mission_perfect_day_desc': return strings.missionPerfectDayDesc;
       case 'mission_top_league_desc': return strings.missionTopLeagueDesc;
+      case 'mission_shop_buy_desc': return strings.mission_shop_buy_desc;
+      case 'mission_inventory_use_desc': return strings.mission_inventory_use_desc;
       default: return clau;
     }
   }
