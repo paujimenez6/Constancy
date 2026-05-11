@@ -8,12 +8,13 @@ class UserModel {
   final String correu;
   final String? imatgePerfil;
   final int puntsXP;
-  final int nivellXP;
   final int monedes;
   final TipusPrivacitat configuracioPrivacitat;
   final DateTime dataRegistre;
   final bool dobleFactorActiu;
   final String? token;
+  final DateTime? multiplicadorXpFins;
+  final DateTime? imantMonedesFins;
 
   UserModel({
     required this.id,
@@ -23,12 +24,13 @@ class UserModel {
     required this.correu,
     this.imatgePerfil,
     this.puntsXP = 0,
-    this.nivellXP = 1,
     this.monedes = 0,
     this.configuracioPrivacitat = TipusPrivacitat.privat,
     required this.dataRegistre,
     this.dobleFactorActiu = false,
     this.token,
+    this.multiplicadorXpFins,
+    this.imantMonedesFins,
   });
 
   UserModel copyWith({
@@ -38,12 +40,13 @@ class UserModel {
     String? correu,
     String? imatgePerfil,
     int? puntsXP,
-    int? nivellXP,
     int? monedes,
     TipusPrivacitat? configuracioPrivacitat,
     DateTime? dataRegistre,
     bool? dobleFactorActiu,
     String? token,
+    DateTime? multiplicadorXpFins,
+    DateTime? imantMonedesFins,
   }) {
     return UserModel(
       id: id,
@@ -53,12 +56,13 @@ class UserModel {
       correu: correu ?? this.correu,
       imatgePerfil: imatgePerfil ?? this.imatgePerfil,
       puntsXP: puntsXP ?? this.puntsXP,
-      nivellXP: nivellXP ?? this.nivellXP,
       monedes: monedes ?? this.monedes,
       configuracioPrivacitat: configuracioPrivacitat ?? this.configuracioPrivacitat,
       dataRegistre: dataRegistre ?? this.dataRegistre,
       dobleFactorActiu: dobleFactorActiu ?? this.dobleFactorActiu,
       token: token ?? this.token,
+      multiplicadorXpFins: multiplicadorXpFins ?? this.multiplicadorXpFins,
+      imantMonedesFins: imantMonedesFins ?? this.imantMonedesFins,
     );
   }
 
@@ -71,7 +75,6 @@ class UserModel {
       correu: json['correu'] ?? '',
       imatgePerfil: json['imatge_perfil'],
       puntsXP: json['punts_xp'] ?? 0,
-      nivellXP: json['nivell_xp'] ?? 1,
       monedes: json['monedes'] ?? 0,
       configuracioPrivacitat: TipusPrivacitat.values.firstWhere(
             (e) => e.toString().split('.').last == json['configuracio_privacitat'], orElse: () => TipusPrivacitat.privat,
@@ -79,6 +82,12 @@ class UserModel {
       dataRegistre: json['data_registre'] != null ? DateTime.parse(json['data_registre']) : DateTime.now(),
       dobleFactorActiu: json['doble_factor_actiu'] ?? false,
       token: json['token'],
+      multiplicadorXpFins: json['multiplicador_xp_fins'] != null ? DateTime.parse(json['multiplicador_xp_fins']) : null,
+      imantMonedesFins: json['imant_monedes_fins'] != null ? DateTime.parse(json['imant_monedes_fins']) : null,
     );
   }
+
+  bool get isMultiplierActive => multiplicadorXpFins != null && multiplicadorXpFins!.isAfter(DateTime.now());
+
+  bool get isCoinMagnetActive => imantMonedesFins != null && imantMonedesFins!.isAfter(DateTime.now());
 }

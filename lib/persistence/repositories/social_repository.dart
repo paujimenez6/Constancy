@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class SocialRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  String? get currentUserId => _supabase.auth.currentUser?.id;
+
   Future<Map<String, bool>> getFollowStatus(String targetUserId) async {
     final currentUserId = _supabase.auth.currentUser!.id;
 
@@ -65,7 +67,7 @@ class SocialRepository {
 
     final res = await _supabase
         .from('follow_requests')
-        .select('*, profiles:sender_id(nickname, nom, cognom, imatge_perfil)')
+        .select('*, profiles:sender_id(id, nickname, nom, cognom, imatge_perfil, punts_xp, monedes, configuracio_privacitat)')
         .eq('receiver_id', currentUserId);
 
     return List<Map<String, dynamic>>.from(res);
@@ -89,7 +91,7 @@ class SocialRepository {
   Future<int> getFollowersCount(String userId) async {
     final res = await _supabase
         .from('follows')
-        .select('*')
+        .select('follower_id')
         .eq('following_id', userId);
     return (res as List).length;
   }
@@ -97,7 +99,7 @@ class SocialRepository {
   Future<int> getFollowingCount(String userId) async {
     final res = await _supabase
         .from('follows')
-        .select('*')
+        .select('following_id')
         .eq('follower_id', userId);
     return (res as List).length;
   }
@@ -106,7 +108,7 @@ class SocialRepository {
     final currentUserId = _supabase.auth.currentUser!.id;
     final res = await _supabase
         .from('follow_requests')
-        .select('*')
+        .select('id')
         .eq('receiver_id', currentUserId);
     return (res as List).isNotEmpty;
   }
@@ -114,7 +116,7 @@ class SocialRepository {
   Future<List<Map<String, dynamic>>> getFollowersList(String userId) async {
     final res = await _supabase
         .from('follows')
-        .select('profiles:follower_id(id, nickname, nom, cognom, imatge_perfil, configuracio_privacitat, nivell_xp)')
+        .select('profiles:follower_id(id, nickname, nom, cognom, imatge_perfil, punts_xp, monedes, configuracio_privacitat)')
         .eq('following_id', userId);
     return (res as List).map((e) => e['profiles'] as Map<String, dynamic>).toList();
   }
@@ -122,7 +124,7 @@ class SocialRepository {
   Future<List<Map<String, dynamic>>> getFollowingList(String userId) async {
     final res = await _supabase
         .from('follows')
-        .select('profiles:following_id(id, nickname, nom, cognom, imatge_perfil, configuracio_privacitat, nivell_xp)')
+        .select('profiles:follower_id(id, nickname, nom, cognom, imatge_perfil, punts_xp, monedes, configuracio_privacitat)')
         .eq('follower_id', userId);
     return (res as List).map((e) => e['profiles'] as Map<String, dynamic>).toList();
   }
@@ -131,7 +133,7 @@ class SocialRepository {
     final currentUserId = _supabase.auth.currentUser!.id;
     final res = await _supabase
         .from('notifications')
-        .select('*, profiles:sender_id(id, nickname, nom, cognom, imatge_perfil, configuracio_privacitat, nivell_xp)')
+        .select('*, profiles:sender_id(id, nickname, nom, cognom, imatge_perfil, configuracio_privacitat, punts_xp)')
         .eq('receiver_id', currentUserId)
         .order('created_at', ascending: false);
     return List<Map<String, dynamic>>.from(res);
@@ -161,7 +163,7 @@ class SocialRepository {
 
       final data = await _supabase
           .from('profiles')
-          .select()
+          .select('id, nickname, nom, cognom, imatge_perfil, punts_xp, monedes, configuracio_privacitat')
           .ilike('nickname', '%$query%')
           .neq('id', currentUserId)
           .limit(limit);

@@ -253,5 +253,13 @@ class AuthRepository {
         .single();
     return UserModel.fromJson(data);
   }
+
+  Stream<UserModel> listenToProfile(String userId) {
+    return _supabase
+        .from('profiles')
+        .stream(primaryKey: ['id'])
+        .eq('id', userId)
+        .map((data) => UserModel.fromJson(data.first));
+  }
 }
 

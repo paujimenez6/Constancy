@@ -29,8 +29,9 @@ class AuthService {
 
   Future<void> signOut() => _authRepository.signOut();
 
-
-
+  Stream<UserModel> listenToProfile(String userId) {
+    return _authRepository.listenToProfile(userId);
+  }
 
   Future<UserModel> updateFullProfile({
     required String userId,

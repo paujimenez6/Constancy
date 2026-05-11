@@ -13,6 +13,7 @@ class HabitService {
 
   HabitService(this._habitRepository);
 
+  String? get currentUserId => _habitRepository.currentUserId;
   Future<List<HabitModel>> getHabits() => _habitRepository.getHabits();
   Future<HabitModel> createHabit(HabitModel habit) => _habitRepository.createHabit(habit);
   Future<void> deleteHabit(String habitId) => _habitRepository.deleteHabit(habitId);
@@ -102,7 +103,7 @@ class HabitService {
     final habit = habits.firstWhere((h) => h.id == habitId);
 
     final completedDates = records
-        .where((r) => r.completat)
+        .where((r) => r.completat || r.isShielded)
         .map((r) => DateTime(r.dataRegistre.year, r.dataRegistre.month, r.dataRegistre.day))
         .toList();
     completedDates.sort((a, b) => b.compareTo(a));
@@ -297,6 +298,17 @@ class HabitService {
 
     for (int i = 0; i < totalDaysInRange; i++) {
       DateTime date = startDate.add(Duration(days: i));
+
+      var recordsToday = records.where((r) =>
+      r.dataRegistre.year == date.year &&
+          r.dataRegistre.month == date.month &&
+          r.dataRegistre.day == date.day
+      ).toList();
+
+      bool isAnyShielded = recordsToday.any((r) => r.isShielded);
+
+      if (isAnyShielded) continue;
+
       var expectedOnDate = filterHabitsForDate(allHabits, date, includeArchived: true);
 
       if (selectedHabitId != null) {
@@ -370,5 +382,32 @@ class HabitService {
   Future<List<HabitModel>> getHabitsByUserId(String targetUserId) async {
     final habits = await _habitRepository.getHabitsByUserId(targetUserId);
     return habits;
+  }
+
+  Future<void> applyShield(String userId, DateTime date, String inventoryId) async {
+    await _habitRepository.applyStreakShield(userId, date, inventoryId);
+
+    final habits = await _habitRepository.getHabits();
+    for (var h in habits) {
+      if (!h.arxivat) {
+        await recalculateAndSaveStreaks(h.id);
+      }
+    }
+  }
+
+  Future<void> removeShieldFromDate(String userId, DateTime date) async {
+    await _habitRepository.unshieldDate(userId, date);
+
+    final habits = await _habitRepository.getHabits();
+    for (var h in habits) {
+      if (!h.arxivat) {
+        await recalculateAndSaveStreaks(h.id);
+      }
+    }
+  }
+
+  Future<bool> isDateShielded(DateTime date) async {
+    final records = await getRecordsForDate(date);
+    return records.any((r) => r.isShielded);
   }
 }

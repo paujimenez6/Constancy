@@ -6,6 +6,8 @@ class SocialService {
 
   SocialService(this._socialRepository);
 
+  String? get currentUserId => _socialRepository.currentUserId;
+
   Future<SocialStats> getSocialOverview(String userId) async {
     final results = await Future.wait([
       _socialRepository.getFollowersCount(userId),
