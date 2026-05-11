@@ -42,4 +42,12 @@ class MissionRepository {
       return data;
     });
   }
+
+  Future<void> rerollMission(String userId, String userMissionId, String inventoryId) async {
+    await _supabase.rpc('reroll_missio', params: {
+      'p_user_id': userId,
+      'p_user_mission_id': userMissionId,
+      'p_inventory_id': inventoryId,
+    });
+  }
 }

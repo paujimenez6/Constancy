@@ -39,4 +39,11 @@ class ShopRepository {
       'p_inventory_id': inventoryId,
     });
   }
+
+  Future<void> activateCoinMagnet(String userId, String inventoryId) async {
+    await _supabase.rpc('activar_imant_monedes', params: {
+      'p_user_id': userId,
+      'p_inventory_id': inventoryId,
+    });
+  }
 }

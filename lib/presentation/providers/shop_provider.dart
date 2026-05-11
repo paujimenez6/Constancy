@@ -45,4 +45,13 @@ class ShopProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<void> activateCoinMagnet(String userId, String inventoryId) async {
+    try {
+      await _service.activateCoinMagnet(userId, inventoryId);
+      await loadShopAndInventory(userId);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

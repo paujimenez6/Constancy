@@ -74,6 +74,18 @@ class MissionProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> reroll(String userId, String userMissionId, String inventoryId) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _service.executeReroll(userId, userMissionId, inventoryId);
+      await loadMissions(userId);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   @override
   void dispose() {
     _missionsSubscription?.cancel();

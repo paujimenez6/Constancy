@@ -71,7 +71,9 @@ class _ShopScreenState extends State<ShopScreen> {
       setState(() => _isProcessing = true);
       try {
         await context.read<ShopProvider>().buyItem(item.id, user.id);
-        if (mounted) messenger.showSnackBar(SnackBar(content: Text(strings.purchaseSuccess)));
+        if (mounted) {
+          messenger.showSnackBar(SnackBar(content: Text(strings.purchaseSuccess)));
+        }
       } catch (e) {
         messenger.showSnackBar(SnackBar(content: Text(strings.errorTransaction)));
       } finally {
@@ -87,7 +89,9 @@ class _ShopScreenState extends State<ShopScreen> {
 
     if (user == null) return;
 
-    if (invItem.definicio.tipusEfecte == 'streak_shield') {
+    final String effectType = invItem.definicio.tipusEfecte;
+
+    if (effectType == 'streak_shield') {
       final DateTime? picked = await showDatePicker(
         context: context,
         initialDate: DateTime.now(),
@@ -101,9 +105,7 @@ class _ShopScreenState extends State<ShopScreen> {
         final alreadyShielded = await habitProv.isDateShielded(picked);
 
         if (alreadyShielded) {
-          messenger.showSnackBar(
-              SnackBar(content: Text(strings.shieldAlreadyActive))
-          );
+          messenger.showSnackBar(SnackBar(content: Text(strings.shieldAlreadyActive)));
           return;
         }
 
@@ -120,7 +122,8 @@ class _ShopScreenState extends State<ShopScreen> {
           if (mounted) setState(() => _isProcessing = false);
         }
       }
-    } else if (invItem.definicio.tipusEfecte == 'xp_multiplier') {
+    }
+    else if (effectType == 'xp_multiplier') {
       if (user.isMultiplierActive) {
         messenger.showSnackBar(SnackBar(content: Text(strings.itemNotActive)));
         return;
@@ -147,6 +150,37 @@ class _ShopScreenState extends State<ShopScreen> {
         }
       }
     }
+    else if (effectType == 'coin_magnet') {
+      if (user.isCoinMagnetActive) {
+        messenger.showSnackBar(SnackBar(content: Text(strings.itemNotActive)));
+        return;
+      }
+
+      final bool? confirm = await _showStyledConfirm(
+        title: strings.coinMagnetConfirmTitle,
+        desc: strings.coinMagnetConfirmDesc,
+        icon: Icons.attach_money,
+      );
+
+      if (confirm == true) {
+        setState(() => _isProcessing = true);
+        try {
+          await context.read<ShopProvider>().activateCoinMagnet(user.id, invItem.id);
+          if (mounted) {
+            await context.read<ShopProvider>().loadShopAndInventory(user.id);
+            messenger.showSnackBar(SnackBar(content: Text(strings.coinMultiplierLabel)));
+          }
+        } catch (e) {
+          messenger.showSnackBar(SnackBar(content: Text(strings.errorProcessingItem)));
+        } finally {
+          if (mounted) setState(() => _isProcessing = false);
+        }
+      }
+    }
+    else if (effectType == 'mission_reroll') {
+      Navigator.pop(context);
+      context.read<AuthProvider>().setTabIndex(3);
+    }
   }
 
   Future<bool?> _showStyledConfirm({required String title, required String desc, required IconData icon}) {
@@ -156,12 +190,22 @@ class _ShopScreenState extends State<ShopScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: const BorderRadius.vertical(top: Radius.circular(28))),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: theme.colorScheme.outlineVariant, borderRadius: BorderRadius.circular(2))),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: theme.colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2)
+              ),
+            ),
             const SizedBox(height: 24),
             Icon(icon, size: 45, color: theme.colorScheme.primary),
             const SizedBox(height: 16),
@@ -170,13 +214,25 @@ class _ShopScreenState extends State<ShopScreen> {
             Text(desc, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 15)),
             const SizedBox(height: 32),
             Row(children: [
-              Expanded(child: TextButton(onPressed: () => Navigator.pop(context, false), child: Text(strings.cancel, style: const TextStyle(fontWeight: FontWeight.bold)))),
+              Expanded(
+                child: TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(strings.cancel, style: const TextStyle(fontWeight: FontWeight.bold))
+                ),
+              ),
               const SizedBox(width: 12),
-              Expanded(child: ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, foregroundColor: theme.colorScheme.onPrimary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 0),
-                child: Text(strings.confirm, style: const TextStyle(fontWeight: FontWeight.bold)),
-              )),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0
+                  ),
+                  child: Text(strings.confirm, style: const TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
             ]),
           ],
         ),
@@ -219,7 +275,12 @@ class _ShopScreenState extends State<ShopScreen> {
               ],
             ),
           ),
-          if (_isProcessing) Container(color: Colors.black.withValues(alpha: 0.4), child: const Center(child: CircularProgressIndicator())),
+
+          if (_isProcessing)
+            Container(
+                color: Colors.black.withValues(alpha:0.4),
+                child: const Center(child: CircularProgressIndicator())
+            ),
         ],
       ),
     );
@@ -231,7 +292,11 @@ class _ShopScreenState extends State<ShopScreen> {
       child: Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(color: Colors.amber.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.amber.withValues(alpha: 0.2))),
+          decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha:0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.amber.withValues(alpha:0.2))
+          ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.monetization_on_rounded, color: Colors.amber, size: 18),
             const SizedBox(width: 6),
@@ -272,7 +337,7 @@ class _ShopCatalogTab extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(15)),
+                  decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha:0.1), borderRadius: BorderRadius.circular(15)),
                   child: Icon(_getIconData(item.icona), color: theme.colorScheme.primary, size: 30),
                 ),
                 const SizedBox(width: 16),
@@ -283,8 +348,17 @@ class _ShopCatalogTab extends StatelessWidget {
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: canAfford ? () => onBuyItem(item) : null,
-                  style: ElevatedButton.styleFrom(backgroundColor: canAfford ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest, foregroundColor: canAfford ? Colors.white : theme.colorScheme.outline, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0),
-                  child: Row(children: [Text("${item.preu}"), const SizedBox(width: 4), const Icon(Icons.monetization_on_rounded, size: 14)]),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: canAfford ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
+                      foregroundColor: canAfford ? Colors.white : theme.colorScheme.outline,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0
+                  ),
+                  child: Row(children: [
+                    Text("${item.preu}"),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.monetization_on_rounded, size: 14)
+                  ]),
                 ),
               ],
             ),
@@ -313,26 +387,31 @@ class _UserInventoryTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         if (user != null && user!.isMultiplierActive)
-          Container(
-            margin: const EdgeInsets.only(bottom: 20),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.orange.shade400, Colors.orange.shade700]), borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.orange.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))]),
-            child: Row(children: [
-              const Icon(Icons.bolt_rounded, color: Colors.white, size: 30),
-              const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(strings.multiplierActive.toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                Text(strings.finishIn(timeLeftFormatter(user!.multiplicadorXpFins!)), style: const TextStyle(color: Colors.white70, fontSize: 13, fontFamily: 'monospace')),
-              ])),
-            ]),
+          _buildPowerUpBadge(
+            color: Colors.orange,
+            icon: Icons.bolt_rounded,
+            title: strings.multiplierActive.toUpperCase(),
+            time: timeLeftFormatter(user!.multiplicadorXpFins!),
+            strings: strings,
+          ),
+
+        if (user != null && user!.isCoinMagnetActive)
+          _buildPowerUpBadge(
+            color: Colors.amber[700]!,
+            icon: Icons.attach_money,
+            title: strings.coinMultiplierLabel.toUpperCase(),
+            time: timeLeftFormatter(user!.imantMonedesFins!),
+            strings: strings,
           ),
 
         if (shopProv.inventory.isEmpty)
           Center(child: Padding(padding: const EdgeInsets.only(top: 100), child: Text(strings.inventoryEmpty, style: TextStyle(color: theme.colorScheme.onSurfaceVariant))))
         else
           ...shopProv.inventory.map((invItem) {
-            final isMultiplier = invItem.definicio.tipusEfecte == 'xp_multiplier';
-            final isActive = isMultiplier && (user?.isMultiplierActive ?? false);
+            final String effect = invItem.definicio.tipusEfecte;
+            final bool isXpActive = effect == 'xp_multiplier' && (user?.isMultiplierActive ?? false);
+            final bool isCoinActive = effect == 'coin_magnet' && (user?.isCoinMagnetActive ?? false);
+            final bool isActive = isXpActive || isCoinActive;
 
             return Card(
               margin: const EdgeInsets.only(bottom: 16),
@@ -342,7 +421,7 @@ class _UserInventoryTab extends StatelessWidget {
                 child: Row(children: [
                   Container(
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(15)),
+                    decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha:0.1), borderRadius: BorderRadius.circular(15)),
                     child: Icon(_getIconData(invItem.definicio.icona), color: theme.colorScheme.primary, size: 30),
                   ),
                   const SizedBox(width: 16),
@@ -355,7 +434,9 @@ class _UserInventoryTab extends StatelessWidget {
                   ElevatedButton(
                     onPressed: (invItem.quantitat > 0 && !isActive) ? () => onUseItem(invItem) : null,
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: isActive ? Colors.orange : theme.colorScheme.primary,
+                        backgroundColor: isActive
+                            ? (isXpActive ? Colors.orange : Colors.amber[700])
+                            : theme.colorScheme.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0
@@ -369,12 +450,34 @@ class _UserInventoryTab extends StatelessWidget {
       ],
     );
   }
+
+  Widget _buildPowerUpBadge({required Color color, required IconData icon, required String title, required String time, required S strings}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [color.withValues(alpha:0.7), color]),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: color.withValues(alpha:0.3), blurRadius: 10, offset: const Offset(0, 4))]
+      ),
+      child: Row(children: [
+        Icon(icon, color: Colors.white, size: 30),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
+          Text(strings.finishIn(time), style: const TextStyle(color: Colors.white70, fontSize: 13, fontFamily: 'monospace')),
+        ])),
+      ]),
+    );
+  }
 }
 
 IconData _getIconData(String iconName) {
   switch (iconName) {
     case 'shield_rounded': return Icons.shield_rounded;
     case 'bolt_rounded': return Icons.bolt_rounded;
+    case 'magnet_rounded': return Icons.attach_money;
+    case 'refresh_rounded': return Icons.refresh_rounded;
     default: return Icons.help_outline_rounded;
   }
 }
@@ -382,11 +485,15 @@ IconData _getIconData(String iconName) {
 String _getLocalizedName(String clau, S strings) {
   if (clau == 'item_streak_shield_title') return strings.item_streak_shield_title;
   if (clau == 'item_xp_multiplier_title') return strings.item_xp_multiplier_title;
+  if (clau == 'item_coin_magnet_title') return strings.item_coin_magnet_title;
+  if (clau == 'item_mission_reroll_title') return strings.item_mission_reroll_title;
   return clau;
 }
 
 String _getLocalizedDesc(String clau, S strings) {
   if (clau == 'item_streak_shield_desc') return strings.item_streak_shield_desc;
   if (clau == 'item_xp_multiplier_desc') return strings.item_xp_multiplier_desc;
+  if (clau == 'item_coin_magnet_desc') return strings.item_coin_magnet_desc;
+  if (clau == 'item_mission_reroll_desc') return strings.item_mission_reroll_desc;
   return clau;
 }

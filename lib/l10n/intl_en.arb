@@ -272,5 +272,16 @@
   "errorTransaction": "Transaction error",
   "errorProcessingItem": "Error processing item",
   "finishIn": "Finishes in: {time}",
-  "shieldAlreadyActive": "This day is already protected with a shield!"
+  "shieldAlreadyActive": "This day is already protected with a shield!",
+  "item_coin_magnet_title": "Coin Magnet",
+  "item_coin_magnet_desc": "Earn double coins for the next 12 hours.",
+  "coinMagnetConfirmTitle": "Activate Magnet",
+  "coinMagnetConfirmDesc": "Do you want to activate the coin magnet (2x) for the next 12 hours?",
+  "coinMultiplierLabel": "Coin Magnet 2x active!",
+  "item_mission_reroll_title": "Mission Reroll",
+  "item_mission_reroll_desc": "Changes an active mission to a new one randomly.",
+  "rerollConfirmTitle": "Change Mission",
+  "rerollConfirmDesc": "Do you want to use a Reroll to change this mission? Current progress will be lost.",
+  "noRerollAvailable": "You have no Reroll items!",
+  "rerollSuccess": "Mission changed successfully"
 }

@@ -14,6 +14,7 @@ class UserModel {
   final bool dobleFactorActiu;
   final String? token;
   final DateTime? multiplicadorXpFins;
+  final DateTime? imantMonedesFins;
 
   UserModel({
     required this.id,
@@ -29,6 +30,7 @@ class UserModel {
     this.dobleFactorActiu = false,
     this.token,
     this.multiplicadorXpFins,
+    this.imantMonedesFins,
   });
 
   UserModel copyWith({
@@ -44,6 +46,7 @@ class UserModel {
     bool? dobleFactorActiu,
     String? token,
     DateTime? multiplicadorXpFins,
+    DateTime? imantMonedesFins,
   }) {
     return UserModel(
       id: id,
@@ -59,6 +62,7 @@ class UserModel {
       dobleFactorActiu: dobleFactorActiu ?? this.dobleFactorActiu,
       token: token ?? this.token,
       multiplicadorXpFins: multiplicadorXpFins ?? this.multiplicadorXpFins,
+      imantMonedesFins: imantMonedesFins ?? this.imantMonedesFins,
     );
   }
 
@@ -79,8 +83,11 @@ class UserModel {
       dobleFactorActiu: json['doble_factor_actiu'] ?? false,
       token: json['token'],
       multiplicadorXpFins: json['multiplicador_xp_fins'] != null ? DateTime.parse(json['multiplicador_xp_fins']) : null,
+      imantMonedesFins: json['imant_monedes_fins'] != null ? DateTime.parse(json['imant_monedes_fins']) : null,
     );
   }
 
   bool get isMultiplierActive => multiplicadorXpFins != null && multiplicadorXpFins!.isAfter(DateTime.now());
+
+  bool get isCoinMagnetActive => imantMonedesFins != null && imantMonedesFins!.isAfter(DateTime.now());
 }

@@ -30,4 +30,8 @@ class MissionService {
       return list.map((json) => UserMissionModel.fromJson(json)).toList();
     });
   }
+
+  Future<void> executeReroll(String userId, String userMissionId, String inventoryId) async {
+    await _repository.rerollMission(userId, userMissionId, inventoryId);
+  }
 }

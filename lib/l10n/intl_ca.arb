@@ -272,5 +272,16 @@
   "errorTransaction": "Error en la transacció",
   "errorProcessingItem": "Error al processar l'objecte",
   "finishIn": "Finalitza en: {time}",
-  "shieldAlreadyActive": "Aquest dia ja està protegit amb un escut!"
+  "shieldAlreadyActive": "Aquest dia ja està protegit amb un escut!",
+  "item_coin_magnet_title": "Imant de Monedes",
+  "item_coin_magnet_desc": "Guanya el doble de monedes durant les pròximes 12 hores.",
+  "coinMagnetConfirmTitle": "Activar Imant",
+  "coinMagnetConfirmDesc": "Vols activar l'imant de monedes (2x) durant les pròximes 12 hores?",
+  "coinMultiplierLabel": "Imant de monedes 2x actiu!",
+  "item_mission_reroll_title": "Reroll de Missió",
+  "item_mission_reroll_desc": "Canvia una missió activa per una de nova a l'atzar.",
+  "rerollConfirmTitle": "Canviar Missió",
+  "rerollConfirmDesc": "Vols utilitzar un Reroll per canviar aquesta missió? El progrés actual es perdrà.",
+  "noRerollAvailable": "No tens objectes de Reroll!",
+  "rerollSuccess": "Missió canviada correctament"
 }

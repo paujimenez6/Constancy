@@ -28,4 +28,8 @@ class ShopService {
   Future<void> activateMultiplier(String userId, String inventoryId) async {
     await _repository.activateXpMultiplier(userId, inventoryId);
   }
+
+  Future<void> activateCoinMagnet(String userId, String inventoryId) async {
+    await _repository.activateCoinMagnet(userId, inventoryId);
+  }
 }

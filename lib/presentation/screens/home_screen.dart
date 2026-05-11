@@ -178,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             )
                 : ListView.separated(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 80),
               physics: const BouncingScrollPhysics(),
               itemCount: activeHabits.length,
               separatorBuilder: (context, index) => const SizedBox(height: 16),
@@ -205,18 +205,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: estaCompletat ? color.withValues(alpha: 0.1) : colorScheme.surface,
+                      color: estaCompletat ? color.withValues(alpha:0.1) : colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isItemShielded ? Colors.blueGrey : (estaCompletat ? color : colorScheme.outlineVariant.withValues(alpha: 0.5)), width: estaCompletat ? 2 : 1,
+                        color: isItemShielded ? Colors.blueGrey : (estaCompletat ? color : colorScheme.outlineVariant.withValues(alpha:0.5)), width: estaCompletat ? 2 : 1,
                       ),
                     ),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.2),
+                            color: color.withValues(alpha:0.2),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(HabitAssets.getIconByName(habit.icona), color: color, size: 28),
@@ -226,25 +227,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      habit.titol,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                        decoration: estaCompletat ? TextDecoration.lineThrough : null,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  if (habit.ratxaActual > 0) ...[
-                                    const SizedBox(width: 8),
-                                    Icon(Icons.local_fire_department_rounded, color: Colors.orange[700], size: 20),
-                                    Text("${habit.ratxaActual}", style: TextStyle(color: Colors.orange[800], fontWeight: FontWeight.bold),),
-                                  ],
-                                ],
+                              Text(
+                                habit.titol,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  decoration: estaCompletat ? TextDecoration.lineThrough : null,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -254,6 +243,20 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
+                        if (habit.ratxaActual > 0) ...[
+                          const SizedBox(width: 8),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.local_fire_department_rounded, color: Colors.orange[700], size: 20),
+                              Text(
+                                "${habit.ratxaActual}",
+                                style: TextStyle(color: Colors.orange[800], fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(width: 4),
                         IconButton(
                           onPressed: () async {
                             if (isShieldedToday) {
@@ -424,12 +427,12 @@ class _DateSelectorWidgetState extends State<DateSelectorWidget> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.primary.withValues(alpha: 0.05),
+                    : theme.colorScheme.primary.withValues(alpha:0.05),
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: isSelected
                     ? [
                   BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      color: theme.colorScheme.primary.withValues(alpha:0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4))
                 ]
@@ -468,7 +471,7 @@ class _DateSelectorWidgetState extends State<DateSelectorWidget> {
                             width: 25,
                             height: 5,
                             decoration: BoxDecoration(
-                              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha: 0.5),
+                              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha:0.5),
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),

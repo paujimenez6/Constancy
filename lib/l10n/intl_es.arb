@@ -272,5 +272,16 @@
   "errorTransaction": "Error en la transacción",
   "errorProcessingItem": "Error al procesar el objeto",
   "finishIn": "Finaliza en: {time}",
-  "shieldAlreadyActive": "¡Este día ya está protegido con un escudo!"
+  "shieldAlreadyActive": "¡Este día ya está protegido con un escudo!",
+  "item_coin_magnet_title": "Imán de Monedas",
+  "item_coin_magnet_desc": "Gana el doble de monedas durante las próximas 12 horas.",
+  "coinMagnetConfirmTitle": "Activar Imán",
+  "coinMagnetConfirmDesc": "¿Quieres activar el imán de monedas (2x) durante las próximas 12 horas?",
+  "coinMultiplierLabel": "Imán de monedas 2x activo!",
+  "item_mission_reroll_title": "Reroll de Misión",
+  "item_mission_reroll_desc": "Cambia una misión activa por una nueva al azar.",
+  "rerollConfirmTitle": "Cambiar Misión",
+  "rerollConfirmDesc": "¿Quieres utilizar un Reroll para cambiar esta misión? El progreso actual se perderá.",
+  "noRerollAvailable": "¡No tienes objetos de Reroll!",
+  "rerollSuccess": "Misión cambiada correctamente"
 }

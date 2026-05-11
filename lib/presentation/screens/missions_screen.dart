@@ -4,8 +4,10 @@ import '../../generated/l10n.dart';
 import '../providers/mission_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/social_provider.dart';
+import '../providers/shop_provider.dart';
 import 'notifications_screen.dart';
 import 'package:confetti/confetti.dart';
+import '../../domain/models/inventory_item_model.dart';
 
 class MissionsScreen extends StatefulWidget {
   const MissionsScreen({super.key});
@@ -25,6 +27,7 @@ class _MissionsScreenState extends State<MissionsScreen> {
       final user = context.read<AuthProvider>().currentUser;
       if (user != null) {
         context.read<MissionProvider>().initMissionsListener(user.id);
+        context.read<ShopProvider>().loadShopAndInventory(user.id);
       }
     });
   }
@@ -35,16 +38,101 @@ class _MissionsScreenState extends State<MissionsScreen> {
     super.dispose();
   }
 
+  Future<void> _handleRerollAction(String userMissionId, String inventoryId) async {
+    final strings = S.of(context);
+    final theme = Theme.of(context);
+    final user = context.read<AuthProvider>().currentUser;
+
+    if (user == null) return;
+
+    final bool? confirm = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Icon(Icons.refresh_rounded, size: 45, color: theme.colorScheme.primary),
+            const SizedBox(height: 16),
+            Text(strings.rerollConfirmTitle, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Text(
+              strings.rerollConfirmDesc,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 15),
+            ),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(strings.cancel, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                    child: Text(strings.confirm, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirm == true) {
+      await context.read<MissionProvider>().reroll(user.id, userMissionId, inventoryId);
+
+      if (mounted) {
+        await context.read<ShopProvider>().loadShopAndInventory(user.id);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.rerollSuccess)));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final strings = S.of(context);
     final theme = Theme.of(context);
 
     final missionProv = context.watch<MissionProvider>();
-    final hasNotifications = context.watch<SocialProvider>().hasPendingRequests;
+    final shopProv = context.watch<ShopProvider>();
     final user = context.watch<AuthProvider>().currentUser;
     final userId = user?.id;
+
     final bool isMultiplierActive = user?.isMultiplierActive ?? false;
+    final bool isCoinMagnetActive = user?.isCoinMagnetActive ?? false;
+
+    final rerollItems = shopProv.inventory.where(
+            (item) => item.definicio.tipusEfecte == 'mission_reroll'
+    ).toList();
+
+    final InventoryItemModel? rerollItem = rerollItems.isNotEmpty ? rerollItems.first : null;
+    final int rerollCount = rerollItem?.quantitat ?? 0;
 
     return Stack(
       children: [
@@ -63,27 +151,20 @@ class _MissionsScreenState extends State<MissionsScreen> {
                 leading: const SizedBox.shrink(),
                 title: Text(
                   strings.navMissions,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
                 ),
                 actions: [
                   Padding(
                     padding: const EdgeInsets.only(right: 12.0),
                     child: IconButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const NotificationsScreen()),
-                        );
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsScreen()));
                       },
                       icon: Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          Icon(Icons.notifications_none_rounded,
-                              color: theme.colorScheme.onSurface, size: 28),
-                          if (hasNotifications)
+                          Icon(Icons.notifications_none_rounded, color: theme.colorScheme.onSurface, size: 28),
+                          if (context.watch<SocialProvider>().hasPendingRequests)
                             Positioned(
                               right: -2,
                               top: -2,
@@ -92,12 +173,9 @@ class _MissionsScreenState extends State<MissionsScreen> {
                                 decoration: BoxDecoration(
                                   color: Colors.red,
                                   shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color: theme.colorScheme.surface,
-                                      width: 1.5),
+                                  border: Border.all(color: theme.colorScheme.surface, width: 1.5),
                                 ),
-                                constraints: const BoxConstraints(
-                                    minWidth: 12, minHeight: 12),
+                                constraints: const BoxConstraints(minWidth: 12, minHeight: 12),
                               ),
                             ),
                         ],
@@ -111,17 +189,11 @@ class _MissionsScreenState extends State<MissionsScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Icon(Icons.assignment_turned_in_rounded,
-                            color:
-                            theme.colorScheme.primary.withValues(alpha: 0.9),
-                            size: 45),
+                        Icon(Icons.assignment_turned_in_rounded, color: theme.colorScheme.primary.withValues(alpha:0.9), size: 45),
                         const SizedBox(height: 4),
                         Text(
                           strings.missionsSubtitle,
-                          style: TextStyle(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500),
+                          style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 15),
                       ],
@@ -129,27 +201,18 @@ class _MissionsScreenState extends State<MissionsScreen> {
                   ),
                 ),
               ),
-
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Divider(
-                    height: 1,
-                    thickness: 1,
-                    color:
-                    theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-                  ),
+                  child: Divider(height: 1, thickness: 1, color: theme.colorScheme.outlineVariant.withValues(alpha:0.5)),
                 ),
               ),
-
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
                 sliver: missionProv.isLoading
-                    ? const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()))
+                    ? const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
                     : missionProv.missions.isEmpty
-                    ? SliverFillRemaining(
-                    child: _buildEmptyState(strings, theme))
+                    ? SliverFillRemaining(child: _buildEmptyState(strings, theme))
                     : SliverList(
                   delegate: SliverChildBuilderDelegate(
                         (context, index) {
@@ -157,11 +220,13 @@ class _MissionsScreenState extends State<MissionsScreen> {
                       return _MissionCard(
                         mission: mission,
                         isMultiplierActive: isMultiplierActive,
+                        isCoinMagnetActive: isCoinMagnetActive,
+                        canReroll: rerollCount > 0 && !mission.reclamada,
+                        onReroll: () => _handleRerollAction(mission.id, rerollItem!.id),
                         onClaim: () async {
-                          final success = await missionProv
-                              .claimMission(mission, userId!, isMultiplierActive);
+                          final success = await missionProv.claimMission(mission, userId!, isMultiplierActive);
                           if (success && mounted) {
-                            _showRewardEffect(context, mission.definicio, isMultiplierActive);
+                            _showRewardEffect(context, mission.definicio, isMultiplierActive, isCoinMagnetActive);
                           }
                         },
                       );
@@ -179,12 +244,7 @@ class _MissionsScreenState extends State<MissionsScreen> {
             confettiController: _confettiController,
             blastDirectionality: BlastDirectionality.explosive,
             shouldLoop: false,
-            colors: const [
-              Colors.blue,
-              Colors.red,
-              Colors.orange,
-              Colors.green
-            ],
+            colors: const [Colors.blue, Colors.red, Colors.orange, Colors.green],
           ),
         ),
       ],
@@ -195,19 +255,19 @@ class _MissionsScreenState extends State<MissionsScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.emoji_events_outlined,
-            size: 60, color: theme.colorScheme.outline),
+        Icon(Icons.emoji_events_outlined, size: 60, color: theme.colorScheme.outline),
         const SizedBox(height: 16),
-        Text(strings.noMissions,
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+        Text(strings.noMissions, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
       ],
     );
   }
 
-  void _showRewardEffect(BuildContext context, dynamic missionDef, bool isMultiplierActive) {
+  void _showRewardEffect(BuildContext context, dynamic missionDef, bool isXpActive, bool isCoinActive) {
     final strings = S.of(context);
     final theme = Theme.of(context);
-    final int xpFinal = isMultiplierActive ? (missionDef.recompensaXp * 2) : missionDef.recompensaXp;
+
+    final int xpFinal = isXpActive ? (missionDef.recompensaXp * 2) : missionDef.recompensaXp;
+    final int monedesFinals = isCoinActive ? (missionDef.recompensaMonedes * 2) : missionDef.recompensaMonedes;
 
     _confettiController.play();
 
@@ -223,37 +283,30 @@ class _MissionsScreenState extends State<MissionsScreen> {
           child: Opacity(
             opacity: anim1.value,
             child: AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                      Icons.celebration,
-                      size: 60,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.8)
-                  ),
+                  Icon(Icons.celebration, size: 60, color: theme.colorScheme.primary.withValues(alpha:0.8)),
                   const SizedBox(height: 16),
-                  Text(strings.missionRewardTitle,
-                      style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.bold)),
+                  Text(strings.missionRewardTitle, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Text(strings.missionRewardSubtitle,
-                      textAlign: TextAlign.center,
-                      style:
-                      TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+                  Text(strings.missionRewardSubtitle, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 24),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildRewardItem(
-                          "$xpFinal XP ${isMultiplierActive ? '(x2)' : ''}",
-                          Icons.bolt_rounded, theme.colorScheme.primary
+                      _buildRewardBadge(
+                        "$xpFinal XP ${isXpActive ? '(x2)' : ''}",
+                        Icons.bolt_rounded,
+                        isXpActive ? Colors.orange : theme.colorScheme.primary,
                       ),
                       const SizedBox(width: 20),
-                      _buildRewardItem("${missionDef.recompensaMonedes}",
-                          Icons.monetization_on_rounded, Colors.amber),
+                      _buildRewardBadge(
+                        "$monedesFinals ${isCoinActive ? '(x2)' : ''}",
+                        Icons.monetization_on_rounded,
+                        isCoinActive ? Colors.amber[700]! : Colors.amber,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -273,20 +326,16 @@ class _MissionsScreenState extends State<MissionsScreen> {
     );
   }
 
-  Widget _buildRewardItem(String text, IconData icon, Color color) {
+  Widget _buildRewardBadge(String text, IconData icon, Color color) {
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color.withValues(alpha:0.1), shape: BoxShape.circle),
           child: Icon(icon, color: color, size: 30),
         ),
         const SizedBox(height: 8),
-        Text(text,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
       ],
     );
   }
@@ -295,42 +344,38 @@ class _MissionsScreenState extends State<MissionsScreen> {
 class _MissionCard extends StatelessWidget {
   final dynamic mission;
   final VoidCallback onClaim;
+  final VoidCallback onReroll;
   final bool isMultiplierActive;
+  final bool isCoinMagnetActive;
+  final bool canReroll;
 
   const _MissionCard({
     required this.mission,
     required this.onClaim,
-    required this.isMultiplierActive
+    required this.onReroll,
+    required this.isMultiplierActive,
+    required this.isCoinMagnetActive,
+    required this.canReroll,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final strings = S.of(context);
-    final isDone = mission.completada;
-    final isClaimed = mission.reclamada;
+    final bool isDone = mission.completada;
+    final bool isClaimed = mission.reclamada;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isClaimed
-            ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
-            : theme.colorScheme.surface,
+        color: isClaimed ? theme.colorScheme.surfaceContainerHighest.withValues(alpha:0.3) : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDone && !isClaimed
-              ? (theme.colorScheme.primary)
-              : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          color: isDone && !isClaimed ? theme.colorScheme.primary : theme.colorScheme.outlineVariant.withValues(alpha:0.5),
           width: isDone && !isClaimed ? 2 : 1,
         ),
-        boxShadow: [
-          if (!isClaimed)
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 4))
-        ],
+        boxShadow: [if (!isClaimed) BoxShadow(color: Colors.black.withValues(alpha:0.03), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         children: [
@@ -339,12 +384,10 @@ class _MissionCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: _getIconColor(mission.definicio.tipus)
-                      .withValues(alpha: 0.1),
+                  color: _getIconColor(mission.definicio.tipus).withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(_getIcon(mission.definicio.tipus),
-                    color: _getIconColor(mission.definicio.tipus)),
+                child: Icon(_getIcon(mission.definicio.tipus), color: _getIconColor(mission.definicio.tipus)),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -353,55 +396,21 @@ class _MissionCard extends StatelessWidget {
                   children: [
                     Text(
                       _getLocalizedTitle(mission.definicio.titolClau, strings),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 15),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                     Text(
-                      _getLocalizedDesc(mission.definicio.descripcioClau,
-                          strings, mission.definicio.objectiu),
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onSurfaceVariant),
+                      _getLocalizedDesc(mission.definicio.descripcioClau, strings, mission.definicio.objectiu),
+                      style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                          isMultiplierActive
-                              ? "+${mission.definicio.recompensaXp * 2} XP"
-                              : "+${mission.definicio.recompensaXp} XP",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: theme.colorScheme.primary)),
-                      const SizedBox(width: 4),
-                      if (isMultiplierActive)
-                        Text("x2", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 10)),
-                      Icon(Icons.bolt_rounded,
-                          size: 14, color: theme.colorScheme.primary),
-                    ],
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text("+${mission.definicio.recompensaMonedes}",
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: Colors.amber)),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.monetization_on_rounded,
-                          size: 14, color: Colors.amber),
-                    ],
-                  ),
-                ],
-              )
+              if (canReroll)
+                IconButton(
+                  onPressed: onReroll,
+                  icon: const Icon(Icons.refresh_rounded, size: 22, color: Colors.blueGrey),
+                  tooltip: strings.item_mission_reroll_title,
+                ),
             ],
           ),
           const SizedBox(height: 16),
@@ -413,20 +422,36 @@ class _MissionCard extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: mission.percentatge,
                     minHeight: 8,
-                    backgroundColor:
-                    theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                    backgroundColor: theme.colorScheme.outlineVariant.withValues(alpha:0.3),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      isDone ? Colors.green : (isMultiplierActive ? Colors.orange : theme.colorScheme.primary),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               Text(
-                strings.missionProgress(
-                  mission.progresActual.toInt().toString(),
-                  mission.definicio.objectiu.toInt().toString(),
-                ),
-                style:
-                const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                strings.missionProgress(mission.progresActual.toInt().toString(), mission.definicio.objectiu.toInt().toString()),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              _buildSmallRewardBadge(
+                "${isMultiplierActive ? mission.definicio.recompensaXp * 2 : mission.definicio.recompensaXp} XP",
+                Icons.bolt_rounded,
+                isMultiplierActive ? Colors.orange : theme.colorScheme.primary,
+                isMultiplierActive,
+              ),
+              const SizedBox(width: 12),
+              _buildSmallRewardBadge(
+                "${isCoinMagnetActive ? mission.definicio.recompensaMonedes * 2 : mission.definicio.recompensaMonedes}",
+                Icons.monetization_on_rounded,
+                isCoinMagnetActive ? Colors.amber[700]! : Colors.amber,
+                isCoinMagnetActive,
               ),
             ],
           ),
@@ -438,12 +463,9 @@ class _MissionCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: (isDone && !isClaimed) ? onClaim : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isClaimed
-                      ? theme.colorScheme.outlineVariant
-                      : theme.colorScheme.primary,
+                  backgroundColor: isClaimed ? theme.colorScheme.outlineVariant : theme.colorScheme.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
                 ),
                 child: Text(
@@ -455,6 +477,18 @@ class _MissionCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildSmallRewardBadge(String text, IconData icon, Color color, bool isActive) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(text, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: color)),
+        const SizedBox(width: 2),
+        if (isActive) Text("x2", style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10)),
+        Icon(icon, size: 14, color: color),
+      ],
     );
   }
 
