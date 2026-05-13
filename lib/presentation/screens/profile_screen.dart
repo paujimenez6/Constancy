@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../generated/l10n.dart';
 import '../../domain/models/league_model.dart';
+import '../../domain/models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/social_provider.dart';
 import '../providers/habit_provider.dart';
@@ -44,11 +45,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isNavigating = true);
 
     final socialProv = context.read<SocialProvider>();
-    final list = isFollowers
+
+    final List<Map<String, dynamic>> rawList = isFollowers
         ? await socialProv.getFollowersList(userId)
         : await socialProv.getFollowingList(userId);
 
     if (mounted) {
+      final List<UserModel> list = rawList.map((m) {
+        if (m.containsKey('profiles')) {
+          return UserModel.fromJson(m['profiles']);
+        }
+        return UserModel.fromJson(m);
+      }).toList();
+
       await Navigator.push(
           context,
           MaterialPageRoute(
@@ -170,7 +179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildAvatar(user, theme) {
+  Widget _buildAvatar(UserModel user, ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -259,7 +268,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildStatRow(user, social, strings, theme) {
+  Widget _buildStatRow(UserModel user, SocialProvider social, S strings, ThemeData theme) {
     return SizedBox(
       width: 280,
       child: IntrinsicHeight(

@@ -8,9 +8,10 @@ import 'user_list_screen.dart';
 import 'profile_habits_list_screen.dart';
 import '../providers/league_provider.dart';
 import '../../domain/models/league_model.dart';
+import '../../domain/models/user_model.dart';
 
 class OtherProfileScreen extends StatefulWidget {
-  final Map<String, dynamic> userData;
+  final UserModel userData;
   const OtherProfileScreen({super.key, required this.userData});
 
   @override
@@ -33,7 +34,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   }
 
   Future<void> _loadInitialData() async {
-    final String userId = widget.userData['id'];
+    final String userId = widget.userData.id;
     await _loadFollowStatus();
 
     if (mounted) {
@@ -51,7 +52,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   Future<void> _loadFollowStatus() async {
     try {
       final socialProvider = context.read<SocialProvider>();
-      final String userId = widget.userData['id'];
+      final String userId = widget.userData.id;
 
       final status = await socialProvider.getFollowStatus(userId);
       final stats = await socialProvider.getOtherUserStats(userId);
@@ -112,9 +113,9 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     if (_isNavigating) return;
 
     final strings = S.of(context);
-    final privacitat = widget.userData['configuracio_privacitat'] ?? 'public';
+    final privacitat = widget.userData.configuracioPrivacitat;
 
-    if (privacitat != 'public' && !_isFollowing) {
+    if (privacitat != TipusPrivacitat.public && !_isFollowing) {
       _showTopToast(strings.privateInfoMessage);
       return;
     }
@@ -122,18 +123,23 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     setState(() => _isNavigating = true);
 
     final socialProvider = context.read<SocialProvider>();
-    final list = isFollowers
-        ? await socialProvider.getFollowersList(widget.userData['id'])
-        : await socialProvider.getFollowingList(widget.userData['id']);
+    final List<Map<String, dynamic>> rawList = isFollowers
+        ? await socialProvider.getFollowersList(widget.userData.id)
+        : await socialProvider.getFollowingList(widget.userData.id);
 
     if (mounted) {
+      final List<UserModel> list = rawList.map((m) {
+        if (m.containsKey('profiles')) return UserModel.fromJson(m['profiles']);
+        return UserModel.fromJson(m);
+      }).toList();
+
       await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => UserListScreen(
             title: isFollowers ? strings.followers : strings.following,
             users: list,
-            ownerNickname: widget.userData['nickname'],
+            ownerNickname: widget.userData.nickname,
           ),
         ),
       );
@@ -142,8 +148,8 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   }
 
   void _handleFollowAction() async {
-    final targetId = widget.userData['id'];
-    final privacy = widget.userData['configuracio_privacitat'] ?? 'public';
+    final targetId = widget.userData.id;
+    final privacy = widget.userData.configuracioPrivacitat.toString().split('.').last;
 
     setState(() => _isLoadingStatus = true);
 
@@ -172,17 +178,17 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     final theme = Theme.of(context);
     final user = widget.userData;
 
-    final int xpTotal = (user['punts_xp'] is int) ? user['punts_xp'] : 0;
-    final int monedes = (user['monedes'] != null) ? int.parse(user['monedes'].toString()) : 0;
+    final int xpTotal = user.puntsXP;
+    final int monedes = user.monedes;
 
     final habitProvider = context.watch<HabitProvider>();
-    final privacitat = user['configuracio_privacitat'] ?? 'public';
-    bool canSeeDetails = privacitat == 'public' || _isFollowing;
+    final privacitat = user.configuracioPrivacitat;
+    bool canSeeDetails = privacitat == TipusPrivacitat.public || _isFollowing;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: Text(user['nickname'] ?? 'Usuari', style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(user.nickname, style: const TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -197,7 +203,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                 children: [
                   _buildAvatar(user, theme),
                   const SizedBox(height: 16),
-                  Text("${user['nom'] ?? ''} ${user['cognom'] ?? ''}",
+                  Text("${user.nom} ${user.cognom}",
                       style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
 
@@ -231,7 +237,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
             if (!canSeeDetails)
               _buildPrivateMessage(theme, strings)
             else ...[
-              _buildHabitsHeader(strings, theme, user['nickname'] ?? ''),
+              _buildHabitsHeader(strings, theme, user.nickname),
               const SizedBox(height: 12),
 
               buildHabitList(
@@ -249,7 +255,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     );
   }
 
-  Widget _buildAvatar(Map<String, dynamic> user, ThemeData theme) {
+  Widget _buildAvatar(UserModel user, ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -259,9 +265,9 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
       child: CircleAvatar(
         radius: 55,
         backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-        backgroundImage: (user['imatge_perfil'] != null) ? NetworkImage(user['imatge_perfil']) : null,
-        child: (user['imatge_perfil'] == null)
-            ? Text(user['nickname'] != null ? user['nickname'][0].toUpperCase() : '?',
+        backgroundImage: (user.imatgePerfil != null) ? NetworkImage(user.imatgePerfil!) : null,
+        child: (user.imatgePerfil == null)
+            ? Text(user.nickname[0].toUpperCase(),
             style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: theme.colorScheme.primary))
             : null,
       ),
@@ -360,7 +366,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     );
   }
 
-  Widget _buildActionButtons(String privacitat, ThemeData theme, S strings) {
+  Widget _buildActionButtons(TipusPrivacitat privacitat, ThemeData theme, S strings) {
     if (_isLoadingStatus) {
       return const SizedBox(height: 48, child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
     }
@@ -381,10 +387,10 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
       textColor = theme.colorScheme.primary;
       icon = Icons.timer_outlined;
     } else {
-      label = privacitat == 'public' ? strings.follow : strings.sendRequest;
+      label = privacitat == TipusPrivacitat.public ? strings.follow : strings.sendRequest;
       bgColor = theme.colorScheme.primary;
       textColor = Colors.white;
-      icon = privacitat == 'public' ? Icons.person_add_alt_1_rounded : Icons.lock_open_rounded;
+      icon = privacitat == TipusPrivacitat.public ? Icons.person_add_alt_1_rounded : Icons.lock_open_rounded;
     }
 
     return ElevatedButton.icon(

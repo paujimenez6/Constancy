@@ -3,12 +3,13 @@ import 'package:provider/provider.dart';
 import '../../generated/l10n.dart';
 import '../providers/auth_provider.dart';
 import '../providers/social_provider.dart';
+import '../../domain/models/user_model.dart';
 import 'profile_screen.dart';
 import 'other_profile_screen.dart';
 
 class UserListScreen extends StatefulWidget {
   final String title;
-  final List<Map<String, dynamic>> users;
+  final List<UserModel> users;
   final bool isMyFollowersList;
   final String ownerNickname;
 
@@ -25,7 +26,7 @@ class UserListScreen extends StatefulWidget {
 }
 
 class _UserListScreenState extends State<UserListScreen> {
-  late List<Map<String, dynamic>> _currentUsers;
+  late List<UserModel> _currentUsers;
 
   @override
   void initState() {
@@ -33,7 +34,7 @@ class _UserListScreenState extends State<UserListScreen> {
     _currentUsers = List.from(widget.users);
   }
 
-  void _confirmRemoveFollower(Map<String, dynamic> user) {
+  void _confirmRemoveFollower(UserModel user) {
     final strings = S.of(context);
     final theme = Theme.of(context);
 
@@ -45,15 +46,15 @@ class _UserListScreenState extends State<UserListScreen> {
         icon: Icons.person_remove_rounded,
         iconColor: theme.colorScheme.primary,
         title: strings.removeFollower,
-        description: "${strings.confirmRemoveFollower} ${user['nickname']}?",
+        description: "${strings.confirmRemoveFollower} ${user.nickname}?",
         confirmLabel: strings.remove,
         isDestructive: true,
         onConfirm: () async {
           final socialProvider = context.read<SocialProvider>();
-          await socialProvider.removeFollower(user['id']);
+          await socialProvider.removeFollower(user.id);
 
           if (mounted) {
-            setState(() => _currentUsers.removeWhere((u) => u['id'] == user['id']));
+            setState(() => _currentUsers.removeWhere((u) => u.id == user.id));
             final myId = context.read<AuthProvider>().currentUser!.id;
             socialProvider.refreshSocialStats(myId);
             Navigator.pop(context);
@@ -223,7 +224,7 @@ class _UserListScreenState extends State<UserListScreen> {
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final user = _currentUsers[index];
-                final bool isMe = user['id'] == currentUserId;
+                final bool isMe = user.id == currentUserId;
 
                 return InkWell(
                   onTap: () {
@@ -252,9 +253,9 @@ class _UserListScreenState extends State<UserListScreen> {
                         CircleAvatar(
                           radius: 26,
                           backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                          backgroundImage: user['imatge_perfil'] != null ? NetworkImage(user['imatge_perfil']) : null,
-                          child: user['imatge_perfil'] == null
-                              ? Text(user['nickname'][0].toUpperCase(), style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold))
+                          backgroundImage: user.imatgePerfil != null ? NetworkImage(user.imatgePerfil!) : null,
+                          child: user.imatgePerfil == null
+                              ? Text(user.nickname[0].toUpperCase(), style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold))
                               : null,
                         ),
                         const SizedBox(width: 16),
@@ -264,7 +265,7 @@ class _UserListScreenState extends State<UserListScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Text(user['nickname'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  Text(user.nickname, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                   if (isMe) ...[
                                     const SizedBox(width: 8),
                                     Container(
@@ -285,7 +286,7 @@ class _UserListScreenState extends State<UserListScreen> {
                                   ],
                                 ],
                               ),
-                              Text("${user['nom']} ${user['cognom']}", style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 14)),
+                              Text("${user.nom} ${user.cognom}", style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 14)),
                             ],
                           ),
                         ),

@@ -53,6 +53,7 @@ class HabitModel {
   final List<String> horesRecordatori;
   final bool arxivat;
   final DateTime createdAt;
+  final bool isGroup;
 
   HabitModel({
     required this.id,
@@ -73,6 +74,7 @@ class HabitModel {
     this.horesRecordatori = const [],
     this.arxivat = false,
     required this.createdAt,
+    this.isGroup = false,
   });
 
   HabitModel copyWith({
@@ -91,6 +93,7 @@ class HabitModel {
     bool? recordatoris,
     List<String>? horesRecordatori,
     bool? arxivat,
+    bool? isGroup,
   }) {
     return HabitModel(
       id: id,
@@ -111,6 +114,7 @@ class HabitModel {
       horesRecordatori: horesRecordatori ?? this.horesRecordatori,
       arxivat: arxivat ?? this.arxivat,
       createdAt: createdAt,
+      isGroup: isGroup ?? this.isGroup,
     );
   }
 
@@ -148,6 +152,7 @@ class HabitModel {
 
       arxivat: json['arxivat'] ?? false,
       createdAt: DateTime.parse(json['created_at']),
+      isGroup: json['is_group'] ?? false,
     );
   }
 
@@ -166,6 +171,7 @@ class HabitModel {
       'recordatoris': recordatoris,
       'hores_recordatori': horesRecordatori,
       'arxivat': arxivat,
+      'is_group': isGroup,
     };
   }
 }

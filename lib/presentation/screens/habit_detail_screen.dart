@@ -5,12 +5,35 @@ import 'package:intl/intl.dart';
 import '../../domain/models/habit_model.dart';
 import '../../domain/models/habit_assets.dart';
 import '../providers/habit_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/social_provider.dart';
 import '../../generated/l10n.dart';
 import 'habit_form_screen.dart';
+import 'other_profile_screen.dart';
 
-class HabitDetailScreen extends StatelessWidget {
+class HabitDetailScreen extends StatefulWidget {
   final String habitId;
   const HabitDetailScreen({super.key, required this.habitId});
+
+  @override
+  State<HabitDetailScreen> createState() => _HabitDetailScreenState();
+}
+
+class _HabitDetailScreenState extends State<HabitDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final habitProv = context.read<HabitProvider>();
+      final habit = habitProv.habits.firstWhere(
+              (h) => h.id == widget.habitId,
+          orElse: () => habitProv.habits.first
+      );
+      if (habit.isGroup) {
+        habitProv.loadGroupDetails(widget.habitId);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +43,7 @@ class HabitDetailScreen extends StatelessWidget {
     final dateFormat = DateFormat.yMMMMd(Intl.getCurrentLocale());
 
     final habit = habitProvider.habits.firstWhere(
-          (h) => h.id == habitId,
+          (h) => h.id == widget.habitId,
       orElse: () => habitProvider.habits.first,
     );
 
@@ -28,18 +51,18 @@ class HabitDetailScreen extends StatelessWidget {
     final progresActual = record?.valorProgres ?? 0.0;
     final double valorObj = habit.valorObjectiu > 0 ? habit.valorObjectiu : 1.0;
     final percentatge = (progresActual / valorObj).clamp(0.0, 1.0);
-
     final habitColor = HabitAssets.hexToColor(habit.color);
-
-    final dataIniciStr = dateFormat.format(habit.dataInici);
-    final dataFiStr = habit.dataFi != null ? dateFormat.format(habit.dataFi!) : "/";
-    final periodeText = "$dataIniciStr\n-\n$dataFiStr";
 
     return Scaffold(
       appBar: AppBar(
         title: Text(habit.titol, style: const TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
+          if (habit.isGroup)
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Icon(Icons.groups_rounded, color: theme.colorScheme.primary),
+            ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -85,6 +108,7 @@ class HabitDetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
+
               if (habit.descripcio != null && habit.descripcio!.isNotEmpty) ...[
                 Text(
                   habit.descripcio!,
@@ -96,113 +120,24 @@ class HabitDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
               ],
+
               if (habit.grup != null && habit.grup!.isNotEmpty) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.category_outlined, size: 16, color: theme.colorScheme.primary),
-                      const SizedBox(width: 8),
-                      Text(
-                        habit.grup!,
-                        style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildChip(theme, Icons.category_outlined, habit.grup!),
                 const SizedBox(height: 12),
               ],
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.calendar_month_outlined, size: 16, color: theme.colorScheme.primary),
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: Text(
-                        periodeText,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant, height: 1.2),
-                      ),
-                    ),
-                  ],
-                ),
+
+              _buildChip(
+                  theme,
+                  Icons.calendar_month_outlined,
+                  "${dateFormat.format(habit.dataInici)} - ${habit.dataFi != null ? dateFormat.format(habit.dataFi!) : "/"}"
               ),
-              const SizedBox(height: 25),
-              Center(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 220,
-                      height: 220,
-                      child: CircularProgressIndicator(
-                        value: percentatge,
-                        strokeWidth: 10,
-                        backgroundColor: habitColor.withValues(alpha: 0.1),
-                        color: habitColor,
-                        strokeCap: StrokeCap.round,
-                      ),
-                    ),
-                    Positioned(
-                      left: 25,
-                      child: _CircleActionButton(
-                        icon: Icons.remove_rounded,
-                        color: habitColor,
-                        onPressed: () {
-                          double nouVal = (progresActual - 1).clamp(0.0, double.infinity);
-                          habitProvider.updateProgress(
-                            habitId: habit.id,
-                            valorProgres: nouVal,
-                            completat: nouVal >= habit.valorObjectiu,
-                          );
-                        },
-                      ),
-                    ),
-                    Positioned(
-                      right: 25,
-                      child: _CircleActionButton(
-                        icon: Icons.add_rounded,
-                        color: habitColor,
-                        onPressed: () {
-                          double nouVal = progresActual + 1;
-                          habitProvider.updateProgress(
-                            habitId: habit.id,
-                            valorProgres: nouVal,
-                            completat: nouVal >= habit.valorObjectiu,
-                          );
-                        },
-                      ),
-                    ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(HabitAssets.getIconByName(habit.icona), color: habitColor, size: 45),
-                        const SizedBox(height: 4),
-                        Text("${(percentatge * 100).toInt()}%", style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 2),
-                        Text(
-                          "${progresActual % 1 == 0 ? progresActual.toInt() : progresActual} / ${habit.valorObjectiu % 1 == 0 ? habit.valorObjectiu.toInt() : habit.valorObjectiu}",
-                          style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w600),
-                        ),
-                        Text(habit.unitatMesura.getLocalizedString(context), style: TextStyle(color: theme.colorScheme.outline, fontSize: 12)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+
+              const SizedBox(height: 30),
+
+              _buildProgressCircle(context, habit, progresActual, percentatge, habitColor, theme),
+
               const SizedBox(height: 40),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -219,25 +154,304 @@ class HabitDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Container(
-                    height: 56, width: 56,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
-                    ),
-                    child: IconButton(
-                      onPressed: () => _showCommentSheet(context, habit),
-                      icon: Icon(Icons.edit_note_rounded, color: theme.colorScheme.primary, size: 30),
-                    ),
-                  ),
+                  _buildCommentButton(context, habit, theme),
                 ],
               ),
+
+              if (habit.isGroup) ...[
+                const SizedBox(height: 40),
+                _buildGroupSection(context, habitProvider, theme, strings),
+              ],
+
               const SizedBox(height: 60),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildChip(ThemeData theme, IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+              text,
+              style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurfaceVariant
+              )
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressCircle(BuildContext context, HabitModel habit, double progresActual, double percentatge, Color habitColor, ThemeData theme) {
+    final habitProvider = context.read<HabitProvider>();
+    return Center(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 220, height: 220,
+            child: CircularProgressIndicator(
+              value: percentatge,
+              strokeWidth: 10,
+              backgroundColor: habitColor.withValues(alpha: 0.1),
+              color: habitColor,
+              strokeCap: StrokeCap.round,
+            ),
+          ),
+          Positioned(
+            left: 25,
+            child: _CircleActionButton(
+              icon: Icons.remove_rounded, color: habitColor,
+              onPressed: () {
+                double nouVal = (progresActual - 1).clamp(0.0, double.infinity);
+                habitProvider.updateProgress(
+                    habitId: habit.id,
+                    valorProgres: nouVal,
+                    completat: nouVal >= habit.valorObjectiu
+                );
+              },
+            ),
+          ),
+          Positioned(
+            right: 25,
+            child: _CircleActionButton(
+              icon: Icons.add_rounded, color: habitColor,
+              onPressed: () {
+                double nouVal = progresActual + 1;
+                habitProvider.updateProgress(
+                    habitId: habit.id,
+                    valorProgres: nouVal,
+                    completat: nouVal >= habit.valorObjectiu
+                );
+              },
+            ),
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(HabitAssets.getIconByName(habit.icona), color: habitColor, size: 45),
+              const SizedBox(height: 4),
+              Text("${(percentatge * 100).toInt()}%", style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+              Text(
+                  "${progresActual % 1 == 0 ? progresActual.toInt() : progresActual} / ${habit.valorObjectiu % 1 == 0 ? habit.valorObjectiu.toInt() : habit.valorObjectiu}",
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w600)
+              ),
+              Text(habit.unitatMesura.getLocalizedString(context), style: TextStyle(color: theme.colorScheme.outline, fontSize: 12)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommentButton(BuildContext context, HabitModel habit, ThemeData theme) {
+    return Container(
+      height: 56, width: 56,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+      ),
+      child: IconButton(
+        onPressed: () => _showCommentSheet(context, habit),
+        icon: Icon(Icons.edit_note_rounded, color: theme.colorScheme.primary, size: 30),
+      ),
+    );
+  }
+
+  Widget _buildGroupSection(BuildContext context, HabitProvider prov, ThemeData theme, S strings) {
+    final myId = context.read<AuthProvider>().currentUser?.id;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          strings.invitationCode.toUpperCase(),
+          style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.outline,
+              letterSpacing: 1
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha:0.3),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.key_rounded, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  prov.currentInviteCode ?? "---",
+                  style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
+                      fontFamily: 'monospace'
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.copy_rounded),
+                onPressed: () {
+                  if (prov.currentInviteCode != null) {
+                    Clipboard.setData(ClipboardData(text: prov.currentInviteCode!));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(strings.invitationCopied))
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 32),
+
+        Text(
+          strings.members.toUpperCase(),
+          style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.outline,
+              letterSpacing: 1
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        if (prov.isLoading)
+          const Center(child: CircularProgressIndicator())
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: prov.currentGroupMembers.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final member = prov.currentGroupMembers[index];
+              final bool isMe = member.userId == myId;
+
+              return InkWell(
+                onTap: () async {
+                  if (isMe) return;
+                  final socialProv = context.read<SocialProvider>();
+                  final targetUser = await socialProv.getUserById(member.userId);
+
+                  if (targetUser != null && context.mounted) {
+                    Navigator.push(context, MaterialPageRoute(
+                        builder: (context) => OtherProfileScreen(userData: targetUser)
+                    ));
+                  }
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isMe ? theme.colorScheme.primary.withValues(alpha:0.05) : theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color: isMe
+                            ? theme.colorScheme.primary.withValues(alpha:0.3)
+                            : theme.colorScheme.outlineVariant.withValues(alpha:0.5)
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: theme.colorScheme.primaryContainer,
+                        child: Text(member.nickname[0].toUpperCase()),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                                member.nickname,
+                                style: const TextStyle(fontWeight: FontWeight.bold)
+                            ),
+                            if (member.esAdministrador)
+                              Text(
+                                  strings.groupAdmin,
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.bold
+                                  )
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withValues(alpha:0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: theme.colorScheme.primary.withValues(alpha:0.2)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "${member.progresAcumulat.toInt()}",
+                                  style: TextStyle(
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          if (member.progresAvui > 0)
+                            Text(
+                              "+${member.progresAvui.toInt()} ${strings.today}",
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.green[700],
+                                  fontWeight: FontWeight.bold
+                              ),
+                            )
+                          else
+                            Text(
+                              strings.noActivityToday,
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: theme.colorScheme.outline
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
     );
   }
 

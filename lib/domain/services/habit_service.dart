@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../persistence/repositories/habit_repository.dart';
 import '../models/chart_data_model.dart';
+import '../models/habit_group_member_model.dart';
 import '../models/habit_model.dart';
 import '../models/habit_record_model.dart';
 import '../models/stats_model.dart';
@@ -15,11 +16,32 @@ class HabitService {
 
   String? get currentUserId => _habitRepository.currentUserId;
   Future<List<HabitModel>> getHabits() => _habitRepository.getHabits();
-  Future<HabitModel> createHabit(HabitModel habit) => _habitRepository.createHabit(habit);
   Future<void> deleteHabit(String habitId) => _habitRepository.deleteHabit(habitId);
   Future<List<HabitRecordModel>> getRecordsForDate(DateTime date) => _habitRepository.getRecordsForDate(date);
   Future<List<HabitRecordModel>> getRecordsForRange(DateTime start, DateTime end) => _habitRepository.getRecordsForRange(start, end);
   Future<List<HabitRecordModel>> getAllRecords() => _habitRepository.getAllRecords();
+
+  Future<HabitModel> createHabit(HabitModel habit) async {
+    if (habit.isGroup) {
+      final code = generateInviteCode();
+      return await _habitRepository.createGroupHabit(habit, code);
+    }
+    return await _habitRepository.createHabit(habit);
+  }
+
+  Future<void> joinGroup(String userId, String code) async {
+    await _habitRepository.joinByCode(userId, code);
+  }
+
+  String generateInviteCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = DateTime.now().millisecondsSinceEpoch;
+    String code = '';
+    for (int i = 0; i < 6; i++) {
+      code += chars[(random + i) % chars.length];
+    }
+    return "CONST-$code";
+  }
 
   List<HabitModel> getArchivedHabits(List<HabitModel> allHabits) {
     return allHabits.where((h) => h.arxivat).toList();
@@ -409,5 +431,13 @@ class HabitService {
   Future<bool> isDateShielded(DateTime date) async {
     final records = await getRecordsForDate(date);
     return records.any((r) => r.isShielded);
+  }
+
+  Future<String?> getGroupInviteCode(String habitId) {
+    return _habitRepository.getGroupInviteCode(habitId);
+  }
+
+  Future<List<HabitGroupMember>> getGroupMembers(String habitId) {
+    return _habitRepository.getGroupMembers(habitId);
   }
 }

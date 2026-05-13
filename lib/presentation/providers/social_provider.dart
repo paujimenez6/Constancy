@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../domain/models/user_model.dart';
 import '../../domain/services/social_service.dart';
 import '../../domain/services/mission_service.dart';
 import '../../domain/models/social_stats_model.dart';
@@ -47,6 +48,10 @@ class SocialProvider extends ChangeNotifier {
 
   Future<SocialStats> getOtherUserStats(String userId) {
     return _socialService.getSocialOverview(userId);
+  }
+
+  Future<UserModel?> getUserById(String userId) async {
+    return await _socialService.getUserById(userId);
   }
 
   Future<void> acceptFollowRequest(String reqId, String followerId) => _socialService.acceptFollowRequest(reqId, followerId);

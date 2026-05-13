@@ -87,6 +87,25 @@ class UserModel {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nickname': nickname,
+      'nom': nom,
+      'cognom': cognom,
+      'correu': correu,
+      'imatge_perfil': imatgePerfil,
+      'punts_xp': puntsXP,
+      'monedes': monedes,
+      'configuracio_privacitat': configuracioPrivacitat.toString().split('.').last,
+      'data_registre': dataRegistre.toIso8601String(),
+      'doble_factor_actiu': dobleFactorActiu,
+      'token': token,
+      'multiplicador_xp_fins': multiplicadorXpFins?.toIso8601String(),
+      'imant_monedes_fins': imantMonedesFins?.toIso8601String(),
+    };
+  }
+
   bool get isMultiplierActive => multiplicadorXpFins != null && multiplicadorXpFins!.isAfter(DateTime.now());
 
   bool get isCoinMagnetActive => imantMonedesFins != null && imantMonedesFins!.isAfter(DateTime.now());

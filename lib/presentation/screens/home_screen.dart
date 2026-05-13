@@ -106,6 +106,97 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showAddOptions(BuildContext context) {
+    final strings = S.of(context);
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: theme.colorScheme.outlineVariant, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                  child: Icon(Icons.person_rounded, color: theme.colorScheme.primary)),
+              title: Text(strings.newHabitTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(strings.habitPersonalDesc),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const HabitFormScreen()));
+              },
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), shape: BoxShape.circle),
+                  child: const Icon(Icons.groups_rounded, color: Colors.orange)),
+              title: Text(strings.joinGroupHabit, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(strings.joinGroupDesc),
+              onTap: () {
+                Navigator.pop(context);
+                _showJoinDialog(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showJoinDialog(BuildContext context) {
+    final strings = S.of(context);
+    final codeController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(strings.joinGroupHabit, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(strings.joinGroupDialogDesc),
+            const SizedBox(height: 16),
+            TextField(
+              controller: codeController,
+              decoration: InputDecoration(
+                hintText: "CONST-XXXX",
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              textCapitalization: TextCapitalization.characters,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(strings.cancel)),
+          ElevatedButton(
+            onPressed: () async {
+              final code = codeController.text.trim();
+              if (code.isNotEmpty) {
+                final userId = context.read<AuthProvider>().currentUser!.id;
+                await context.read<HabitProvider>().joinGroup(userId, code);
+                if (context.mounted) Navigator.pop(context);
+              }
+            },
+            child: Text(strings.joinAction),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final strings = S.of(context);
@@ -205,10 +296,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: estaCompletat ? color.withValues(alpha:0.1) : colorScheme.surface,
+                      color: estaCompletat ? color.withValues(alpha: 0.1) : colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isItemShielded ? Colors.blueGrey : (estaCompletat ? color : colorScheme.outlineVariant.withValues(alpha:0.5)), width: estaCompletat ? 2 : 1,
+                        color: isItemShielded ? Colors.blueGrey : (estaCompletat ? color : colorScheme.outlineVariant.withValues(alpha: 0.5)), width: estaCompletat ? 2 : 1,
                       ),
                     ),
                     child: Row(
@@ -217,7 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: color.withValues(alpha:0.2),
+                            color: color.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(HabitAssets.getIconByName(habit.icona), color: color, size: 28),
@@ -227,13 +318,25 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                habit.titol,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  decoration: estaCompletat ? TextDecoration.lineThrough : null,
-                                ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (habit.isGroup)
+                                     Padding(
+                                      padding: const EdgeInsets.only(right: 6, top: 2),
+                                      child: Icon(Icons.groups_rounded, size: 22, color: theme.colorScheme.primary),
+                                    ),
+                                  Expanded(
+                                    child: Text(
+                                      habit.titol,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                        decoration: estaCompletat ? TextDecoration.lineThrough : null,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -292,15 +395,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-              context, MaterialPageRoute(builder: (context) => const HabitFormScreen()));
-        },
-        label: Text(strings.addHabit),
-        icon: const Icon(Icons.add),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddOptions(context),
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
+        child: const Icon(Icons.add, size: 30),
       ),
     );
   }
@@ -427,12 +526,12 @@ class _DateSelectorWidgetState extends State<DateSelectorWidget> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.primary.withValues(alpha:0.05),
+                    : theme.colorScheme.primary.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: isSelected
                     ? [
                   BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha:0.3),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4))
                 ]
@@ -471,7 +570,7 @@ class _DateSelectorWidgetState extends State<DateSelectorWidget> {
                             width: 25,
                             height: 5,
                             decoration: BoxDecoration(
-                              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha:0.5),
+                              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),

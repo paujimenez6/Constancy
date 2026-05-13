@@ -251,24 +251,19 @@ class _SearchScreenState extends State<SearchScreen> {
     final strings = S.of(context);
 
     return InkWell(
-      onTap: () {
+      onTap: () async {
         if (isMe) {
           auth.setTabIndex(4);
         } else {
-          final userData = {
-            'id': p.userId,
-            'nickname': p.nickname ?? "Usuari",
-            'nom': p.nom ?? '',
-            'cognom': p.cognom ?? '',
-            'imatge_perfil': p.imatgePerfil,
-            'punts_xp': p.puntsXP,
-            'monedes': p.monedes,
-            'configuracio_privacitat': 'public',
-          };
-          Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: userData))
-          );
+          final socialProv = context.read<SocialProvider>();
+          final targetUser = await socialProv.getUserById(p.userId);
+
+          if (targetUser != null && mounted) {
+            Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: targetUser))
+            );
+          }
         }
       },
       borderRadius: BorderRadius.circular(16),
@@ -359,15 +354,16 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildUserResultItem(ThemeData theme, dynamic user) {
     return InkWell(
-      onTap: () {
-        final userData = Map<String, dynamic>.from(user);
-        userData['punts_xp'] = user['punts_xp'] ?? 0;
-        userData['monedes'] = user['monedes'] ?? 0;
+      onTap: () async {
+        final socialProv = context.read<SocialProvider>();
+        final targetUser = await socialProv.getUserById(user['id']);
 
-        Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: userData))
-        );
+        if (targetUser != null && mounted) {
+          Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: targetUser))
+          );
+        }
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(

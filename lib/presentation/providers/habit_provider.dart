@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/models/chart_data_model.dart';
+import '../../domain/models/habit_group_member_model.dart';
 import '../../domain/models/habit_model.dart';
 import '../../domain/models/habit_record_model.dart';
 import '../../domain/models/stats_model.dart';
@@ -15,6 +16,8 @@ class HabitProvider extends ChangeNotifier {
   List<HabitRecordModel> _allTimeRecords = [];
   Map<String, HabitRecordModel> _dailyRecords = {};
   List<HabitModel> _profileHabits = [];
+  List<HabitGroupMember> _currentGroupMembers = [];
+  String? _currentInviteCode;
 
   DateTime _selectedDate = DateTime.now();
   DateTime _focusedMonth = DateTime.now();
@@ -45,6 +48,10 @@ class HabitProvider extends ChangeNotifier {
   List<String> getMonthLabels() => _habitService.getLocalizedMonths();
 
   List<String> get availableCategories => _habitService.getUniqueCategories(_habits);
+
+  List<HabitGroupMember> get currentGroupMembers => _currentGroupMembers;
+
+  String? get currentInviteCode => _currentInviteCode;
 
   List<ChartDataPoint> getStatisticsChartData({
     required bool isMensual,
@@ -131,6 +138,11 @@ class HabitProvider extends ChangeNotifier {
         completat: completat,
         comentari: existingComment,
       );
+
+      final habit = _habits.firstWhere((h) => h.id == habitId);
+      if (habit.isGroup) {
+        await loadGroupDetails(habitId);
+      }
 
       final now = DateTime.now();
       bool isToday = _selectedDate.year == now.year &&
@@ -290,5 +302,33 @@ class HabitProvider extends ChangeNotifier {
 
   Future<bool> isDateShielded(DateTime date) async {
     return await _habitService.isDateShielded(date);
+  }
+
+  Future<void> joinGroup(String userId, String code) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _habitService.joinGroup(userId, code);
+      await loadDataForDate(_selectedDate);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadGroupDetails(String habitId) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final results = await Future.wait([
+        _habitService.getGroupInviteCode(habitId),
+        _habitService.getGroupMembers(habitId),
+      ]);
+      _currentInviteCode = results[0] as String?;
+      _currentGroupMembers = results[1] as List<HabitGroupMember>;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../domain/models/user_model.dart';
+
 class SocialRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -173,5 +175,15 @@ class SocialRepository {
       print("Error a SocialRepository.searchUsers: $e");
       return [];
     }
+  }
+
+  Future<UserModel?> getUserById(String userId) async {
+    final data = await _supabase
+        .from('profiles')
+        .select()
+        .eq('id', userId)
+        .maybeSingle();
+    if (data == null) return null;
+    return UserModel.fromJson(data);
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../domain/models/habit_group_member_model.dart';
 import '../../domain/models/habit_model.dart';
 import '../../domain/models/habit_record_model.dart';
 
@@ -12,21 +13,20 @@ class HabitRepository {
     final userId = _supabase.auth.currentUser!.id;
 
     final data = await _supabase
-        .from('habits')
+        .from('v_user_habits')
         .select()
-        .eq('user_id', userId)
+        .or('user_id.eq.$userId, participant_id.eq.$userId')
         .order('created_at');
 
     return data.map((json) => HabitModel.fromJson(json)).toList();
   }
 
   Future<List<HabitModel>> getHabitsByUserId(String userId) async {
-
     try {
       final data = await _supabase
-          .from('habits')
+          .from('v_user_habits')
           .select()
-          .eq('user_id', userId)
+          .or('user_id.eq.$userId, participant_id.eq.$userId')
           .eq('arxivat', false)
           .order('created_at');
 
@@ -36,6 +36,7 @@ class HabitRepository {
       return [];
     }
   }
+
   Future<HabitModel> createHabit(HabitModel habit) async {
     final userId = _supabase.auth.currentUser!.id;
     final habitData = habit.toJson();
@@ -137,6 +138,7 @@ class HabitRepository {
       'comentari': comentari,
       'updated_at': DateTime.now().toIso8601String(),
     }, onConflict: 'habit_id, data_registre');
+
   }
 
   Future<void> updateHabitRecordComment(String habitId, String userId, DateTime date, String comentari) async {
@@ -170,5 +172,58 @@ class HabitRepository {
         .update({'is_shielded': false, 'completat': false,})
         .eq('user_id', userId)
         .eq('data_registre', dateStr);
+  }
+
+  Future<HabitModel> createGroupHabit(HabitModel habit, String inviteCode) async {
+    final userId = _supabase.auth.currentUser!.id;
+
+    final habitData = habit.toJson();
+    habitData['user_id'] = userId;
+    habitData['is_group'] = true;
+
+    final hBase = await _supabase.from('habits').insert(habitData).select().single();
+    final hId = hBase['id'];
+
+    await _supabase.from('group_habits').insert({
+      'id': hId,
+      'codi_invitacio': inviteCode,
+      'creat_per': userId,
+    });
+
+    await _supabase.from('participacions_habits').insert({
+      'user_id': userId,
+      'habit_grupal_id': hId,
+      'es_administrador': true,
+    });
+
+    return HabitModel.fromJson(hBase);
+  }
+
+  Future<void> joinByCode(String userId, String code) async {
+    await _supabase.rpc('unir_a_habit_grupal', params: {
+      'p_user_id': userId,
+      'p_codi': code,
+    });
+  }
+
+  Future<String?> getGroupInviteCode(String habitId) async {
+    final data = await _supabase
+        .from('group_habits')
+        .select('codi_invitacio')
+        .eq('id', habitId)
+        .maybeSingle();
+    return data?['codi_invitacio'];
+  }
+
+  Future<List<HabitGroupMember>> getGroupMembers(String habitId) async {
+    final avuiStr = DateTime.now().toIso8601String().split('T').first;
+
+    final data = await _supabase
+        .from('v_habit_group_ranking')
+        .select()
+        .eq('habit_grupal_id', habitId)
+        .or('data_registre_avui.eq.$avuiStr,data_registre_avui.is.null');
+
+    return (data as List).map((m) => HabitGroupMember.fromJson(m)).toList();
   }
 }
