@@ -18,7 +18,14 @@ class HabitRepository {
         .or('user_id.eq.$userId, participant_id.eq.$userId')
         .order('created_at');
 
-    return data.map((json) => HabitModel.fromJson(json)).toList();
+    final List<HabitModel> allHabits = data.map((json) => HabitModel.fromJson(json)).toList();
+
+    final Map<String, HabitModel> uniqueHabits = {};
+    for (var habit in allHabits) {
+      uniqueHabits[habit.id] = habit;
+    }
+
+    return uniqueHabits.values.toList()..sort((a, b) => a.createdAt.compareTo(b.createdAt));
   }
 
   Future<List<HabitModel>> getHabitsByUserId(String userId) async {
@@ -30,9 +37,16 @@ class HabitRepository {
           .eq('arxivat', false)
           .order('created_at');
 
-      return data.map((json) => HabitModel.fromJson(json)).toList();
+      final List<HabitModel> allHabits = data.map((json) => HabitModel.fromJson(json)).toList();
+
+      final Map<String, HabitModel> uniqueHabits = {};
+      for (var habit in allHabits) {
+        uniqueHabits[habit.id] = habit;
+      }
+
+      return uniqueHabits.values.toList()..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     } catch (e) {
-      debugPrint("Error al repository: $e");
+      debugPrint("Error al repository (getHabitsByUserId): $e");
       return [];
     }
   }
@@ -137,7 +151,7 @@ class HabitRepository {
       'completat': completat,
       'comentari': comentari,
       'updated_at': DateTime.now().toIso8601String(),
-    }, onConflict: 'habit_id, data_registre');
+    }, onConflict: 'habit_id, user_id, data_registre');
 
   }
 
@@ -150,7 +164,7 @@ class HabitRepository {
         'user_id': userId,
         'data_registre': dateStr,
         'comentari': comentari,
-      }, onConflict: 'habit_id, data_registre');
+      }, onConflict: 'habit_id, user_id, data_registre');
     } catch (e) {
       throw Exception('Error al Repositori en actualitzar el comentari: $e');
     }
@@ -200,10 +214,18 @@ class HabitRepository {
   }
 
   Future<void> joinByCode(String userId, String code) async {
-    await _supabase.rpc('unir_a_habit_grupal', params: {
-      'p_user_id': userId,
-      'p_codi': code,
-    });
+    try {
+      await _supabase.rpc('unir_a_habit_grupal', params: {
+        'p_user_id': userId,
+        'p_codi': code,
+      });
+    } on PostgrestException catch (e) {
+      if (e.code == 'P0001' || e.code == '23505') {
+        throw 'invalid_code';
+      }
+      print('Error al executar la funció RPC: $e');
+      rethrow;
+    }
   }
 
   Future<String?> getGroupInviteCode(String habitId) async {
@@ -215,15 +237,48 @@ class HabitRepository {
     return data?['codi_invitacio'];
   }
 
-  Future<List<HabitGroupMember>> getGroupMembers(String habitId) async {
-    final avuiStr = DateTime.now().toIso8601String().split('T').first;
+  Future<List<HabitGroupMember>> getGroupMembers(String habitId, DateTime date) async {
+    try {
+      final dateStr = date.toIso8601String().split('T').first;
 
-    final data = await _supabase
-        .from('v_habit_group_ranking')
-        .select()
-        .eq('habit_grupal_id', habitId)
-        .or('data_registre_avui.eq.$avuiStr,data_registre_avui.is.null');
+      final List<dynamic> data = await _supabase.rpc(
+        'get_group_ranking_custom_date',
+        params: {
+          'p_habit_id': habitId,
+          'p_date': dateStr,
+        },
+      );
 
-    return (data as List).map((m) => HabitGroupMember.fromJson(m)).toList();
+      return data.map((m) => HabitGroupMember.fromJson(m)).toList();
+    } catch (e) {
+      debugPrint("ERROR REPOSITORY (getGroupMembers): $e");
+      return [];
+    }
+  }
+
+  Future<double> getGroupTotalProgress(String habitId, DateTime date) async {
+    final dateStr = date.toIso8601String().split('T').first;
+    final data = await _supabase.rpc('get_group_total_progress', params: {
+      'p_habit_id': habitId,
+      'p_date': dateStr,
+    });
+    return (data as num).toDouble();
+  }
+
+  RealtimeChannel subscribeToGroupChanges(String habitId, Function onUpdate) {
+    return _supabase
+        .channel('group_ranking_$habitId')
+        .onPostgresChanges(
+      event: PostgresChangeEvent.all,
+      schema: 'public',
+      table: 'participacions_habits',
+      filter: PostgresChangeFilter(
+        type: PostgresChangeFilterType.eq,
+        column: 'habit_grupal_id',
+        value: habitId,
+      ),
+      callback: (payload) => onUpdate(),
+    )
+        .subscribe();
   }
 }

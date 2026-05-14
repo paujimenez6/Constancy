@@ -309,5 +309,8 @@
   "joinAction": "Unir-se",
   "invitationCopied": "Codi d'invitació copiat",
   "today": "avui",
-  "noActivityToday": "sense activitat"
+  "noActivityToday": "sense activitat",
+  "errorInvalidInviteCode": "El codi d'invitació no és vàlid o ja formes part d'aquest hàbit grupal.",
+  "joinedSuccessfully": "T'has unit a l'hàbit grupal correctament!",
+  "genericError": "S'ha produït un error inesperat."
 }

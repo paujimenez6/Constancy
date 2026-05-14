@@ -20,19 +20,34 @@ class HabitDetailScreen extends StatefulWidget {
 }
 
 class _HabitDetailScreenState extends State<HabitDetailScreen> {
+  late HabitProvider _habitProviderReference;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final habitProv = context.read<HabitProvider>();
       final habit = habitProv.habits.firstWhere(
-              (h) => h.id == widget.habitId,
-          orElse: () => habitProv.habits.first
+            (h) => h.id == widget.habitId,
+        orElse: () => habitProv.habits.first,
       );
       if (habit.isGroup) {
         habitProv.loadGroupDetails(widget.habitId);
+        habitProv.listenToGroupChanges(widget.habitId);
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _habitProviderReference = Provider.of<HabitProvider>(context, listen: false);
+  }
+
+  @override
+  void dispose() {
+    _habitProviderReference.stopListeningToGroupChanges();
+    super.dispose();
   }
 
   @override
@@ -48,9 +63,14 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     );
 
     final record = habitProvider.dailyRecords[habit.id];
-    final progresActual = record?.valorProgres ?? 0.0;
+    final double progresActual = record?.valorProgres ?? 0.0;
+    final bool isGroup = habit.isGroup;
+    final double progresCercle = isGroup
+        ? habitProvider.currentGroupTotalProgress
+        : progresActual;
+
     final double valorObj = habit.valorObjectiu > 0 ? habit.valorObjectiu : 1.0;
-    final percentatge = (progresActual / valorObj).clamp(0.0, 1.0);
+    final double percentatge = (progresCercle / valorObj).clamp(0.0, 1.0);
     final habitColor = HabitAssets.hexToColor(habit.color);
 
     return Scaffold(
@@ -134,7 +154,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
 
               const SizedBox(height: 30),
 
-              _buildProgressCircle(context, habit, progresActual, percentatge, habitColor, theme),
+              _buildProgressCircle(context, habit, progresActual, progresCercle, percentatge, habitColor, theme),
 
               const SizedBox(height: 40),
 
@@ -195,7 +215,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     );
   }
 
-  Widget _buildProgressCircle(BuildContext context, HabitModel habit, double progresActual, double percentatge, Color habitColor, ThemeData theme) {
+  Widget _buildProgressCircle(BuildContext context, HabitModel habit, double individual, double actualCercle, double percentatge, Color habitColor, ThemeData theme) {
     final habitProvider = context.read<HabitProvider>();
     return Center(
       child: Stack(
@@ -206,7 +226,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
             child: CircularProgressIndicator(
               value: percentatge,
               strokeWidth: 10,
-              backgroundColor: habitColor.withValues(alpha: 0.1),
+              backgroundColor: habitColor.withValues(alpha:0.1),
               color: habitColor,
               strokeCap: StrokeCap.round,
             ),
@@ -216,7 +236,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
             child: _CircleActionButton(
               icon: Icons.remove_rounded, color: habitColor,
               onPressed: () {
-                double nouVal = (progresActual - 1).clamp(0.0, double.infinity);
+                double nouVal = (individual - 1).clamp(0.0, double.infinity);
                 habitProvider.updateProgress(
                     habitId: habit.id,
                     valorProgres: nouVal,
@@ -230,7 +250,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
             child: _CircleActionButton(
               icon: Icons.add_rounded, color: habitColor,
               onPressed: () {
-                double nouVal = progresActual + 1;
+                double nouVal = individual + 1;
                 habitProvider.updateProgress(
                     habitId: habit.id,
                     valorProgres: nouVal,
@@ -246,7 +266,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
               const SizedBox(height: 4),
               Text("${(percentatge * 100).toInt()}%", style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
               Text(
-                  "${progresActual % 1 == 0 ? progresActual.toInt() : progresActual} / ${habit.valorObjectiu % 1 == 0 ? habit.valorObjectiu.toInt() : habit.valorObjectiu}",
+                  "${actualCercle % 1 == 0 ? actualCercle.toInt() : actualCercle} / ${habit.valorObjectiu % 1 == 0 ? habit.valorObjectiu.toInt() : habit.valorObjectiu}",
                   style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w600)
               ),
               Text(habit.unitatMesura.getLocalizedString(context), style: TextStyle(color: theme.colorScheme.outline, fontSize: 12)),
@@ -261,9 +281,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     return Container(
       height: 56, width: 56,
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+        color: theme.colorScheme.primary.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+        border: Border.all(color: theme.colorScheme.primary.withValues(alpha:0.2)),
       ),
       child: IconButton(
         onPressed: () => _showCommentSheet(context, habit),
@@ -274,6 +294,12 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
 
   Widget _buildGroupSection(BuildContext context, HabitProvider prov, ThemeData theme, S strings) {
     final myId = context.read<AuthProvider>().currentUser?.id;
+
+    final bool isToday = prov.selectedDate.day == DateTime.now().day &&
+        prov.selectedDate.month == DateTime.now().month &&
+        prov.selectedDate.year == DateTime.now().year;
+
+    final String dateLabel = isToday ? strings.today : DateFormat.Md(Intl.getCurrentLocale()).format(prov.selectedDate);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -422,13 +448,15 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                                       fontSize: 13
                                   ),
                                 ),
+                                const SizedBox(width: 4),
+                                Icon(Icons.auto_awesome_rounded, color: theme.colorScheme.primary, size: 14),
                               ],
                             ),
                           ),
                           const SizedBox(height: 4),
                           if (member.progresAvui > 0)
                             Text(
-                              "+${member.progresAvui.toInt()} ${strings.today}",
+                              "+${member.progresAvui.toInt()} $dateLabel",
                               style: TextStyle(
                                   fontSize: 10,
                                   color: Colors.green[700],
@@ -543,7 +571,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                               hintText: strings.commentHint,
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
-                              fillColor: theme.colorScheme.primary.withValues(alpha: 0.05),
+                              fillColor: theme.colorScheme.primary.withValues(alpha:0.05),
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -615,7 +643,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                       ),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
-                      fillColor: theme.colorScheme.primary.withValues(alpha: 0.05),
+                      fillColor: theme.colorScheme.primary.withValues(alpha:0.05),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -696,7 +724,7 @@ class _CircleActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 40, height: 40,
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+      decoration: BoxDecoration(color: color.withValues(alpha:0.1), shape: BoxShape.circle),
       child: IconButton(icon: Icon(icon, color: color, size: 20), onPressed: onPressed, padding: EdgeInsets.zero),
     );
   }

@@ -309,5 +309,8 @@
   "joinAction": "Unirse",
   "invitationCopied": "Código de invitación copiado",
   "today": "hoy",
-  "noActivityToday": "sin actividad"
+  "noActivityToday": "sin actividad",
+  "errorInvalidInviteCode": "El código de invitación no es válido o ya formas parte de este hábito grupal.",
+  "joinedSuccessfully": "¡Te has unido al hábito grupal correctamente!",
+  "genericError": "Se ha producido un error inesperado."
 }

@@ -21,7 +21,7 @@ class HabitGroupMember {
       nickname: json['nickname'] ?? 'Usuari',
       imatgePerfil: json['imatge_perfil'],
       progresAcumulat: (json['progres_acumulat'] ?? 0).toDouble(),
-      progresAvui: (json['progres_avui'] ?? 0).toDouble(),
+      progresAvui: (json['progres_dia'] ?? 0).toDouble(),
       esAdministrador: json['es_administrador'] ?? false,
     );
   }

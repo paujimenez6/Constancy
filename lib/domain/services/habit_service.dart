@@ -437,7 +437,15 @@ class HabitService {
     return _habitRepository.getGroupInviteCode(habitId);
   }
 
-  Future<List<HabitGroupMember>> getGroupMembers(String habitId) {
-    return _habitRepository.getGroupMembers(habitId);
+  Future<List<HabitGroupMember>> getGroupMembers(String habitId, DateTime date) {
+    return _habitRepository.getGroupMembers(habitId, date);
+  }
+
+  Future<double> getGroupTotalProgress(String habitId, DateTime date) {
+    return _habitRepository.getGroupTotalProgress(habitId, date);
+  }
+
+  dynamic subscribeToGroupChanges(String habitId, Function onUpdate) {
+    return _habitRepository.subscribeToGroupChanges(habitId, onUpdate);
   }
 }

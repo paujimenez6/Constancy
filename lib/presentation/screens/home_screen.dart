@@ -18,11 +18,82 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late HabitProvider _habitProviderRef;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HabitProvider>().loadDataForDate(DateTime.now());
+      final prov = context.read<HabitProvider>();
+      prov.loadDataForDate(DateTime.now()).then((_) {
+        prov.listenToAllVisibleGroups();
+      });
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _habitProviderRef = Provider.of<HabitProvider>(context, listen: false);
+  }
+
+  @override
+  void dispose() {
+    _habitProviderRef.stopListeningToAllGroups();
+    super.dispose();
+  }
+
+  void _showTopToast(BuildContext context, String message, {bool isError = true}) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 20,
+        left: 20,
+        right: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            decoration: BoxDecoration(
+              color: isError ? Colors.redAccent.withValues(alpha:0.95) : Colors.green.withValues(alpha:0.95),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha:0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                )
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+    Future.delayed(const Duration(seconds: 4), () {
+      if (overlayEntry.mounted) overlayEntry.remove();
     });
   }
 
@@ -127,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ListTile(
               leading: Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha:0.1), shape: BoxShape.circle),
                   child: Icon(Icons.person_rounded, color: theme.colorScheme.primary)),
               title: Text(strings.newHabitTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(strings.habitPersonalDesc),
@@ -140,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ListTile(
               leading: Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: Colors.orange.withValues(alpha:0.1), shape: BoxShape.circle),
                   child: const Icon(Icons.groups_rounded, color: Colors.orange)),
               title: Text(strings.joinGroupHabit, style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(strings.joinGroupDesc),
@@ -157,42 +228,140 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showJoinDialog(BuildContext context) {
     final strings = S.of(context);
+    final theme = Theme.of(context);
     final codeController = TextEditingController();
+    bool isJoining = false;
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(strings.joinGroupHabit, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(strings.joinGroupDialogDesc),
-            const SizedBox(height: 16),
-            TextField(
-              controller: codeController,
-              decoration: InputDecoration(
-                hintText: "CONST-XXXX",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               ),
-              textCapitalization: TextCapitalization.characters,
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.outlineVariant,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha:0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.groups_rounded, size: 40, color: Colors.orange),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      strings.joinGroupHabit,
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      strings.joinGroupDialogDesc,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 15),
+                    ),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: codeController,
+                      enabled: !isJoining,
+                      textCapitalization: TextCapitalization.characters,
+                      style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2),
+                      decoration: InputDecoration(
+                        hintText: "CONST-XXXX",
+                        hintStyle: TextStyle(letterSpacing: 0, color: theme.colorScheme.outline.withValues(alpha:0.5)),
+                        prefixIcon: const Icon(Icons.key_rounded),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        filled: true,
+                        fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha:0.3),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: isJoining ? null : () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: Text(strings.cancel, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isJoining
+                                ? null
+                                : () async {
+                              final code = codeController.text.trim();
+                              if (code.isEmpty) return;
+
+                              setDialogState(() => isJoining = true);
+
+                              try {
+                                final habitProvider = context.read<HabitProvider>();
+                                final authProvider = context.read<AuthProvider>();
+
+                                await habitProvider.joinGroup(authProvider.currentUser!.id, code);
+
+                                if (context.mounted) {
+                                  FocusScope.of(context).unfocus();
+                                  Navigator.pop(context);
+                                  _showTopToast(context, strings.joinedSuccessfully, isError: false);
+                                  habitProvider.listenToAllVisibleGroups();
+                                }
+                              } catch (e) {
+                                FocusScope.of(context).unfocus();
+                                setDialogState(() => isJoining = false);
+
+                                String message = strings.genericError;
+                                if (e == 'invalid_code' || e.toString().contains('23505')) {
+                                  message = strings.errorInvalidInviteCode;
+                                }
+
+                                if (context.mounted) {
+                                  _showTopToast(context, message, isError: true);
+                                }
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primary,
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              elevation: 0,
+                            ),
+                            child: isJoining
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : Text(strings.joinAction, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(strings.cancel)),
-          ElevatedButton(
-            onPressed: () async {
-              final code = codeController.text.trim();
-              if (code.isNotEmpty) {
-                final userId = context.read<AuthProvider>().currentUser!.id;
-                await context.read<HabitProvider>().joinGroup(userId, code);
-                if (context.mounted) Navigator.pop(context);
-              }
-            },
-            child: Text(strings.joinAction),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -210,8 +379,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final activeHabits = habitProvider.filteredHabits;
-    final dataSeleccionadaFormatada = DateFormat.yMMMMd(Intl.getCurrentLocale()).format(habitProvider.selectedDate);
-
+    final dataStr = DateFormat.yMMMMd(Intl.getCurrentLocale()).format(habitProvider.selectedDate);
     final bool isShieldedToday = habitProvider.dailyRecords.values.any((r) => r.isShielded);
 
     return Scaffold(
@@ -230,7 +398,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(strings.welcomeUser(user.nickname), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(dataSeleccionadaFormatada, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+                Text(dataStr, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
               ],
             ),
           ],
@@ -276,10 +444,16 @@ class _HomeScreenState extends State<HomeScreen> {
               itemBuilder: (context, index) {
                 final habit = activeHabits[index];
                 final record = habitProvider.dailyRecords[habit.id];
-
                 final color = HabitAssets.hexToColor(habit.color);
-                final progresActual = record?.valorProgres ?? 0.0;
-                final estaCompletat = record?.completat ?? false;
+
+                final double displayProgres = habit.isGroup
+                    ? (habitProvider.groupTotals[habit.id] ?? 0.0)
+                    : (record?.valorProgres ?? 0.0);
+
+                final bool estaCompletat = habit.isGroup
+                    ? (displayProgres >= habit.valorObjectiu)
+                    : (record?.completat ?? false);
+
                 final isItemShielded = record?.isShielded ?? false;
 
                 return InkWell(
@@ -296,11 +470,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: estaCompletat ? color.withValues(alpha: 0.1) : colorScheme.surface,
+                      color: estaCompletat ? color.withValues(alpha:0.1) : colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isItemShielded ? Colors.blueGrey : (estaCompletat ? color : colorScheme.outlineVariant.withValues(alpha: 0.5)), width: estaCompletat ? 2 : 1,
+                        color: isItemShielded ? Colors.blueGrey : (estaCompletat ? color : colorScheme.outlineVariant.withValues(alpha:0.5)), width: estaCompletat ? 2 : 1,
                       ),
+                      boxShadow: estaCompletat ? [BoxShadow(color: color.withValues(alpha:0.1), blurRadius: 8, offset: const Offset(0, 4))] : [],
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -308,7 +483,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.2),
+                            color: color.withValues(alpha:0.2),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(HabitAssets.getIconByName(habit.icona), color: color, size: 28),
@@ -322,7 +497,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   if (habit.isGroup)
-                                     Padding(
+                                    Padding(
                                       padding: const EdgeInsets.only(right: 6, top: 2),
                                       child: Icon(Icons.groups_rounded, size: 22, color: theme.colorScheme.primary),
                                     ),
@@ -340,7 +515,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                isItemShielded ? strings.shieldDayTag : "${progresActual % 1 == 0 ? progresActual.toInt() : progresActual} / ${habit.valorObjectiu % 1 == 0 ? habit.valorObjectiu.toInt() : habit.valorObjectiu} ${habit.unitatMesura.getLocalizedString(context)}",
+                                isItemShielded
+                                    ? strings.shieldDayTag
+                                    : "${displayProgres % 1 == 0 ? displayProgres.toInt() : displayProgres} / ${habit.valorObjectiu.toInt()} ${habit.unitatMesura.getLocalizedString(context)}",
                                 style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                               ),
                             ],
@@ -367,11 +544,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               if (proceed != true) return;
                             }
 
-                            double nouProgres = estaCompletat ? 0 : habit.valorObjectiu;
+                            double nouIndividual = (record?.valorProgres ?? 0.0) >= habit.valorObjectiu ? 0 : habit.valorObjectiu;
+
                             await habitProvider.updateProgress(
                               habitId: habit.id,
-                              valorProgres: nouProgres,
-                              completat: nouProgres >= habit.valorObjectiu,
+                              valorProgres: nouIndividual,
+                              completat: nouIndividual >= habit.valorObjectiu,
                             );
                           },
                           icon: Icon(
@@ -465,7 +643,6 @@ class _DateSelectorWidgetState extends State<DateSelectorWidget> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _centerToday();
     });
@@ -526,12 +703,12 @@ class _DateSelectorWidgetState extends State<DateSelectorWidget> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.primary.withValues(alpha: 0.05),
+                    : theme.colorScheme.primary.withValues(alpha:0.05),
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: isSelected
                     ? [
                   BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      color: theme.colorScheme.primary.withValues(alpha:0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4))
                 ]
@@ -570,7 +747,7 @@ class _DateSelectorWidgetState extends State<DateSelectorWidget> {
                             width: 25,
                             height: 5,
                             decoration: BoxDecoration(
-                              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha: 0.5),
+                              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha:0.5),
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),

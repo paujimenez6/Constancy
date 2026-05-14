@@ -309,5 +309,8 @@
   "joinAction": "Join",
   "invitationCopied": "Invitation code copied",
   "today": "today",
-  "noActivityToday": "no activity"
+  "noActivityToday": "no activity",
+  "errorInvalidInviteCode": "The invitation code is invalid or you are already part of this group habit.",
+  "joinedSuccessfully": "You have successfully joined the group habit!",
+  "genericError": "An unexpected error occurred."
 }

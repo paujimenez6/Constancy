@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/models/chart_data_model.dart';
 import '../../domain/models/habit_group_member_model.dart';
 import '../../domain/models/habit_model.dart';
@@ -18,6 +19,10 @@ class HabitProvider extends ChangeNotifier {
   List<HabitModel> _profileHabits = [];
   List<HabitGroupMember> _currentGroupMembers = [];
   String? _currentInviteCode;
+  RealtimeChannel? _groupSubscription;
+  double _currentGroupTotalProgress = 0.0;
+  Map<String, double> _groupTotals = {};
+  Map<String, RealtimeChannel> _activeSubscriptions = {};
 
   DateTime _selectedDate = DateTime.now();
   DateTime _focusedMonth = DateTime.now();
@@ -52,6 +57,10 @@ class HabitProvider extends ChangeNotifier {
   List<HabitGroupMember> get currentGroupMembers => _currentGroupMembers;
 
   String? get currentInviteCode => _currentInviteCode;
+
+  double get currentGroupTotalProgress => _currentGroupTotalProgress;
+
+  Map<String, double> get groupTotals => _groupTotals;
 
   List<ChartDataPoint> getStatisticsChartData({
     required bool isMensual,
@@ -96,10 +105,35 @@ class HabitProvider extends ChangeNotifier {
       ]);
       _habits = results[0] as List<HabitModel>;
       _dailyRecords = {for (var r in (results[1] as List<HabitRecordModel>)) r.habitId: r};
+      final groupHabits = _habits.where((h) => h.isGroup).toList();
+      _groupTotals.clear();
+      for (var habit in groupHabits) {
+        final total = await _habitService.getGroupTotalProgress(habit.id, date);
+        _groupTotals[habit.id] = total;
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void listenToAllVisibleGroups() {
+    stopListeningToAllGroups();
+
+    final visibleGroups = filteredHabits.where((h) => h.isGroup);
+    for (var habit in visibleGroups) {
+      _activeSubscriptions[habit.id] = _habitService.subscribeToGroupChanges(habit.id, () async {
+        await loadDataForDate(_selectedDate);
+        notifyListeners();
+      });
+    }
+  }
+
+  void stopListeningToAllGroups() {
+    for (var sub in _activeSubscriptions.values) {
+      sub.unsubscribe();
+    }
+    _activeSubscriptions.clear();
   }
 
   Future<void> loadProfileHabits(String targetUserId) async {
@@ -307,9 +341,15 @@ class HabitProvider extends ChangeNotifier {
   Future<void> joinGroup(String userId, String code) async {
     _isLoading = true;
     notifyListeners();
+
     try {
       await _habitService.joinGroup(userId, code);
       await loadDataForDate(_selectedDate);
+    } catch (e) {
+      if (e == 'invalid_code') {
+        throw 'invalid_code';
+      }
+      throw 'error_generic';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -322,13 +362,27 @@ class HabitProvider extends ChangeNotifier {
     try {
       final results = await Future.wait([
         _habitService.getGroupInviteCode(habitId),
-        _habitService.getGroupMembers(habitId),
+        _habitService.getGroupMembers(habitId, _selectedDate),
+        _habitService.getGroupTotalProgress(habitId, _selectedDate),
       ]);
       _currentInviteCode = results[0] as String?;
       _currentGroupMembers = results[1] as List<HabitGroupMember>;
+      _currentGroupTotalProgress = results[2] as double;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void listenToGroupChanges(String habitId) {
+    _groupSubscription?.unsubscribe();
+    _groupSubscription = _habitService.subscribeToGroupChanges(habitId, () {
+      loadGroupDetails(habitId);
+    });
+  }
+
+  void stopListeningToGroupChanges() {
+    _groupSubscription?.unsubscribe();
+    _groupSubscription = null;
   }
 }
