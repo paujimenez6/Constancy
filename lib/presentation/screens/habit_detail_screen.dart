@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../domain/models/habit_model.dart';
 import '../../domain/models/habit_assets.dart';
+import '../../domain/models/habit_group_member_model.dart';
 import '../providers/habit_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/social_provider.dart';
@@ -53,6 +54,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final habitProvider = context.watch<HabitProvider>();
+    final authProvider = context.watch<AuthProvider>();
     final theme = Theme.of(context);
     final strings = S.of(context);
     final dateFormat = DateFormat.yMMMMd(Intl.getCurrentLocale());
@@ -62,8 +64,25 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
       orElse: () => habitProvider.habits.first,
     );
 
+    bool isUserAdmin = !habit.isGroup;
+    if (habit.isGroup) {
+      final myId = authProvider.currentUser?.id;
+      final myMemberData = habitProvider.currentGroupMembers.firstWhere(
+            (m) => m.userId == myId,
+        orElse: () => HabitGroupMember(
+            userId: '',
+            nickname: '',
+            progresAcumulat: 0,
+            progresAvui: 0,
+            esAdministrador: false
+        ),
+      );
+      isUserAdmin = myMemberData.esAdministrador;
+    }
+
     final record = habitProvider.dailyRecords[habit.id];
     final double progresActual = record?.valorProgres ?? 0.0;
+
     final bool isGroup = habit.isGroup;
     final double progresCercle = isGroup
         ? habitProvider.currentGroupTotalProgress
@@ -86,37 +105,57 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            onSelected: (value) => _handleMenuAction(context, value, habit),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'edit',
-                child: ListTile(
-                  leading: Icon(Icons.edit_outlined, color: theme.colorScheme.primary),
-                  title: Text(strings.editHabitTitle),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                ),
-              ),
-              PopupMenuItem(
-                value: 'archive',
-                child: ListTile(
-                  leading: Icon(Icons.archive_outlined, color: theme.colorScheme.primary),
-                  title: Text(strings.archive),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                ),
-              ),
-              const PopupMenuDivider(),
-              PopupMenuItem(
-                value: 'delete',
-                child: ListTile(
-                  leading: const Icon(Icons.delete_outline, color: Colors.red),
-                  title: Text(strings.remove, style: const TextStyle(color: Colors.red)),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                ),
-              ),
-            ],
+            onSelected: (value) => _handleMenuAction(context, value, habit, isUserAdmin),
+            itemBuilder: (context) {
+              final List<PopupMenuEntry<String>> menuItems = [];
+
+              if (isUserAdmin) {
+                menuItems.addAll([
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: ListTile(
+                      leading: Icon(Icons.edit_outlined, color: theme.colorScheme.primary),
+                      title: Text(strings.editHabitTitle),
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'archive',
+                    child: ListTile(
+                      leading: Icon(Icons.archive_outlined, color: theme.colorScheme.primary),
+                      title: Text(strings.archive),
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: ListTile(
+                      leading: const Icon(Icons.delete_outline, color: Colors.red),
+                      title: Text(strings.remove, style: const TextStyle(color: Colors.red)),
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                    ),
+                  ),
+                ]);
+              } else {
+                menuItems.add(
+                  PopupMenuItem(
+                    value: 'leave',
+                    child: ListTile(
+                      leading: const Icon(Icons.logout_rounded, color: Colors.orange),
+                      title: Text(strings.leaveAction, style: const TextStyle(color: Colors.orange)),
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                    ),
+                  ),
+                );
+              }
+
+              return menuItems;
+            },
           ),
         ],
       ),
@@ -226,7 +265,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
             child: CircularProgressIndicator(
               value: percentatge,
               strokeWidth: 10,
-              backgroundColor: habitColor.withValues(alpha:0.1),
+              backgroundColor: habitColor.withValues(alpha: 0.1),
               color: habitColor,
               strokeCap: StrokeCap.round,
             ),
@@ -281,9 +320,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     return Container(
       height: 56, width: 56,
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha:0.1),
+        color: theme.colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.primary.withValues(alpha:0.2)),
+        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
       ),
       child: IconButton(
         onPressed: () => _showCommentSheet(context, habit),
@@ -317,7 +356,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha:0.3),
+            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: theme.colorScheme.outlineVariant),
           ),
@@ -391,12 +430,12 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isMe ? theme.colorScheme.primary.withValues(alpha:0.05) : theme.colorScheme.surface,
+                    color: isMe ? theme.colorScheme.primary.withValues(alpha: 0.05) : theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                         color: isMe
-                            ? theme.colorScheme.primary.withValues(alpha:0.3)
-                            : theme.colorScheme.outlineVariant.withValues(alpha:0.5)
+                            ? theme.colorScheme.primary.withValues(alpha: 0.3)
+                            : theme.colorScheme.outlineVariant.withValues(alpha: 0.5)
                     ),
                   ),
                   child: Row(
@@ -433,9 +472,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withValues(alpha:0.1),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: theme.colorScheme.primary.withValues(alpha:0.2)),
+                              border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -448,8 +487,6 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                                       fontSize: 13
                                   ),
                                 ),
-                                const SizedBox(width: 4),
-                                Icon(Icons.auto_awesome_rounded, color: theme.colorScheme.primary, size: 14),
                               ],
                             ),
                           ),
@@ -571,7 +608,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                               hintText: strings.commentHint,
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
-                              fillColor: theme.colorScheme.primary.withValues(alpha:0.05),
+                              fillColor: theme.colorScheme.primary.withValues(alpha: 0.05),
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -643,7 +680,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                       ),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
-                      fillColor: theme.colorScheme.primary.withValues(alpha:0.05),
+                      fillColor: theme.colorScheme.primary.withValues(alpha: 0.05),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -675,7 +712,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     );
   }
 
-  void _handleMenuAction(BuildContext context, String action, HabitModel currentHabit) {
+  void _handleMenuAction(BuildContext context, String action, HabitModel currentHabit, bool isAdmin) {
     final strings = S.of(context);
     final provider = context.read<HabitProvider>();
     if (action == 'edit') {
@@ -684,6 +721,8 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
       _showConfirmDialog(context, title: strings.archiveHabitConfirm, message: strings.archiveHabitMessage, onConfirm: () async => await provider.archiveHabit(currentHabit.id, true));
     } else if (action == 'delete') {
       _showConfirmDialog(context, title: strings.deleteHabitConfirm, message: strings.deleteHabitMessage, isDestructive: true, onConfirm: () async => await provider.deleteHabit(currentHabit.id));
+    } else if (action == 'leave') {
+      _showConfirmDialog(context, title: strings.leaveHabitConfirm, message: strings.leaveHabitMessage, isDestructive: true, onConfirm: () async => await provider.leaveGroup(currentHabit.id));
     }
   }
 
@@ -705,8 +744,14 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                 Navigator.pop(context);
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: isDestructive ? Colors.red : Theme.of(context).colorScheme.primary, foregroundColor: Colors.white, elevation: 0),
-            child: Text(isDestructive ? strings.remove : strings.confirm),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: isDestructive ? Colors.red : Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+                elevation: 0
+            ),
+            child: Text(isDestructive
+                ? (title == strings.leaveHabitConfirm ? strings.leaveAction : strings.remove)
+                : strings.confirm),
           ),
         ],
       ),
@@ -724,7 +769,7 @@ class _CircleActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 40, height: 40,
-      decoration: BoxDecoration(color: color.withValues(alpha:0.1), shape: BoxShape.circle),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
       child: IconButton(icon: Icon(icon, color: color, size: 20), onPressed: onPressed, padding: EdgeInsets.zero),
     );
   }

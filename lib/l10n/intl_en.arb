@@ -312,5 +312,8 @@
   "noActivityToday": "no activity",
   "errorInvalidInviteCode": "The invitation code is invalid or you are already part of this group habit.",
   "joinedSuccessfully": "You have successfully joined the group habit!",
-  "genericError": "An unexpected error occurred."
+  "genericError": "An unexpected error occurred.",
+  "leaveHabitConfirm": "Leave habit?",
+  "leaveHabitMessage": "Are you sure you want to leave this group habit? Your personal records will be deleted.",
+  "leaveAction": "Leave"
 }

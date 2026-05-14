@@ -312,5 +312,8 @@
   "noActivityToday": "sense activitat",
   "errorInvalidInviteCode": "El codi d'invitació no és vàlid o ja formes part d'aquest hàbit grupal.",
   "joinedSuccessfully": "T'has unit a l'hàbit grupal correctament!",
-  "genericError": "S'ha produït un error inesperat."
+  "genericError": "S'ha produït un error inesperat.",
+  "leaveHabitConfirm": "Abandonar l'hàbit?",
+  "leaveHabitMessage": "Estàs segur que vols abandonar aquest hàbit grupal? Es borraran els teus registres personals.",
+  "leaveAction": "Abandonar"
 }

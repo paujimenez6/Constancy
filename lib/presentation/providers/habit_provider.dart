@@ -231,10 +231,21 @@ class HabitProvider extends ChangeNotifier {
   }
 
   Future<void> deleteHabit(String habitId) async {
-    await _habitService.deleteHabit(habitId);
-    await loadDataForDate(_selectedDate);
-    await loadMonthlyData(_focusedMonth);
-    await loadAllTimeData();
+    _isLoading = true;
+    notifyListeners();
+    try {
+      stopListeningToGroupChanges();
+      await _habitService.deleteHabit(habitId);
+
+      stopListeningToAllGroups();
+      await loadDataForDate(_selectedDate);
+      listenToAllVisibleGroups();
+
+      await loadAllTimeData();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> archiveHabit(String habitId, bool arxivat) async {
@@ -384,5 +395,28 @@ class HabitProvider extends ChangeNotifier {
   void stopListeningToGroupChanges() {
     _groupSubscription?.unsubscribe();
     _groupSubscription = null;
+  }
+
+  Future<void> leaveGroup(String habitId) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final myId = _habitService.currentUserId;
+      if (myId == null) return;
+
+      stopListeningToGroupChanges();
+      await _habitService.leaveGroupHabit(habitId, myId);
+      stopListeningToAllGroups();
+
+      await loadDataForDate(_selectedDate);
+      listenToAllVisibleGroups();
+      await loadAllTimeData();
+    } catch (e) {
+      debugPrint("Error al abandonar grup: $e");
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

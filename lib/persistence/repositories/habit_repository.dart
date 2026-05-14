@@ -281,4 +281,18 @@ class HabitRepository {
     )
         .subscribe();
   }
+
+  Future<void> leaveGroupHabit(String habitId, String userId) async {
+    await _supabase
+        .from('habit_records')
+        .delete()
+        .eq('habit_id', habitId)
+        .eq('user_id', userId);
+
+    await _supabase
+        .from('participacions_habits')
+        .delete()
+        .eq('habit_grupal_id', habitId)
+        .eq('user_id', userId);
+  }
 }

@@ -448,4 +448,8 @@ class HabitService {
   dynamic subscribeToGroupChanges(String habitId, Function onUpdate) {
     return _habitRepository.subscribeToGroupChanges(habitId, onUpdate);
   }
+
+  Future<void> leaveGroupHabit(String habitId, String userId) async {
+    await _habitRepository.leaveGroupHabit(habitId, userId);
+  }
 }
