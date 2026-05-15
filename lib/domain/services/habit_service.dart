@@ -116,7 +116,6 @@ class HabitService {
       completat: completat,
       comentari: comentari,
     );
-    await recalculateAndSaveStreaks(habitId);
   }
 
   Future<void> recalculateAndSaveStreaks(String habitId) async {
@@ -321,18 +320,7 @@ class HabitService {
     for (int i = 0; i < totalDaysInRange; i++) {
       DateTime date = startDate.add(Duration(days: i));
 
-      var recordsToday = records.where((r) =>
-      r.dataRegistre.year == date.year &&
-          r.dataRegistre.month == date.month &&
-          r.dataRegistre.day == date.day
-      ).toList();
-
-      bool isAnyShielded = recordsToday.any((r) => r.isShielded);
-
-      if (isAnyShielded) continue;
-
       var expectedOnDate = filterHabitsForDate(allHabits, date, includeArchived: true);
-
       if (selectedHabitId != null) {
         expectedOnDate = expectedOnDate.where((h) => h.id == selectedHabitId).toList();
       }
@@ -343,6 +331,8 @@ class HabitService {
 
       for (var h in habitsToAnalyze) {
         bool expectedToday = expectedOnDate.any((eh) => eh.id == h.id);
+        if (!expectedToday) continue;
+
         var recordToday = records.where((r) =>
         r.habitId == h.id &&
             r.dataRegistre.year == date.year &&
@@ -350,7 +340,8 @@ class HabitService {
             r.dataRegistre.day == date.day
         ).toList();
 
-        bool completedToday = recordToday.any((r) => r.completat);
+        bool completedToday = recordToday.isNotEmpty && (recordToday.first.valorProgres >= h.valorObjectiu || recordToday.first.isShielded);
+
         if (recordToday.isNotEmpty) totalAccumulatedValue += recordToday.first.valorProgres;
 
         if (completedToday) {
@@ -359,13 +350,14 @@ class HabitService {
           if ((habitCurrentStreaks[h.id] ?? 0) > (habitMaxStreaks[h.id] ?? 0)) {
             habitMaxStreaks[h.id] = habitCurrentStreaks[h.id]!;
           }
-        } else if (expectedToday) {
+        } else {
           habitCurrentStreaks[h.id] = 0;
         }
       }
 
       totalExpected += expectedOnDate.length;
       totalCompleted += completedOnDateCount;
+
       if (expectedOnDate.isNotEmpty && completedOnDateCount >= expectedOnDate.length) {
         perfectDays++;
       }
@@ -451,5 +443,13 @@ class HabitService {
 
   Future<void> leaveGroupHabit(String habitId, String userId) async {
     await _habitRepository.leaveGroupHabit(habitId, userId);
+  }
+
+  Future<List<HabitRecordModel>> getGroupRecordsForRange(String habitId, DateTime start, DateTime end) async{
+    return await _habitRepository.getGroupRecordsForRange(habitId, start, end);
+  }
+
+  Future<List<HabitRecordModel>> getAllRecordsForHabit(String habitId) async {
+    return await _habitRepository.getAllRecordsForHabit(habitId);
   }
 }

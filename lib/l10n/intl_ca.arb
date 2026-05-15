@@ -315,5 +315,7 @@
   "genericError": "S'ha produït un error inesperat.",
   "leaveHabitConfirm": "Abandonar l'hàbit?",
   "leaveHabitMessage": "Estàs segur que vols abandonar aquest hàbit grupal? Es borraran els teus registres personals.",
-  "leaveAction": "Abandonar"
+  "leaveAction": "Abandonar",
+  "personalStats": "Personal",
+  "groupStats": "Grupal"
 }

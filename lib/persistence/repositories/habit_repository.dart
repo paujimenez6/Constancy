@@ -223,7 +223,6 @@ class HabitRepository {
       if (e.code == 'P0001' || e.code == '23505') {
         throw 'invalid_code';
       }
-      print('Error al executar la funció RPC: $e');
       rethrow;
     }
   }
@@ -294,5 +293,19 @@ class HabitRepository {
         .delete()
         .eq('habit_grupal_id', habitId)
         .eq('user_id', userId);
+  }
+
+  Future<List<HabitRecordModel>> getGroupRecordsForRange(String habitId, DateTime start, DateTime end) async {
+    final startStr = start.toIso8601String().split('T').first;
+    final endStr = end.toIso8601String().split('T').first;
+
+    final data = await _supabase
+        .from('habit_records')
+        .select()
+        .eq('habit_id', habitId)
+        .gte('data_registre', startStr)
+        .lte('data_registre', endStr);
+
+    return data.map((json) => HabitRecordModel.fromJson(json)).toList();
   }
 }

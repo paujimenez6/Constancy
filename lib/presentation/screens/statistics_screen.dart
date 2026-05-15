@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../providers/habit_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/social_provider.dart';
 import '../../domain/models/habit_record_model.dart';
 import '../../domain/models/habit_model.dart';
 import '../../generated/l10n.dart';
 import '../../domain/models/habit_assets.dart';
 import 'habit_form_screen.dart';
+import 'other_profile_screen.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -18,7 +22,7 @@ class StatisticsScreen extends StatefulWidget {
 
 enum StatsView { mensual, global }
 
-class _StatisticsScreenState extends State<StatisticsScreen> {
+class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerProviderStateMixin {
   DateTime _currentMonth = DateTime.now();
   List<HabitRecordModel> _prevMonthRecords = [];
   bool _isComparing = false;
@@ -26,19 +30,38 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   StatsView _currentView = StatsView.mensual;
   HabitModel? _selectedHabit;
   String? _selectedCategory;
+  TabController? _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController!.addListener(() {
+      if (!_tabController!.indexIsChanging) {
+        setState(() {});
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
   }
 
-  void _loadData() async {
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
     final provider = context.read<HabitProvider>();
+
     await provider.loadMonthlyData(_currentMonth);
     await provider.loadAllTimeData();
+
+    if (_selectedHabit != null && _selectedHabit!.isGroup) {
+      await provider.loadGroupStatistics(_selectedHabit!.id, _currentMonth);
+      await provider.loadGroupDetails(_selectedHabit!.id);
+    }
 
     setState(() => _isComparing = true);
     final prevMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1);
@@ -47,10 +70,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
     final records = await provider.getRecordsForRange(startOfPrev, endOfPrev);
 
-    setState(() {
-      _prevMonthRecords = records;
-      _isComparing = false;
-    });
+    if (mounted) {
+      setState(() {
+        _prevMonthRecords = records;
+        _isComparing = false;
+      });
+    }
   }
 
   void _changeMonth(int increment) {
@@ -63,8 +88,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<HabitProvider>();
+    final authProvider = context.watch<AuthProvider>();
     final strings = S.of(context);
     final theme = Theme.of(context);
+    final currentUserId = authProvider.currentUser?.id;
 
     if (_selectedHabit != null) {
       _selectedHabit = provider.habits.cast<HabitModel?>().firstWhere(
@@ -73,68 +100,102 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       );
     }
 
+    final bool isGroupHabit = _selectedHabit?.isGroup ?? false;
+    final bool isAdmin = _selectedHabit == null || !isGroupHabit || _selectedHabit!.userId == currentUserId;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(strings.navStats, style: const TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
+        bottom: isGroupHabit ? TabBar(
+          controller: _tabController,
+          indicatorSize: TabBarIndicatorSize.label,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          tabs: [
+            Tab(text: strings.personalStats.toUpperCase()),
+            Tab(text: strings.groupStats.toUpperCase()),
+          ],
+        ) : null,
       ),
       body: provider.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _buildHabitSelector(provider, strings, theme),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(icon: const Icon(Icons.chevron_left), onPressed: () => _changeMonth(-1)),
-                Text(
-                  DateFormat.yMMMM(Intl.getCurrentLocale()).format(_currentMonth).toUpperCase(),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                IconButton(icon: const Icon(Icons.chevron_right), onPressed: () => _changeMonth(1)),
-              ],
-            ),
-            const SizedBox(height: 10),
-            _buildCalendarGrid(provider, strings, theme),
-            const SizedBox(height: 20),
-            SegmentedButton<StatsView>(
-              segments: [
-                ButtonSegment(value: StatsView.mensual, label: Text(strings.monthlyLabel), icon: const Icon(Icons.calendar_view_month)),
-                ButtonSegment(value: StatsView.global, label: Text(strings.globalLabel), icon: const Icon(Icons.public)),
-              ],
-              selected: {_currentView},
-              onSelectionChanged: (Set<StatsView> newSelection) {
-                setState(() => _currentView = newSelection.first);
-              },
-            ),
-            const SizedBox(height: 20),
-            const Divider(),
-            const SizedBox(height: 20),
-            _buildAdvancedStats(provider, strings, theme),
-            const SizedBox(height: 30),
-            SegmentedButton<bool>(
-              segments: [
-                ButtonSegment(value: false, label: Text(strings.statsPunctual), icon: const Icon(Icons.show_chart)),
-                ButtonSegment(value: true, label: Text(strings.statsCumulative), icon: const Icon(Icons.stacked_line_chart)),
-              ],
-              selected: {_isCumulativeView},
-              onSelectionChanged: (Set<bool> newSelection) {
-                setState(() => _isCumulativeView = newSelection.first);
-              },
-            ),
-            _buildTrendChart(provider, strings, theme),
-            if (_selectedHabit != null) ...[
-              const SizedBox(height: 30),
-              _buildCommentsSection(provider, strings, theme),
-              const SizedBox(height: 40),
-              _buildHabitActions(provider, strings, theme),
+          : isGroupHabit
+          ? TabBarView(
+        controller: _tabController,
+        children: [
+          _buildMainContent(provider, strings, theme, isAdmin, isGroupMode: false),
+          _buildMainContent(provider, strings, theme, isAdmin, isGroupMode: true),
+        ],
+      )
+          : _buildMainContent(provider, strings, theme, isAdmin, isGroupMode: false),
+    );
+  }
+
+  Widget _buildMainContent(HabitProvider provider, S strings, ThemeData theme, bool isAdmin, {required bool isGroupMode}) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          _buildHabitSelector(provider, strings, theme),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(icon: const Icon(Icons.chevron_left), onPressed: () => _changeMonth(-1)),
+              Text(
+                DateFormat.yMMMM(Intl.getCurrentLocale()).format(_currentMonth).toUpperCase(),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              IconButton(icon: const Icon(Icons.chevron_right), onPressed: () => _changeMonth(1)),
             ],
+          ),
+          const SizedBox(height: 10),
+          _buildCalendarGrid(provider, strings, theme, isGroupMode: isGroupMode),
+          const SizedBox(height: 20),
+          SegmentedButton<StatsView>(
+            segments: [
+              ButtonSegment(value: StatsView.mensual, label: Text(strings.monthlyLabel), icon: const Icon(Icons.calendar_view_month)),
+              ButtonSegment(value: StatsView.global, label: Text(strings.globalLabel), icon: const Icon(Icons.public)),
+            ],
+            selected: {_currentView},
+            onSelectionChanged: (Set<StatsView> newSelection) {
+              setState(() => _currentView = newSelection.first);
+            },
+          ),
+          const SizedBox(height: 20),
+          const Divider(),
+          const SizedBox(height: 20),
+          _buildAdvancedStats(provider, strings, theme, isGroupMode: isGroupMode),
+          const SizedBox(height: 30),
+          SegmentedButton<bool>(
+            segments: [
+              ButtonSegment(value: false, label: Text(strings.statsPunctual), icon: const Icon(Icons.show_chart)),
+              ButtonSegment(value: true, label: Text(strings.statsCumulative), icon: const Icon(Icons.stacked_line_chart)),
+            ],
+            selected: {_isCumulativeView},
+            onSelectionChanged: (Set<bool> newSelection) {
+              setState(() => _isCumulativeView = newSelection.first);
+            },
+          ),
+          _buildTrendChart(provider, strings, theme, isGroupMode: isGroupMode),
+
+          if (_selectedHabit != null) ...[
+            const SizedBox(height: 30),
+            if (isAdmin && !isGroupMode) _buildCommentsSection(provider, strings, theme),
+
+            if (isGroupMode) ...[
+              const SizedBox(height: 20),
+              const Divider(),
+              const SizedBox(height: 30),
+              _buildGroupMembersSection(context, provider, theme, strings),
+            ],
+
             const SizedBox(height: 40),
+            if (!isGroupMode) _buildHabitActions(provider, strings, theme, isAdmin),
           ],
-        ),
+          const SizedBox(height: 40),
+        ],
       ),
     );
   }
@@ -193,6 +254,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           size: 20,
                           color: HabitAssets.hexToColor(h.color)),
                       const SizedBox(width: 10),
+                      if (h.isGroup)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Icon(Icons.groups_rounded, size: 18, color: theme.colorScheme.primary),
+                        ),
                       Expanded(
                           child: Text(h.titol,
                               style: TextStyle(fontStyle: isArchived ? FontStyle.italic : FontStyle.normal))),
@@ -218,13 +284,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 _selectedCategory = null;
               }
             });
+            _loadData();
           },
         ),
       ),
     );
   }
 
-  Widget _buildCalendarGrid(HabitProvider provider, S strings, ThemeData theme) {
+  Widget _buildCalendarGrid(HabitProvider provider, S strings, ThemeData theme, {required bool isGroupMode}) {
     final daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
     final firstDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
     final offset = firstDayOfMonth.weekday - 1;
@@ -265,27 +332,29 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             List<HabitModel> filteredExpected = expectedTotal;
             if (_selectedHabit != null) {
               filteredExpected = expectedTotal.where((h) => h.id == _selectedHabit!.id).toList();
-            } else if (_selectedCategory != null) {
-              filteredExpected = expectedTotal.where((h) => h.grup == _selectedCategory).toList();
             }
 
             double progress = 0.0;
-            final dayRecords = provider.monthlyRecords.where((r) => r.dataRegistre.day == day).toList();
+            final sourceRecords = isGroupMode ? provider.groupAggregatedMonthlyRecords : provider.monthlyRecords;
+            final dayRecords = sourceRecords.where((r) => r.dataRegistre.day == day).toList();
 
             if (filteredExpected.isNotEmpty) {
               if (_selectedHabit != null) {
                 final r = dayRecords.firstWhere((r) => r.habitId == _selectedHabit!.id, orElse: () => HabitRecordModel(id: '', habitId: '', userId: '', dataRegistre: date, createdAt: DateTime.now(), updatedAt: DateTime.now()));
                 progress = (r.valorProgres / _selectedHabit!.valorObjectiu).clamp(0.0, 1.0);
               } else {
-                final completedCount = dayRecords.where((r) => r.completat && filteredExpected.any((h) => h.id == r.habitId)).length;
-                progress = completedCount / filteredExpected.length;
+                final completedCount = dayRecords.where((r) {
+                  final h = provider.habits.firstWhere((hab) => hab.id == r.habitId);
+                  return r.valorProgres >= h.valorObjectiu;
+                }).length;
+                progress = (completedCount / filteredExpected.length).clamp(0.0, 1.0);
               }
             }
 
             return GestureDetector(
               onTap: () {
                 final detailRecords = dayRecords.where((r) => filteredExpected.any((h) => h.id == r.habitId)).toList();
-                _showDailyDetail(context, date, filteredExpected, detailRecords, strings);
+                _showDailyDetail(context, date, filteredExpected, detailRecords, strings, isGroupMode: isGroupMode);
               },
               child: Stack(
                 alignment: Alignment.center,
@@ -305,7 +374,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: filteredExpected.isEmpty
-                              ? (theme.brightness == Brightness.dark ? Colors.grey.shade700 : Colors.grey.shade400)
+                              ? theme.colorScheme.outline.withValues(alpha: 0.5)
                               : theme.colorScheme.onSurface)),
                 ],
               ),
@@ -316,7 +385,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  Widget _buildTrendChart(HabitProvider provider, S strings, ThemeData theme) {
+  Widget _buildTrendChart(HabitProvider provider, S strings, ThemeData theme, {required bool isGroupMode}) {
     final isMensual = _currentView == StatsView.mensual;
     final chartData = provider.getStatisticsChartData(
       isMensual: isMensual,
@@ -324,6 +393,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       selectedCategory: _selectedCategory,
       viewDate: _currentMonth,
       isCumulative: _isCumulativeView,
+      useGroupData: isGroupMode,
     );
 
     if (chartData.isEmpty) return const SizedBox.shrink();
@@ -354,7 +424,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           lineTouchData: LineTouchData(
             touchTooltipData: LineTouchTooltipData(
               getTooltipColor: (touchedSpot) => theme.colorScheme.primaryContainer,
-              tooltipRoundedRadius: 12,
               getTooltipItems: (spots) => spots.map((s) => LineTooltipItem(
                 "${s.y.toInt()} $unitat\n",
                 TextStyle(color: theme.colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold),
@@ -377,18 +446,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               sideTitles: SideTitles(showTitles: true, reservedSize: 40, interval: 1, getTitlesWidget: (val, meta) => Text(val.toInt().toString(), style: _chartLabelStyle(theme))),
             ),
             bottomTitles: AxisTitles(
-              axisNameWidget: Padding(padding: const EdgeInsets.only(top: 4.0), child: Text((isMensual ? strings.daysOfMonth : strings.monthsOfYear).toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primaryColor))),
+              axisNameWidget: Padding(padding: const EdgeInsets.only(top: 10.0), child: Text((isMensual ? strings.daysOfMonth : strings.monthsOfYear).toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primaryColor))),
               axisNameSize: 25,
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 60,
-                interval: 1,
                 getTitlesWidget: (val, meta) {
                   if (val % 1 != 0) return const SizedBox.shrink();
                   final int index = val.toInt();
-                  final double topPadding = (index % 2 == 0) ? 8.0 : 28.0;
                   final label = isMensual ? Text(index.toString(), style: _chartLabelStyle(theme)) : Text(provider.getMonthLabels()[index - 1].toUpperCase(), style: _chartLabelStyle(theme));
-                  return Padding(padding: EdgeInsets.only(top: topPadding), child: label);
+                  return Padding(padding: const EdgeInsets.only(top: 10), child: label);
                 },
               ),
             ),
@@ -400,7 +467,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               isCurved: true,
               color: primaryColor,
               barWidth: 4,
-              dotData: FlDotData(show: true, getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(radius: 3, color: theme.colorScheme.surface, strokeWidth: 2, strokeColor: primaryColor)),
+              dotData: const FlDotData(show: true),
               belowBarData: BarAreaData(show: true, gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [primaryColor.withValues(alpha: 0.2), primaryColor.withValues(alpha: 0.0)])),
             ),
           ],
@@ -416,18 +483,35 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   TextStyle _chartLabelStyle(ThemeData theme) => TextStyle(fontSize: 9, color: theme.colorScheme.outline, fontWeight: FontWeight.bold);
 
-  Widget _buildAdvancedStats(HabitProvider provider, S strings, ThemeData theme) {
+  Widget _buildAdvancedStats(HabitProvider provider, S strings, ThemeData theme, {required bool isGroupMode}) {
     final stats = provider.getStats(
       isMensual: _currentView == StatsView.mensual,
       habitId: _selectedHabit?.id,
       categoryId: _selectedCategory,
+      useGroupData: isGroupMode,
     );
 
     final cardWidth = (MediaQuery.of(context).size.width - 52) / 2;
 
     return Column(
       children: [
-        Text(_selectedHabit != null ? _selectedHabit!.titol : (_selectedCategory ?? ( _currentView == StatsView.mensual ? strings.monthlySummary : strings.globalSummary)), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_selectedHabit != null && _selectedHabit!.isGroup)
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Icon(Icons.groups_rounded, color: theme.colorScheme.primary, size: 28),
+              ),
+            Flexible(
+              child: Text(
+                _selectedHabit != null ? _selectedHabit!.titol : (_selectedCategory ?? ( _currentView == StatsView.mensual ? strings.monthlySummary : strings.globalSummary)),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 24),
         Stack(
           alignment: Alignment.center,
@@ -436,7 +520,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               width: 150,
               height: 150,
               child: CircularProgressIndicator(
-                value: stats.completionPercentage / 100,
+                value: (stats.completionPercentage / 100).clamp(0.0, 1.0),
                 strokeWidth: 12,
                 backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                 color: _selectedHabit != null ? HabitAssets.hexToColor(_selectedHabit!.color) : theme.colorScheme.primary,
@@ -455,22 +539,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           runSpacing: 12,
           alignment: WrapAlignment.center,
           children: [
-            SizedBox(width: cardWidth, child: _statCard(strings.completedLabel, "${stats.totalCompleted}", Icons.check_circle, Colors.green)),
-            if (_selectedHabit == null) ...[
-              SizedBox(width: cardWidth, child: _statCard(strings.starHabitLabel, stats.starHabit?.titol ?? "-", stats.starHabit != null ? HabitAssets.getIconByName(stats.starHabit!.icona) : Icons.star_border_rounded, Colors.amber)),
-              SizedBox(width: cardWidth, child: _statCard(strings.perfectDaysLabel, "${stats.perfectDays}", Icons.workspace_premium, Colors.blueAccent)),
-              SizedBox(width: cardWidth, child: _statCard(strings.dailyAverageLabel, stats.dailyAverage.toStringAsFixed(1), Icons.bar_chart, Colors.deepPurple)),
-              if (_currentView == StatsView.mensual)
-                SizedBox(width: cardWidth, child: _buildWorkloadCard(provider, strings))
-              else
-                SizedBox(width: cardWidth, child: _statCard(strings.allTimeRecord, "${stats.starHabit?.millorRatxa ?? 0}", Icons.emoji_events, Colors.orange)),
-            ] else ...[
-              SizedBox(width: cardWidth, child: _statCard(strings.totalAccumulated, "${stats.totalAccumulatedValue % 1 == 0 ? stats.totalAccumulatedValue.toInt() : stats.totalAccumulatedValue.toStringAsFixed(1)} ${_selectedHabit!.unitatMesura.getLocalizedString(context)}", Icons.analytics_outlined, Colors.blue)),
-              SizedBox(width: cardWidth, child: _statCard(strings.currentStreakLabel, "${stats.currentStreak}", Icons.local_fire_department, Colors.orange)),
-              SizedBox(width: cardWidth, child: _statCard(strings.bestStreakLabel, "${stats.maxStreak}", Icons.military_tech, Colors.amber)),
-              if (_currentView == StatsView.mensual)
-                SizedBox(width: cardWidth, child: _buildWorkloadCard(provider, strings)),
-            ],
+            _statCard(strings.completedLabel, "${stats.totalCompleted}", Icons.check_circle, Colors.green, cardWidth),
+            _statCard(strings.currentStreakLabel, "${isGroupMode ? _selectedHabit?.ratxaActual : stats.currentStreak}", Icons.local_fire_department, Colors.orange, cardWidth),
+            _statCard(strings.totalAccumulated, "${stats.totalAccumulatedValue.toInt()} ${_selectedHabit?.unitatMesura.getLocalizedString(context) ?? ''}", Icons.analytics_outlined, Colors.blue, cardWidth),
+            _statCard(strings.bestStreakLabel, "${isGroupMode ? _selectedHabit?.millorRatxa : stats.maxStreak}", Icons.military_tech, Colors.amber, cardWidth),
+            if (_currentView == StatsView.mensual)
+              _buildWorkloadCard(provider, strings, cardWidth),
           ],
         ),
       ],
@@ -514,7 +588,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               return Card(
                 elevation: 0,
                 margin: const EdgeInsets.only(bottom: 10),
-                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha:0.2),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
                   title: Text(DateFormat.yMMMMd(Intl.getCurrentLocale()).format(r.dataRegistre), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
@@ -528,7 +602,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                        onPressed: () => provider.updateComment(habitId: r.habitId, comentari: null),
+                        onPressed: () async {
+                          await provider.updateComment(habitId: r.habitId, comentari: null);
+                          await _loadData();
+                        },
                       ),
                     ],
                   ),
@@ -541,37 +618,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Future<void> _showAddCommentFlow(BuildContext context, HabitModel habit) async {
-    final strings = S.of(context);
-
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: habit.dataInici,
-      lastDate: DateTime.now(),
-      helpText: strings.selectDate,
-    );
+    final pickedDate = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: habit.dataInici, lastDate: DateTime.now());
 
     if (pickedDate != null && mounted) {
-      final provider = context.read<HabitProvider>();
-      final existingRecords = provider.allTimeRecords.where((r) =>
-      r.habitId == habit.id &&
-          r.dataRegistre.year == pickedDate.year &&
-          r.dataRegistre.month == pickedDate.month &&
-          r.dataRegistre.day == pickedDate.day
-      ).toList();
-
-      final HabitRecordModel recordToEdit = existingRecords.isNotEmpty
-          ? existingRecords.first
-          : HabitRecordModel(
-          id: '',
-          habitId: habit.id,
-          userId: habit.userId,
-          dataRegistre: pickedDate,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now()
-      );
-
-      _showCommentEditSheet(context, recordToEdit, habit);
+      final HabitRecordModel rec = HabitRecordModel(id: '', habitId: habit.id, userId: habit.userId, dataRegistre: pickedDate, createdAt: DateTime.now(), updatedAt: DateTime.now());
+      _showCommentEditSheet(context, rec, habit);
     }
   }
 
@@ -598,19 +649,20 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 maxLines: 3,
                 maxLength: 150,
                 autofocus: true,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: theme.colorScheme.primary.withValues(alpha:0.05),
-                ),
+                decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: theme.colorScheme.primary.withValues(alpha: 0.05)),
               ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
-                  final oldDate = context.read<HabitProvider>().selectedDate;
-                  await context.read<HabitProvider>().loadDataForDate(record.dataRegistre);
-                  await context.read<HabitProvider>().updateComment(habitId: habit.id, comentari: controller.text.trim());
-                  await context.read<HabitProvider>().loadDataForDate(oldDate);
+                  final prov = context.read<HabitProvider>();
+                  final oldDate = prov.selectedDate;
+
+                  await prov.loadDataForDate(record.dataRegistre);
+                  await prov.updateComment(habitId: habit.id, comentari: controller.text.trim());
+
+                  await _loadData();
+                  await prov.loadDataForDate(oldDate);
+
                   if (context.mounted) Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
@@ -623,57 +675,46 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  Widget _buildHabitActions(HabitProvider provider, S strings, ThemeData theme) {
+  Widget _buildHabitActions(HabitProvider provider, S strings, ThemeData theme, bool isAdmin) {
     final habit = _selectedHabit!;
+
+    if (!isAdmin) {
+      return Column(
+        children: [
+          const Divider(height: 40),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _showConfirmDialog(
+                context,
+                title: strings.leaveHabitConfirm,
+                message: strings.leaveHabitMessage,
+                isDestructive: true,
+                onConfirm: () async => await provider.leaveGroup(habit.id),
+              ),
+              icon: const Icon(Icons.logout_rounded),
+              label: Text(strings.leaveAction, style: const TextStyle(fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 14)),
+            ),
+          ),
+        ],
+      );
+    }
+
     return Column(
       children: [
         const Divider(height: 40),
         Row(
           children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HabitFormScreen(habitToEdit: habit))),
-                icon: const Icon(Icons.edit_outlined),
-                label: Text(strings.editHabitTitle),
-                style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              ),
-            ),
+            Expanded(child: ElevatedButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HabitFormScreen(habitToEdit: habit))), icon: const Icon(Icons.edit_outlined), label: Text(strings.editHabitTitle))),
           ],
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _showConfirmDialog(
-                  context,
-                  title: habit.arxivat ? strings.unarchive : strings.archive,
-                  message: habit.arxivat ? strings.unarchiveDialog : strings.archiveHabitMessage,
-                  onConfirm: () async => await provider.archiveHabit(habit.id, !habit.arxivat),
-                ),
-                icon: Icon(habit.arxivat ? Icons.unarchive_outlined : Icons.archive_outlined),
-                label: Text(habit.arxivat ? strings.unarchive : strings.archive),
-                style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              ),
-            ),
+            Expanded(child: OutlinedButton.icon(onPressed: () => provider.archiveHabit(habit.id, !habit.arxivat), icon: Icon(habit.arxivat ? Icons.unarchive_outlined : Icons.archive_outlined), label: Text(habit.arxivat ? strings.unarchive : strings.archive))),
             const SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _showConfirmDialog(
-                  context,
-                  title: strings.deleteHabitConfirm,
-                  message: strings.deleteHabitMessage,
-                  isDestructive: true,
-                  onConfirm: () async {
-                    await provider.deleteHabit(habit.id);
-                    setState(() => _selectedHabit = null);
-                  },
-                ),
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                label: Text(strings.remove, style: const TextStyle(color: Colors.red)),
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              ),
-            ),
+            Expanded(child: OutlinedButton.icon(onPressed: () => _showConfirmDialog(context, title: strings.deleteHabitConfirm, message: strings.deleteHabitMessage, isDestructive: true, onConfirm: () async => await provider.deleteHabit(habit.id)), icon: const Icon(Icons.delete_outline, color: Colors.red), label: Text(strings.remove, style: const TextStyle(color: Colors.red)), style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red)))),
           ],
         ),
       ],
@@ -693,45 +734,47 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           ElevatedButton(
             onPressed: () async {
               await onConfirm();
-              if (context.mounted) Navigator.pop(context);
+              if (context.mounted) {
+                Navigator.pop(context);
+                if (isDestructive) setState(() => _selectedHabit = null);
+              }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: isDestructive ? Colors.red : Theme.of(context).colorScheme.primary, foregroundColor: Colors.white, elevation: 0),
-            child: Text(isDestructive ? strings.remove : strings.confirm),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDestructive ? Colors.red : Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
+            child: Text(isDestructive ? (title == strings.leaveHabitConfirm ? strings.leaveAction : strings.remove) : strings.confirm),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildWorkloadCard(HabitProvider provider, S strings) {
+  Widget _buildWorkloadCard(HabitProvider provider, S strings, double width) {
     var currentRecs = provider.monthlyRecords;
     var prevRecs = _prevMonthRecords;
     if (_selectedHabit != null) {
       currentRecs = currentRecs.where((r) => r.habitId == _selectedHabit!.id).toList();
       prevRecs = prevRecs.where((r) => r.habitId == _selectedHabit!.id).toList();
-    } else if (_selectedCategory != null) {
-      final catIds = provider.habits.where((h) => h.grup == _selectedCategory).map((h) => h.id).toSet();
-      currentRecs = currentRecs.where((r) => catIds.contains(r.habitId)).toList();
-      prevRecs = prevRecs.where((r) => catIds.contains(r.habitId)).toList();
     }
     final completedCurrent = currentRecs.where((r) => r.completat).length;
     final completedPrev = prevRecs.where((r) => r.completat).length;
     String workloadVal = "-";
     Color workloadColor = Colors.blue;
-    IconData workloadIcon = Icons.trending_flat;
     if (!_isComparing && completedPrev > 0) {
       double diff = ((completedCurrent - completedPrev) / completedPrev) * 100;
       workloadVal = "${diff > 0 ? '+' : ''}${diff.toStringAsFixed(0)}%";
       workloadColor = diff >= 0 ? Colors.blue : Colors.red;
-      workloadIcon = diff >= 0 ? Icons.trending_up : Icons.trending_down;
     }
-    return _statCard(strings.workloadLabel, workloadVal, workloadIcon, workloadColor);
+    return _statCard(strings.workloadLabel, workloadVal, Icons.trending_up, workloadColor, width);
   }
 
-  Widget _statCard(String label, String value, IconData icon, Color color) {
+  Widget _statCard(String label, String value, IconData icon, Color color, double width) {
     return Container(
+      width: width,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: color.withValues(alpha:0.1), borderRadius: BorderRadius.circular(15), border: Border.all(color: color.withValues(alpha:0.2))),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(15), border: Border.all(color: color.withValues(alpha: 0.2))),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -745,7 +788,91 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  void _showDailyDetail(BuildContext context, DateTime date, List<HabitModel> expected, List<HabitRecordModel> records, S strings) {
+  Widget _buildGroupMembersSection(BuildContext context, HabitProvider prov, ThemeData theme, S strings) {
+    final myId = context.read<AuthProvider>().currentUser?.id;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(strings.invitationCode.toUpperCase(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.colorScheme.outline, letterSpacing: 1)),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(16), border: Border.all(color: theme.colorScheme.outlineVariant)),
+          child: Row(
+            children: [
+              const Icon(Icons.key_rounded, size: 20),
+              const SizedBox(width: 12),
+              Expanded(child: Text(prov.currentInviteCode ?? "---", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 2, fontFamily: 'monospace'))),
+              IconButton(
+                icon: const Icon(Icons.copy_rounded),
+                onPressed: () {
+                  if (prov.currentInviteCode != null) {
+                    Clipboard.setData(ClipboardData(text: prov.currentInviteCode!));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.invitationCopied)));
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 32),
+        Text(strings.members.toUpperCase(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.colorScheme.outline, letterSpacing: 1)),
+        const SizedBox(height: 16),
+        if (prov.isLoading)
+          const Center(child: CircularProgressIndicator())
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: prov.currentGroupMembers.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final member = prov.currentGroupMembers[index];
+              final bool isMe = member.userId == myId;
+
+              return InkWell(
+                onTap: () async {
+                  if (isMe) return;
+                  final socialProv = context.read<SocialProvider>();
+                  final targetUser = await socialProv.getUserById(member.userId);
+                  if (targetUser != null && context.mounted) {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: targetUser)));
+                  }
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isMe ? theme.colorScheme.primary.withValues(alpha: 0.05) : theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: isMe ? theme.colorScheme.primary.withValues(alpha: 0.3) : theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(backgroundColor: theme.colorScheme.primaryContainer, child: Text(member.nickname[0].toUpperCase())),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(member.nickname, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            if (member.esAdministrador)
+                              Text(strings.groupAdmin, style: TextStyle(fontSize: 10, color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  void _showDailyDetail(BuildContext context, DateTime date, List<HabitModel> expected, List<HabitRecordModel> records, S strings, {required bool isGroupMode}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -767,13 +894,30 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 itemBuilder: (context, i) {
                   final h = expected[i];
                   final record = records.firstWhere((r) => r.habitId == h.id, orElse: () => HabitRecordModel(id: '', habitId: h.id, userId: '', dataRegistre: date, createdAt: DateTime.now(), updatedAt: DateTime.now()));
-                  final isDone = record.id.isNotEmpty && record.completat;
+
+                  final bool estaRealmentFet = isGroupMode
+                      ? (record.valorProgres >= h.valorObjectiu)
+                      : (record.id.isNotEmpty && record.valorProgres >= h.valorObjectiu);
+
                   final color = HabitAssets.hexToColor(h.color);
+
                   return ListTile(
-                    leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withValues(alpha:0.1), shape: BoxShape.circle), child: Icon(HabitAssets.getIconByName(h.icona), color: color)),
-                    title: Text(h.titol, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: isDone ? Text("${strings.registeredAt} ${DateFormat.Hm().format(record.updatedAt)}") : Text(strings.pendingStatus),
-                    trailing: Text("${record.valorProgres % 1 == 0 ? record.valorProgres.toInt() : record.valorProgres} / ${h.valorObjectiu % 1 == 0 ? h.valorObjectiu.toInt() : h.valorObjectiu}", style: TextStyle(fontWeight: FontWeight.bold, color: isDone ? color : Colors.grey)),
+                    leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle), child: Icon(HabitAssets.getIconByName(h.icona), color: color)),
+                    title: Row(
+                      children: [
+                        if (h.isGroup)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: Icon(Icons.groups_rounded, size: 16, color: Theme.of(context).colorScheme.primary),
+                          ),
+                        Expanded(child: Text(h.titol, style: const TextStyle(fontWeight: FontWeight.bold))),
+                      ],
+                    ),
+                    subtitle: estaRealmentFet
+                        ? Text("${strings.registeredAt} ${DateFormat.Hm().format(record.updatedAt)}")
+                        : Text(strings.pendingStatus),
+                    trailing: Text("${record.valorProgres % 1 == 0 ? record.valorProgres.toInt() : record.valorProgres} / ${h.valorObjectiu % 1 == 0 ? h.valorObjectiu.toInt() : h.valorObjectiu}",
+                        style: TextStyle(fontWeight: FontWeight.bold, color: estaRealmentFet ? color : Colors.grey)),
                   );
                 },
               ),

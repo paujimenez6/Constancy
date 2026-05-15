@@ -315,5 +315,7 @@
   "genericError": "An unexpected error occurred.",
   "leaveHabitConfirm": "Leave habit?",
   "leaveHabitMessage": "Are you sure you want to leave this group habit? Your personal records will be deleted.",
-  "leaveAction": "Leave"
+  "leaveAction": "Leave",
+  "personalStats": "Personal",
+  "groupStats": "Group"
 }

@@ -88,6 +88,15 @@ Widget buildHabitList({
                       children: [
                         Row(
                           children: [
+                            if (h.isGroup)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: Icon(
+                                  Icons.groups_rounded,
+                                  size: 20,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
                             Flexible(
                               child: Text(
                                   h.titol,
@@ -95,7 +104,6 @@ Widget buildHabitList({
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                     fontStyle: isArchived ? FontStyle.italic : FontStyle.normal,
-                                    decoration: isArchived ? TextDecoration.none : null,
                                   )
                               ),
                             ),
@@ -136,7 +144,7 @@ Widget buildHabitList({
               ],
 
               const SizedBox(height: 16),
-              const Divider(height: 1),
+              Divider(height: 1, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
               const SizedBox(height: 12),
 
               Row(

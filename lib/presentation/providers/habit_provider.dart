@@ -23,6 +23,8 @@ class HabitProvider extends ChangeNotifier {
   double _currentGroupTotalProgress = 0.0;
   Map<String, double> _groupTotals = {};
   Map<String, RealtimeChannel> _activeSubscriptions = {};
+  List<HabitRecordModel> _groupAggregatedMonthlyRecords = [];
+  List<HabitRecordModel> _groupAggregatedAllTimeRecords = [];
 
   DateTime _selectedDate = DateTime.now();
   DateTime _focusedMonth = DateTime.now();
@@ -62,14 +64,23 @@ class HabitProvider extends ChangeNotifier {
 
   Map<String, double> get groupTotals => _groupTotals;
 
+  List<HabitRecordModel> get groupAggregatedMonthlyRecords => _groupAggregatedMonthlyRecords;
+
   List<ChartDataPoint> getStatisticsChartData({
     required bool isMensual,
     required HabitModel? selectedHabit,
     required String? selectedCategory,
     required DateTime viewDate,
     bool isCumulative = false,
+    bool useGroupData = false,
   }) {
-    List<HabitRecordModel> filteredRecords;
+    List<HabitRecordModel> sourceRecords;
+
+    if (useGroupData) {
+      sourceRecords = isMensual ? _groupAggregatedMonthlyRecords : _groupAggregatedAllTimeRecords;
+    } else {
+      sourceRecords = isMensual ? _monthlyRecords : _allTimeRecords;
+    }
 
     if (selectedCategory != null) {
       final idsInDynamicCategory = _habits
@@ -77,15 +88,11 @@ class HabitProvider extends ChangeNotifier {
           .map((h) => h.id)
           .toSet();
 
-      filteredRecords = (isMensual ? _monthlyRecords : _allTimeRecords)
-          .where((r) => idsInDynamicCategory.contains(r.habitId))
-          .toList();
-    } else {
-      filteredRecords = isMensual ? _monthlyRecords : _allTimeRecords;
+      sourceRecords = sourceRecords.where((r) => idsInDynamicCategory.contains(r.habitId)).toList();
     }
 
     return _habitService.getChartData(
-      records: filteredRecords,
+      records: sourceRecords,
       isMensual: isMensual,
       referenceDate: viewDate,
       selectedHabit: selectedHabit,
@@ -290,41 +297,35 @@ class HabitProvider extends ChangeNotifier {
     await loadAllTimeData();
   }
 
-  HabitStats getStats({required bool isMensual, String? habitId, String? categoryId}) {
+  HabitStats getStats({required bool isMensual, String? habitId, String? categoryId, bool useGroupData = false,}) {
     final now = DateTime.now();
     DateTime start;
     DateTime end;
     List<HabitRecordModel> sourceRecords;
 
+    if (useGroupData) {
+      sourceRecords = isMensual ? _groupAggregatedMonthlyRecords : _groupAggregatedAllTimeRecords;
+    } else {
+      sourceRecords = isMensual ? _monthlyRecords : _allTimeRecords;
+    }
+
     if (isMensual) {
       start = DateTime(_focusedMonth.year, _focusedMonth.month, 1);
       DateTime lastDay = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 0);
       end = (_focusedMonth.year == now.year && _focusedMonth.month == now.month) ? now : lastDay;
-      sourceRecords = _monthlyRecords;
     } else {
       if (_habits.isEmpty) return HabitStats();
-
       List<HabitModel> habitsToCheck = _habits;
       if (habitId != null) {
         habitsToCheck = _habits.where((h) => h.id == habitId).toList();
-      } else if (categoryId != null) {
-        habitsToCheck = _habits.where((h) => h.grup == categoryId).toList();
       }
-
       if (habitsToCheck.isEmpty) return HabitStats();
-
       start = habitsToCheck.map((h) => h.dataInici).reduce((a, b) => a.isBefore(b) ? a : b);
       end = now;
-      sourceRecords = _allTimeRecords;
-    }
-
-    List<HabitModel> habitsForCalculation = _habits;
-    if (categoryId != null) {
-      habitsForCalculation = _habits.where((h) => h.grup == categoryId).toList();
     }
 
     return _habitService.calculateStats(
-      allHabits: habitsForCalculation,
+      allHabits: _habits,
       records: sourceRecords,
       startDate: start,
       endDate: end,
@@ -418,5 +419,47 @@ class HabitProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> loadGroupStatistics(String habitId, DateTime month) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final start = DateTime(month.year, month.month, 1);
+      final end = DateTime(month.year, month.month + 1, 0);
+
+      final allRecords = await _habitService.getGroupRecordsForRange(habitId, start, end);
+      final allTimeGroupRecords = await _habitService.getAllRecordsForHabit(habitId);
+
+      final habit = _habits.firstWhere((h) => h.id == habitId);
+      _groupAggregatedMonthlyRecords = _aggregateRecords(allRecords, habit.valorObjectiu);
+      _groupAggregatedAllTimeRecords = _aggregateRecords(allTimeGroupRecords, habit.valorObjectiu);
+
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  List<HabitRecordModel> _aggregateRecords(List<HabitRecordModel> records, double valorObjectiu) {
+    final Map<String, HabitRecordModel> aggregated = {};
+
+    for (var r in records) {
+      final dateKey = r.dataRegistre.toIso8601String().split('T').first;
+      if (aggregated.containsKey(dateKey)) {
+        final existing = aggregated[dateKey]!;
+        final nouProgres = existing.valorProgres + r.valorProgres;
+        aggregated[dateKey] = existing.copyWith(
+          valorProgres: nouProgres,
+          completat: nouProgres >= valorObjectiu,
+        );
+      } else {
+        aggregated[dateKey] = r.copyWith(
+            completat: r.valorProgres >= valorObjectiu
+        );
+      }
+    }
+    return aggregated.values.toList();
   }
 }
