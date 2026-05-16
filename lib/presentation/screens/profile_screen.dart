@@ -1,9 +1,11 @@
 import 'package:Constancy/presentation/screens/shop_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../domain/models/achievement_model.dart';
 import '../../generated/l10n.dart';
 import '../../domain/models/league_model.dart';
 import '../../domain/models/user_model.dart';
+import '../providers/achievement_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/social_provider.dart';
 import '../providers/habit_provider.dart';
@@ -35,8 +37,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final user = context.read<AuthProvider>().currentUser;
       if (user != null) {
         context.read<AuthProvider>().initProfileListener(user.id);
+        context.read<AchievementProvider>().loadUserAchievements(user.id);
       }
     });
+  }
+
+  IconData _getAchievementIcon(String iconName) {
+    switch (iconName) {
+      case 'edit_calendar': return Icons.edit_calendar;
+      case 'check_circle_outline': return Icons.check_circle_outline;
+      case 'whatshot': return Icons.whatshot;
+      case 'groups': return Icons.groups;
+      case 'person_add': return Icons.person_add;
+      case 'assignment': return Icons.assignment;
+      case 'storefront': return Icons.storefront;
+      case 'backpack': return Icons.backpack;
+      case 'military_tech': return Icons.military_tech;
+      case 'diamond': return Icons.diamond;
+      case 'face': return Icons.face;
+      case 'phonelink_lock': return Icons.phonelink_lock;
+      case 'bolt': return Icons.bolt;
+      case 'savings': return Icons.savings;
+      case 'auto_awesome': return Icons.auto_awesome;
+      default: return Icons.star;
+    }
   }
 
   void _navigateToUserList(String userId, String nickname, String title, bool isFollowers) async {
@@ -155,6 +179,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             const SizedBox(height: 40),
+            _buildSectionHeader(strings.achTitle.toUpperCase(), theme),
+            const SizedBox(height: 16),
+            _buildAchievementShowcase(context, user.id, isMe: true),
+            const SizedBox(height: 5),
 
             Align(
               alignment: Alignment.centerLeft,
@@ -418,6 +446,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
       title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 16)),
       trailing: isDestructive ? null : Icon(Icons.chevron_right_rounded, size: 24, color: theme.colorScheme.outline),
       onTap: onTap,
+    );
+  }
+
+  Widget _buildSectionHeader(String title, ThemeData theme) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+          title,
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: theme.colorScheme.primary, letterSpacing: 1.2)
+      ),
+    );
+  }
+
+  Widget _buildAchievementShowcase(BuildContext context, String userId, {required bool isMe}) {
+    final prov = context.watch<AchievementProvider>();
+
+    if (prov.isLoading && prov.achievements.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return SizedBox(
+      height: 130,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: prov.achievements.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        itemBuilder: (context, index) {
+          final ach = prov.achievements[index];
+          final color = ach.completat ? Theme.of(context).colorScheme.primary : Colors.grey;
+
+          return GestureDetector(
+            onTap: () => _showAchievementDetail(context, ach, isMe, userId),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
+                  ),
+                  child: Icon(_getAchievementIcon(ach.icona), color: color, size: 28),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: 70,
+                  child: Text(
+                    ach.getNom(context),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showAchievementDetail(BuildContext context, AchievementModel ach, bool isMe, String userId) {
+    final strings = S.of(context);
+    final theme = Theme.of(context);
+    final color = ach.completat ? theme.colorScheme.primary : Colors.grey;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: const BorderRadius.vertical(top: Radius.circular(28))),
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: theme.colorScheme.outlineVariant, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: Icon(_getAchievementIcon(ach.icona), color: color, size: 50),
+            ),
+            const SizedBox(height: 20),
+            Text(ach.getNom(context), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(ach.getDescripcio(context), textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 16)),
+            const SizedBox(height: 24),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("${strings.progress}: ${ach.progresActual}/${ach.valorObjectiu}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                if (ach.completat) Text(ach.dataFormatada, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(
+              value: ach.progresActual / ach.valorObjectiu,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              color: color,
+              minHeight: 8,
+              borderRadius: BorderRadius.circular(10),
+            ),
+
+            const SizedBox(height: 32),
+            if (isMe && ach.completat && !ach.reclamat)
+              ElevatedButton(
+                onPressed: () async {
+                  final xp = await context.read<AchievementProvider>().claimAchievementReward(ach.id, userId);
+                  if (xp != null && context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${strings.rewardClaimed}: +$xp XP!")));
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: Text(strings.claimReward.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
     );
   }
 }
