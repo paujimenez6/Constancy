@@ -19,6 +19,8 @@ class _SearchScreenState extends State<SearchScreen> {
   final _searchController = TextEditingController();
   final _focusNode = FocusNode();
   late ConfettiController _confettiController;
+  late LeagueProvider _leagueProviderRef;
+
   List<dynamic> _searchResults = [];
   bool _isSearchingUsers = false;
   bool _isLoadingResults = false;
@@ -37,26 +39,29 @@ class _SearchScreenState extends State<SearchScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = context.read<AuthProvider>().currentUser;
       if (user != null) {
-        final leagueProv = context.read<LeagueProvider>();
-        leagueProv.initRealtimeListeners(user.id);
-        leagueProv.loadUserLeague(user.id);
-        leagueProv.addListener(_handleLeagueResults);
+        _leagueProviderRef.initRealtimeListeners(user.id);
+        _leagueProviderRef.loadUserLeague(user.id);
+        _leagueProviderRef.addListener(_handleLeagueResults);
       }
     });
   }
 
-  void _handleLeagueResults() {
-    final leagueProv = context.read<LeagueProvider>();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _leagueProviderRef = Provider.of<LeagueProvider>(context, listen: false);
+  }
 
-    if (leagueProv.pendingResult != null && !_isDialogShowing && mounted) {
+  void _handleLeagueResults() {
+    if (_leagueProviderRef.pendingResult != null && !_isDialogShowing && mounted) {
       _isDialogShowing = true;
-      _showResultDialog(context, leagueProv.pendingResult!);
+      _showResultDialog(context, _leagueProviderRef.pendingResult!);
     }
   }
 
   @override
   void dispose() {
-    context.read<LeagueProvider>().removeListener(_handleLeagueResults);
+    _leagueProviderRef.removeListener(_handleLeagueResults);
     _searchController.dispose();
     _focusNode.dispose();
     _confettiController.dispose();

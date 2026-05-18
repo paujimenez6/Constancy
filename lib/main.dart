@@ -75,17 +75,20 @@ void main() async {
         ProxyProvider<AchievementRepository, AchievementService>(
           update: (context, achievementRepo, previous) => AchievementService(achievementRepo),
         ),
-        ChangeNotifierProxyProvider<AuthService, AuthProvider>(
-          create: (context) => AuthProvider(context.read<AuthService>()),
-          update: (context, authService, previous) => previous ?? AuthProvider(authService),
+        ChangeNotifierProxyProvider2<AuthService, AchievementService, AuthProvider>(
+          create: (context) => AuthProvider(context.read<AuthService>(), context.read<AchievementService>(),),
+          update: (context, authService, achievementService, previous) =>
+          previous ?? AuthProvider(authService, achievementService),
         ),
-        ChangeNotifierProxyProvider2<SocialService, MissionService, SocialProvider>(
-          create: (context) => SocialProvider(context.read<SocialService>(), context.read<MissionService>(),),
-          update: (context, socialService, missionService, previous) => previous ?? SocialProvider(socialService, missionService),
+        ChangeNotifierProxyProvider3<SocialService, MissionService, AchievementService, SocialProvider>(
+          create: (context) => SocialProvider(context.read<SocialService>(),context.read<MissionService>(),context.read<AchievementService>(),),
+          update: (context, socialService, missionService, achievementService, previous) =>
+          previous ?? SocialProvider(socialService, missionService, achievementService),
         ),
-        ChangeNotifierProxyProvider2<HabitService, MissionService, HabitProvider>(
-          create: (context) => HabitProvider(context.read<HabitService>(), context.read<MissionService>(),),
-          update: (context, habitService, missionService, previous) => previous ?? HabitProvider(habitService, missionService),
+        ChangeNotifierProxyProvider3<HabitService, MissionService, AchievementService, HabitProvider>(
+          create: (context) => HabitProvider(context.read<HabitService>(), context.read<MissionService>(), context.read<AchievementService>(),),
+          update: (context, habitService, missionService, achievementService, previous) =>
+          previous ?? HabitProvider(habitService, missionService, achievementService),
         ),
         ChangeNotifierProxyProvider2<LeagueService, MissionService, LeagueProvider>(
           create: (context) => LeagueProvider(context.read<LeagueService>(), context.read<MissionService>(),),
@@ -99,12 +102,9 @@ void main() async {
           create: (context) => ShopProvider(context.read<ShopService>()),
           update: (context, shopService, previous) => previous ?? ShopProvider(shopService),
         ),
-        ChangeNotifierProxyProvider2<AchievementService, AchievementRepository, AchievementProvider>(
-          create: (context) => AchievementProvider(
-            context.read<AchievementService>(),
-            context.read<AchievementRepository>(),
-          ),
-          update: (context, achievementService, achievementRepo, previous) => previous ?? AchievementProvider(achievementService, achievementRepo),
+        ChangeNotifierProxyProvider<AchievementService, AchievementProvider>(
+          create: (context) => AchievementProvider(context.read<AchievementService>()),
+          update: (context, achievementService, previous) => previous ?? AchievementProvider(achievementService),
         ),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],

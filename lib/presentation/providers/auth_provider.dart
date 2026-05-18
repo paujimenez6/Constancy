@@ -2,17 +2,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import '../../domain/models/user_model.dart';
+import '../../domain/services/achievement_service.dart';
 import '../../domain/services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService;
+  final AchievementService _achievementService;
 
   UserModel? _currentUser;
   bool isManualLogin = false;
   int _currentTabIndex = 0;
   StreamSubscription? _profileSubscription;
 
-  AuthProvider(this._authService);
+  AuthProvider(this._authService, this._achievementService);
 
   UserModel? get currentUser => _currentUser;
   bool get isAuthenticated => _currentUser != null;
@@ -107,9 +109,20 @@ class AuthProvider extends ChangeNotifier {
   Future<void> loginMFAChallenge(String code) => _authService.loginMFAChallenge(code);
   Future<bool> isMFAEnabled() => _authService.isMFAEnabled();
   Future<dynamic> enrollMFA() => _authService.enrollMFA();
-  Future<void> verifyMFA(String factorId, String code) => _authService.verifyMFA(factorId, code);
   Future<String?> getMFAFactorId() => _authService.getMFAFactorId();
   Future<void> unenrollMFA(String factorId) => _authService.unenrollMFA(factorId);
+
+  Future<void> verifyMFA(String factorId, String code) async {
+    try {
+      await _authService.verifyMFA(factorId, code);
+
+      if (_currentUser != null) {
+        await _achievementService.setAbsoluteProgress(_currentUser!.id, 'activarMfa', 1);
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   Future<void> deleteAccount() async {
     await _authService.deleteAccount();

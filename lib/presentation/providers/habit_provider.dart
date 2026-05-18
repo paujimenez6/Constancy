@@ -5,12 +5,14 @@ import '../../domain/models/habit_group_member_model.dart';
 import '../../domain/models/habit_model.dart';
 import '../../domain/models/habit_record_model.dart';
 import '../../domain/models/stats_model.dart';
+import '../../domain/services/achievement_service.dart';
 import '../../domain/services/habit_service.dart';
 import '../../domain/services/mission_service.dart';
 
 class HabitProvider extends ChangeNotifier {
   final HabitService _habitService;
   final MissionService _missionService;
+  final AchievementService _achievementService;
 
   List<HabitModel> _habits = [];
   List<HabitRecordModel> _monthlyRecords = [];
@@ -30,7 +32,7 @@ class HabitProvider extends ChangeNotifier {
   DateTime _focusedMonth = DateTime.now();
   bool _isLoading = false;
 
-  HabitProvider(this._habitService, this._missionService);
+  HabitProvider(this._habitService, this._missionService, this._achievementService);
 
   List<HabitModel> get habits => _habits;
 
@@ -185,6 +187,12 @@ class HabitProvider extends ChangeNotifier {
         await loadGroupDetails(habitId);
       }
 
+      if (completat && !wasCompleted) {
+        await _achievementService.updateProgress(myId, 'completatHabits50', 1);
+      } else if (!completat && wasCompleted) {
+        await _achievementService.updateProgress(myId, 'completatHabits50', -1);
+      }
+
       final now = DateTime.now();
       bool isToday = _selectedDate.year == now.year &&
           _selectedDate.month == now.month &&
@@ -208,6 +216,18 @@ class HabitProvider extends ChangeNotifier {
       }
 
       await loadDataForDate(_selectedDate);
+
+      final habitsDeLaData = filteredHabits;
+      bool diaEsPerfecteAra = habitsDeLaData.isNotEmpty &&
+          habitsDeLaData.every((h) => _dailyRecords[h.id]?.completat ?? false);
+
+      await _achievementService.syncPerfectDay(myId, _selectedDate, diaEsPerfecteAra);
+
+      if (_habits.isNotEmpty) {
+        final int maxRatxaGlobal = _habits.map((h) => h.millorRatxa).reduce((a, b) => a > b ? a : b);
+        await _achievementService.setAbsoluteProgress(myId, 'ratxa50', maxRatxaGlobal);
+      }
+
       await loadMonthlyData(_focusedMonth);
       await loadAllTimeData();
     } catch (e) {
@@ -218,7 +238,19 @@ class HabitProvider extends ChangeNotifier {
 
   Future<void> createHabit(HabitModel habit) async {
     await _habitService.createHabit(habit);
+
+    final myId = _habitService.currentUserId;
+    if (myId != null) {
+      await _achievementService.updateProgress(myId, 'primerHabit', 1);
+    }
+
     await loadDataForDate(_selectedDate);
+
+    if (myId != null && habit.isGroup) {
+      final int totalGrupals = _habits.where((h) => h.isGroup).length;
+      await _achievementService.setAbsoluteProgress(myId, 'grupalsUnits5', totalGrupals);
+    }
+
     await loadAllTimeData();
   }
 
@@ -229,6 +261,13 @@ class HabitProvider extends ChangeNotifier {
       await _habitService.updateHabit(habit);
 
       await loadDataForDate(_selectedDate);
+
+      final myId = _habitService.currentUserId;
+      if (myId != null && _habits.isNotEmpty) {
+        final int maxRatxaGlobal = _habits.map((h) => h.millorRatxa).reduce((a, b) => a > b ? a : b);
+        await _achievementService.setAbsoluteProgress(myId, 'ratxa50', maxRatxaGlobal);
+      }
+
       await loadMonthlyData(_focusedMonth);
       await loadAllTimeData();
     } finally {
@@ -241,12 +280,17 @@ class HabitProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      stopListeningToGroupChanges();
-      await _habitService.deleteHabit(habitId);
+      final bool eraGrupal = _habits.any((h) => h.id == habitId && h.isGroup);
 
       stopListeningToAllGroups();
       await loadDataForDate(_selectedDate);
       listenToAllVisibleGroups();
+
+      final myId = _habitService.currentUserId;
+      if (myId != null && eraGrupal) {
+        final int totalGrupals = _habits.where((h) => h.isGroup).length;
+        await _achievementService.setAbsoluteProgress(myId, 'grupalsUnits5', totalGrupals);
+      }
 
       await loadAllTimeData();
     } finally {
@@ -357,6 +401,10 @@ class HabitProvider extends ChangeNotifier {
     try {
       await _habitService.joinGroup(userId, code);
       await loadDataForDate(_selectedDate);
+
+      final int totalGrupals = _habits.where((h) => h.isGroup).length;
+      await _achievementService.setAbsoluteProgress(userId, 'grupalsUnits5', totalGrupals);
+
     } catch (e) {
       if (e == 'invalid_code') {
         throw 'invalid_code';
@@ -411,6 +459,10 @@ class HabitProvider extends ChangeNotifier {
 
       await loadDataForDate(_selectedDate);
       listenToAllVisibleGroups();
+
+      final int totalGrupals = _habits.where((h) => h.isGroup).length;
+      await _achievementService.setAbsoluteProgress(myId, 'grupalsUnits5', totalGrupals);
+
       await loadAllTimeData();
     } catch (e) {
       debugPrint("Error al abandonar grup: $e");

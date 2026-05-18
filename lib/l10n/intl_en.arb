@@ -351,5 +351,6 @@
   "achDiaPerfecte10Title": "Flawless Day",
   "achDiaPerfecte10Desc": "Achieve the milestone of hitting 10 Perfect Days by completing all your planned habits.",
   "achTitleOther": "{nickname}'s Achievements",
-  "achTitle": "My achievements"
+  "achTitle": "My achievements",
+  "achRewardSubtitle": "You have completed the achievement and earned:"
 }

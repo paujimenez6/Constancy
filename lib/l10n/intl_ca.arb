@@ -351,5 +351,6 @@
   "achDiaPerfecte10Title": "Dia Impecable",
   "achDiaPerfecte10Desc": "Aconsegueix la fita de tancar 10 Dies Perfectes completant tots els teus hàbits previstos.",
   "achTitleOther": "Assoliments de {nickname}",
-  "achTitle": "Els meus assoliments"
+  "achTitle": "Els meus assoliments",
+  "achRewardSubtitle": "Has completat l'assoliment i has guanyat:"
 }

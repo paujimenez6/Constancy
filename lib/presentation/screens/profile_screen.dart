@@ -1,6 +1,7 @@
 import 'package:Constancy/presentation/screens/shop_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:confetti/confetti.dart';
 import '../../domain/models/achievement_model.dart';
 import '../../generated/l10n.dart';
 import '../../domain/models/league_model.dart';
@@ -29,17 +30,26 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isNavigating = false;
+  late ConfettiController _confettiController;
 
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 2));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = context.read<AuthProvider>().currentUser;
       if (user != null) {
         context.read<AuthProvider>().initProfileListener(user.id);
         context.read<AchievementProvider>().loadUserAchievements(user.id);
+        context.read<AchievementProvider>().listenToAchievementChanges(user.id);
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
   }
 
   IconData _getAchievementIcon(String iconName) {
@@ -111,99 +121,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: Text(strings.navProfile, style: const TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: widget.isDirectTab ? [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: IconButton(
-              icon: Icon(Icons.shopping_bag_outlined, color: theme.colorScheme.primary),
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const ShopScreen()));
-              },
-            ),
-          ),
-        ] : null,
-      ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-        child: Column(
-          children: [
-            Center(
-              child: Column(
-                children: [
-                  _buildAvatar(user, theme),
-                  const SizedBox(height: 16),
-
-                  Text(user.nickname, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(user.correu, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
-                  const SizedBox(height: 20),
-
-                  if (leagueProv.currentLeague != null)
-                    _buildLeagueBadge(theme, leagueProv.currentLeague!, strings),
-
-                  const SizedBox(height: 12),
-
-                  _buildBalanceRow(theme, user.puntsXP, user.monedes),
-
-                  const SizedBox(height: 24),
-
-                  _buildStatRow(user, social, strings, theme),
-                ],
-              ),
-            ),
-            const SizedBox(height: 40),
-
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                  strings.homeTitle.toUpperCase(),
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: theme.colorScheme.primary, letterSpacing: 1.2)
-              ),
-            ),
-            const SizedBox(height: 12),
-            buildHabitList(
-              habits: habitProv.habits,
-              isLoading: habitProv.isLoading,
-              emptyMessage: strings.noHabits,
-              strings: strings,
-              theme: theme,
-              context: context,
-            ),
-
-            const SizedBox(height: 40),
-            _buildSectionHeader(strings.achTitle.toUpperCase(), theme),
-            const SizedBox(height: 16),
-            _buildAchievementShowcase(context, user.id, isMe: true),
-            const SizedBox(height: 5),
-
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
-                child: Text(
-                  strings.settings.toUpperCase(),
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: theme.colorScheme.primary),
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: theme.colorScheme.surface,
+          appBar: AppBar(
+            title: Text(strings.navProfile, style: const TextStyle(fontWeight: FontWeight.bold)),
+            centerTitle: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            actions: widget.isDirectTab ? [
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: IconButton(
+                  icon: Icon(Icons.shopping_bag_outlined, color: theme.colorScheme.primary),
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ShopScreen()));
+                  },
                 ),
               ),
-            ),
+            ] : null,
+          ),
+          body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+            child: Column(
+              children: [
+                Center(
+                  child: Column(
+                    children: [
+                      _buildAvatar(user, theme),
+                      const SizedBox(height: 16),
 
-            _buildSettingsContainer(context, strings, theme),
-            if (widget.isDirectTab) ...[
-              const SizedBox(height: 24),
-              _buildLogoutButton(context, strings, theme),
-            ],
-            const SizedBox(height: 80),
-          ],
+                      Text(user.nickname, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(user.correu, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+                      const SizedBox(height: 20),
+
+                      if (leagueProv.currentLeague != null)
+                        _buildLeagueBadge(theme, leagueProv.currentLeague!, strings),
+
+                      const SizedBox(height: 12),
+
+                      _buildBalanceRow(theme, user.puntsXP, user.monedes),
+
+                      const SizedBox(height: 24),
+
+                      _buildStatRow(user, social, strings, theme),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                      strings.homeTitle.toUpperCase(),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: theme.colorScheme.primary, letterSpacing: 1.2)
+                  ),
+                ),
+                const SizedBox(height: 12),
+                buildHabitList(
+                  habits: habitProv.habits,
+                  isLoading: habitProv.isLoading,
+                  emptyMessage: strings.noHabits,
+                  strings: strings,
+                  theme: theme,
+                  context: context,
+                ),
+
+                const SizedBox(height: 40),
+                _buildSectionHeader(strings.achTitle.toUpperCase(), theme),
+                const SizedBox(height: 16),
+                _buildAchievementShowcase(context, user.id, isMe: true),
+                const SizedBox(height: 5),
+
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
+                    child: Text(
+                      strings.settings.toUpperCase(),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: theme.colorScheme.primary),
+                    ),
+                  ),
+                ),
+
+                _buildSettingsContainer(context, strings, theme),
+                if (widget.isDirectTab) ...[
+                  const SizedBox(height: 24),
+                  _buildLogoutButton(context, strings, theme),
+                ],
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
         ),
-      ),
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirectionality: BlastDirectionality.explosive,
+            shouldLoop: false,
+            colors: const [Colors.blue, Colors.red, Colors.orange, Colors.green],
+          ),
+        ),
+      ],
     );
   }
 
@@ -558,7 +581,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final xp = await context.read<AchievementProvider>().claimAchievementReward(ach.id, userId);
                   if (xp != null && context.mounted) {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${strings.rewardClaimed}: +$xp XP!")));
+                    _showRewardEffect(context, xp);
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -573,6 +596,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showRewardEffect(BuildContext context, int xpGained) {
+    final strings = S.of(context);
+    final theme = Theme.of(context);
+
+    _confettiController.play();
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      transitionDuration: const Duration(milliseconds: 400),
+      pageBuilder: (context, anim1, anim2) => const SizedBox(),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return Transform.scale(
+          scale: anim1.value,
+          child: Opacity(
+            opacity: anim1.value,
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.celebration, size: 60, color: theme.colorScheme.primary.withValues(alpha: 0.8)),
+                  const SizedBox(height: 16),
+                  Text(strings.missionRewardTitle, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text(strings.missionRewardSubtitle, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildRewardBadge(
+                        "$xpGained XP",
+                        Icons.bolt_rounded,
+                        theme.colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(strings.awesome),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRewardBadge(String text, IconData icon, Color color) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+          child: Icon(icon, color: color, size: 30),
+        ),
+        const SizedBox(height: 8),
+        Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+      ],
     );
   }
 }

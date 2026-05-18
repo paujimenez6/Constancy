@@ -29,10 +29,20 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   int _followingCount = 0;
   LeagueModel? _otherUserLeague;
 
+  late AchievementProvider _achievementProviderRef;
+  late AuthProvider _authProviderRef;
+
   @override
   void initState() {
     super.initState();
     _loadInitialData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _achievementProviderRef = Provider.of<AchievementProvider>(context, listen: false);
+    _authProviderRef = Provider.of<AuthProvider>(context, listen: false);
   }
 
   Future<void> _loadInitialData() async {
@@ -49,6 +59,9 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
 
       await context.read<HabitProvider>().loadProfileHabits(userId);
       await context.read<AchievementProvider>().loadUserAchievements(userId);
+      if (mounted) {
+        context.read<AchievementProvider>().listenToAchievementChanges(userId);
+      }
     }
   }
 
@@ -574,5 +587,19 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    final myId = _authProviderRef.currentUser?.id;
+    _achievementProviderRef.stopListeningToAchievementChanges();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (myId != null) {
+        _achievementProviderRef.loadUserAchievements(myId);
+        _achievementProviderRef.listenToAchievementChanges(myId);
+      }
+    });
+    super.dispose();
   }
 }

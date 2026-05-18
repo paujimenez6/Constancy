@@ -410,6 +410,19 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
     if (showObjectiveLine && _selectedHabit!.valorObjectiu > maxY) maxY = _selectedHabit!.valorObjectiu;
     maxY = maxY == 0 ? 5 : (maxY * 1.3).ceilToDouble();
 
+    double yInterval = 1;
+    if (maxY > 5 && maxY <= 12) {
+      yInterval = 2;
+    } else if (maxY > 12 && maxY <= 30) {
+      yInterval = 5;
+    } else if (maxY > 30 && maxY <= 70) {
+      yInterval = 10;
+    } else if (maxY > 70 && maxY <= 200) {
+      yInterval = 25;
+    } else if (maxY > 200) {
+      yInterval = (maxY / 6).ceilToDouble();
+    }
+
     return Container(
       height: 380,
       margin: const EdgeInsets.symmetric(vertical: 20),
@@ -436,14 +449,27 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
               )).toList(),
             ),
           ),
-          gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (value) => FlLine(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2), strokeWidth: 1)),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: yInterval,
+            getDrawingHorizontalLine: (value) => FlLine(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2), strokeWidth: 1),
+          ),
           titlesData: FlTitlesData(
             rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             leftTitles: AxisTitles(
               axisNameWidget: Padding(padding: const EdgeInsets.only(bottom: 12.0), child: Text(yAxisLabel, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primaryColor))),
               axisNameSize: 30,
-              sideTitles: SideTitles(showTitles: true, reservedSize: 40, interval: 1, getTitlesWidget: (val, meta) => Text(val.toInt().toString(), style: _chartLabelStyle(theme))),
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 40,
+                interval: yInterval,
+                getTitlesWidget: (val, meta) {
+                  if (val % yInterval != 0) return const SizedBox.shrink();
+                  return Text(val.toInt().toString(), style: _chartLabelStyle(theme));
+                },
+              ),
             ),
             bottomTitles: AxisTitles(
               axisNameWidget: Padding(padding: const EdgeInsets.only(top: 10.0), child: Text((isMensual ? strings.daysOfMonth : strings.monthsOfYear).toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primaryColor))),
@@ -480,8 +506,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
       ),
     );
   }
-
-  TextStyle _chartLabelStyle(ThemeData theme) => TextStyle(fontSize: 9, color: theme.colorScheme.outline, fontWeight: FontWeight.bold);
 
   Widget _buildAdvancedStats(HabitProvider provider, S strings, ThemeData theme, {required bool isGroupMode}) {
     final stats = provider.getStats(
@@ -871,6 +895,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
       ],
     );
   }
+
+  TextStyle _chartLabelStyle(ThemeData theme) => TextStyle(fontSize: 9, color: theme.colorScheme.outline, fontWeight: FontWeight.bold);
 
   void _showDailyDetail(BuildContext context, DateTime date, List<HabitModel> expected, List<HabitRecordModel> records, S strings, {required bool isGroupMode}) {
     showModalBottomSheet(

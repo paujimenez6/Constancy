@@ -352,5 +352,6 @@
   "achDiaPerfecte10Title": "Día Impecable",
   "achDiaPerfecte10Desc": "Consigue el hito de cerrar 10 Días Perfectos completando todos tus hábitos previstos.",
   "achTitleOther": "Logros de {nickname}",
-  "achTitle": "Mis logros"
+  "achTitle": "Mis logros",
+  "achRewardSubtitle": "Has completado el logro y has ganado:"
 }

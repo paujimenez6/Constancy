@@ -126,7 +126,7 @@ class SocialRepository {
   Future<List<Map<String, dynamic>>> getFollowingList(String userId) async {
     final res = await _supabase
         .from('follows')
-        .select('profiles:follower_id(id, nickname, nom, cognom, imatge_perfil, punts_xp, monedes, configuracio_privacitat)')
+        .select('profiles:following_id(id, nickname, nom, cognom, imatge_perfil, punts_xp, monedes, configuracio_privacitat)')
         .eq('follower_id', userId);
     return (res as List).map((e) => e['profiles'] as Map<String, dynamic>).toList();
   }
