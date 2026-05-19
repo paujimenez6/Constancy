@@ -30,8 +30,12 @@ jobs:
       - name: Generate Localizations
         run: flutter pub run intl_utils:generate
 
-      - name: Create dummy .env file
-        run: touch .env
+      - name: Create real .env file
+        run: |
+          cat << EOF > .env
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}
+          EOF
 
       - name: Create firebase_options.dart dynamically
         run: |
