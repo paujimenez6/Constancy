@@ -57,7 +57,45 @@ jobs:
           }
           EOF
 
+      - name: Create google-services.json dynamically
+        run: |
+          mkdir -p android/app
+          cat << 'EOF' > android/app/google-services.json
+          {
+            "project_info": {
+              "project_number": "155450377472",
+              "project_id": "constancy-tfg",
+              "storage_bucket": "constancy-tfg.firebasestorage.app"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:155450377472:android:d6d513ac24bd1c89245fe5",
+                  "android_client_info": {
+                    "package_name": "com.example.constancy"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [
+                  {
+                    "current_key": "AIzaSyD0b2Kvo9uLZM6uEdnEC9v3eeMqGNiz7hg"
+                  }
+                ],
+                "services": {
+                  "appinvite_service": {
+                    "other_platform_oauth_client": []
+                  }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+
       - name: Build APK and Upload to Firebase App Distribution
+        working-directory: android
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_DISTRIBUTION_TOKEN }}
-        run: flutter build apk --release --pub
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease appDistributionUploadRelease
