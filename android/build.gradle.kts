@@ -1,3 +1,8 @@
+plugins {
+    id("com.google.gms.google-services") version "4.3.15" apply false
+    id("com.google.firebase.appdistribution") version "4.0.1" apply false
+}
+
 allprojects {
     repositories {
         google()

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../persistence/repositories/habit_repository.dart';
 import '../models/chart_data_model.dart';
+import '../models/habit_group_member_model.dart';
 import '../models/habit_model.dart';
 import '../models/habit_record_model.dart';
 import '../models/stats_model.dart';
@@ -15,11 +16,32 @@ class HabitService {
 
   String? get currentUserId => _habitRepository.currentUserId;
   Future<List<HabitModel>> getHabits() => _habitRepository.getHabits();
-  Future<HabitModel> createHabit(HabitModel habit) => _habitRepository.createHabit(habit);
   Future<void> deleteHabit(String habitId) => _habitRepository.deleteHabit(habitId);
   Future<List<HabitRecordModel>> getRecordsForDate(DateTime date) => _habitRepository.getRecordsForDate(date);
   Future<List<HabitRecordModel>> getRecordsForRange(DateTime start, DateTime end) => _habitRepository.getRecordsForRange(start, end);
   Future<List<HabitRecordModel>> getAllRecords() => _habitRepository.getAllRecords();
+
+  Future<HabitModel> createHabit(HabitModel habit) async {
+    if (habit.isGroup) {
+      final code = generateInviteCode();
+      return await _habitRepository.createGroupHabit(habit, code);
+    }
+    return await _habitRepository.createHabit(habit);
+  }
+
+  Future<void> joinGroup(String userId, String code) async {
+    await _habitRepository.joinByCode(userId, code);
+  }
+
+  String generateInviteCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = DateTime.now().millisecondsSinceEpoch;
+    String code = '';
+    for (int i = 0; i < 6; i++) {
+      code += chars[(random + i) % chars.length];
+    }
+    return "CONST-$code";
+  }
 
   List<HabitModel> getArchivedHabits(List<HabitModel> allHabits) {
     return allHabits.where((h) => h.arxivat).toList();
@@ -94,7 +116,6 @@ class HabitService {
       completat: completat,
       comentari: comentari,
     );
-    await recalculateAndSaveStreaks(habitId);
   }
 
   Future<void> recalculateAndSaveStreaks(String habitId) async {
@@ -299,18 +320,7 @@ class HabitService {
     for (int i = 0; i < totalDaysInRange; i++) {
       DateTime date = startDate.add(Duration(days: i));
 
-      var recordsToday = records.where((r) =>
-      r.dataRegistre.year == date.year &&
-          r.dataRegistre.month == date.month &&
-          r.dataRegistre.day == date.day
-      ).toList();
-
-      bool isAnyShielded = recordsToday.any((r) => r.isShielded);
-
-      if (isAnyShielded) continue;
-
       var expectedOnDate = filterHabitsForDate(allHabits, date, includeArchived: true);
-
       if (selectedHabitId != null) {
         expectedOnDate = expectedOnDate.where((h) => h.id == selectedHabitId).toList();
       }
@@ -321,6 +331,8 @@ class HabitService {
 
       for (var h in habitsToAnalyze) {
         bool expectedToday = expectedOnDate.any((eh) => eh.id == h.id);
+        if (!expectedToday) continue;
+
         var recordToday = records.where((r) =>
         r.habitId == h.id &&
             r.dataRegistre.year == date.year &&
@@ -328,7 +340,8 @@ class HabitService {
             r.dataRegistre.day == date.day
         ).toList();
 
-        bool completedToday = recordToday.any((r) => r.completat);
+        bool completedToday = recordToday.isNotEmpty && (recordToday.first.valorProgres >= h.valorObjectiu || recordToday.first.isShielded);
+
         if (recordToday.isNotEmpty) totalAccumulatedValue += recordToday.first.valorProgres;
 
         if (completedToday) {
@@ -337,13 +350,14 @@ class HabitService {
           if ((habitCurrentStreaks[h.id] ?? 0) > (habitMaxStreaks[h.id] ?? 0)) {
             habitMaxStreaks[h.id] = habitCurrentStreaks[h.id]!;
           }
-        } else if (expectedToday) {
+        } else {
           habitCurrentStreaks[h.id] = 0;
         }
       }
 
       totalExpected += expectedOnDate.length;
       totalCompleted += completedOnDateCount;
+
       if (expectedOnDate.isNotEmpty && completedOnDateCount >= expectedOnDate.length) {
         perfectDays++;
       }
@@ -409,5 +423,33 @@ class HabitService {
   Future<bool> isDateShielded(DateTime date) async {
     final records = await getRecordsForDate(date);
     return records.any((r) => r.isShielded);
+  }
+
+  Future<String?> getGroupInviteCode(String habitId) {
+    return _habitRepository.getGroupInviteCode(habitId);
+  }
+
+  Future<List<HabitGroupMember>> getGroupMembers(String habitId, DateTime date) {
+    return _habitRepository.getGroupMembers(habitId, date);
+  }
+
+  Future<double> getGroupTotalProgress(String habitId, DateTime date) {
+    return _habitRepository.getGroupTotalProgress(habitId, date);
+  }
+
+  dynamic subscribeToGroupChanges(String habitId, Function onUpdate) {
+    return _habitRepository.subscribeToGroupChanges(habitId, onUpdate);
+  }
+
+  Future<void> leaveGroupHabit(String habitId, String userId) async {
+    await _habitRepository.leaveGroupHabit(habitId, userId);
+  }
+
+  Future<List<HabitRecordModel>> getGroupRecordsForRange(String habitId, DateTime start, DateTime end) async{
+    return await _habitRepository.getGroupRecordsForRange(habitId, start, end);
+  }
+
+  Future<List<HabitRecordModel>> getAllRecordsForHabit(String habitId) async {
+    return await _habitRepository.getAllRecordsForHabit(habitId);
   }
 }

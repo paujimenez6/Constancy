@@ -1,5 +1,6 @@
 import '../../persistence/repositories/social_repository.dart';
 import '../models/social_stats_model.dart';
+import '../models/user_model.dart';
 
 class SocialService {
   final SocialRepository _socialRepository;
@@ -69,4 +70,6 @@ class SocialService {
 
   Future<List<Map<String, dynamic>>> searchUsers(String query, {int limit = 20}) =>
       _socialRepository.searchUsers(query, limit: limit);
+
+  Future<UserModel?> getUserById(String userId) => _socialRepository.getUserById(userId);
 }

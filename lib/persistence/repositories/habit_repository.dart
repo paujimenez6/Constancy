@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../domain/models/habit_group_member_model.dart';
 import '../../domain/models/habit_model.dart';
 import '../../domain/models/habit_record_model.dart';
 
@@ -12,30 +13,44 @@ class HabitRepository {
     final userId = _supabase.auth.currentUser!.id;
 
     final data = await _supabase
-        .from('habits')
+        .from('v_user_habits')
         .select()
-        .eq('user_id', userId)
+        .or('user_id.eq.$userId, participant_id.eq.$userId')
         .order('created_at');
 
-    return data.map((json) => HabitModel.fromJson(json)).toList();
+    final List<HabitModel> allHabits = data.map((json) => HabitModel.fromJson(json)).toList();
+
+    final Map<String, HabitModel> uniqueHabits = {};
+    for (var habit in allHabits) {
+      uniqueHabits[habit.id] = habit;
+    }
+
+    return uniqueHabits.values.toList()..sort((a, b) => a.createdAt.compareTo(b.createdAt));
   }
 
   Future<List<HabitModel>> getHabitsByUserId(String userId) async {
-
     try {
       final data = await _supabase
-          .from('habits')
+          .from('v_user_habits')
           .select()
-          .eq('user_id', userId)
+          .or('user_id.eq.$userId, participant_id.eq.$userId')
           .eq('arxivat', false)
           .order('created_at');
 
-      return data.map((json) => HabitModel.fromJson(json)).toList();
+      final List<HabitModel> allHabits = data.map((json) => HabitModel.fromJson(json)).toList();
+
+      final Map<String, HabitModel> uniqueHabits = {};
+      for (var habit in allHabits) {
+        uniqueHabits[habit.id] = habit;
+      }
+
+      return uniqueHabits.values.toList()..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     } catch (e) {
-      debugPrint("Error al repository: $e");
+      debugPrint("Error al repository (getHabitsByUserId): $e");
       return [];
     }
   }
+
   Future<HabitModel> createHabit(HabitModel habit) async {
     final userId = _supabase.auth.currentUser!.id;
     final habitData = habit.toJson();
@@ -136,7 +151,8 @@ class HabitRepository {
       'completat': completat,
       'comentari': comentari,
       'updated_at': DateTime.now().toIso8601String(),
-    }, onConflict: 'habit_id, data_registre');
+    }, onConflict: 'habit_id, user_id, data_registre');
+
   }
 
   Future<void> updateHabitRecordComment(String habitId, String userId, DateTime date, String comentari) async {
@@ -148,7 +164,7 @@ class HabitRepository {
         'user_id': userId,
         'data_registre': dateStr,
         'comentari': comentari,
-      }, onConflict: 'habit_id, data_registre');
+      }, onConflict: 'habit_id, user_id, data_registre');
     } catch (e) {
       throw Exception('Error al Repositori en actualitzar el comentari: $e');
     }
@@ -170,5 +186,126 @@ class HabitRepository {
         .update({'is_shielded': false, 'completat': false,})
         .eq('user_id', userId)
         .eq('data_registre', dateStr);
+  }
+
+  Future<HabitModel> createGroupHabit(HabitModel habit, String inviteCode) async {
+    final userId = _supabase.auth.currentUser!.id;
+
+    final habitData = habit.toJson();
+    habitData['user_id'] = userId;
+    habitData['is_group'] = true;
+
+    final hBase = await _supabase.from('habits').insert(habitData).select().single();
+    final hId = hBase['id'];
+
+    await _supabase.from('group_habits').insert({
+      'id': hId,
+      'codi_invitacio': inviteCode,
+      'creat_per': userId,
+    });
+
+    await _supabase.from('participacions_habits').insert({
+      'user_id': userId,
+      'habit_grupal_id': hId,
+      'es_administrador': true,
+    });
+
+    return HabitModel.fromJson(hBase);
+  }
+
+  Future<void> joinByCode(String userId, String code) async {
+    try {
+      await _supabase.rpc('unir_a_habit_grupal', params: {
+        'p_user_id': userId,
+        'p_codi': code,
+      });
+    } on PostgrestException catch (e) {
+      if (e.code == 'P0001' || e.code == '23505') {
+        throw 'invalid_code';
+      }
+      rethrow;
+    }
+  }
+
+  Future<String?> getGroupInviteCode(String habitId) async {
+    final data = await _supabase
+        .from('group_habits')
+        .select('codi_invitacio')
+        .eq('id', habitId)
+        .maybeSingle();
+    return data?['codi_invitacio'];
+  }
+
+  Future<List<HabitGroupMember>> getGroupMembers(String habitId, DateTime date) async {
+    try {
+      final dateStr = date.toIso8601String().split('T').first;
+
+      final List<dynamic> data = await _supabase.rpc(
+        'get_group_ranking_custom_date',
+        params: {
+          'p_habit_id': habitId,
+          'p_date': dateStr,
+        },
+      );
+
+      return data.map((m) => HabitGroupMember.fromJson(m)).toList();
+    } catch (e) {
+      debugPrint("ERROR REPOSITORY (getGroupMembers): $e");
+      return [];
+    }
+  }
+
+  Future<double> getGroupTotalProgress(String habitId, DateTime date) async {
+    final dateStr = date.toIso8601String().split('T').first;
+    final data = await _supabase.rpc('get_group_total_progress', params: {
+      'p_habit_id': habitId,
+      'p_date': dateStr,
+    });
+    return (data as num).toDouble();
+  }
+
+  RealtimeChannel subscribeToGroupChanges(String habitId, Function onUpdate) {
+    return _supabase
+        .channel('group_ranking_$habitId')
+        .onPostgresChanges(
+      event: PostgresChangeEvent.all,
+      schema: 'public',
+      table: 'participacions_habits',
+      filter: PostgresChangeFilter(
+        type: PostgresChangeFilterType.eq,
+        column: 'habit_grupal_id',
+        value: habitId,
+      ),
+      callback: (payload) => onUpdate(),
+    )
+        .subscribe();
+  }
+
+  Future<void> leaveGroupHabit(String habitId, String userId) async {
+    await _supabase
+        .from('habit_records')
+        .delete()
+        .eq('habit_id', habitId)
+        .eq('user_id', userId);
+
+    await _supabase
+        .from('participacions_habits')
+        .delete()
+        .eq('habit_grupal_id', habitId)
+        .eq('user_id', userId);
+  }
+
+  Future<List<HabitRecordModel>> getGroupRecordsForRange(String habitId, DateTime start, DateTime end) async {
+    final startStr = start.toIso8601String().split('T').first;
+    final endStr = end.toIso8601String().split('T').first;
+
+    final data = await _supabase
+        .from('habit_records')
+        .select()
+        .eq('habit_id', habitId)
+        .gte('data_registre', startStr)
+        .lte('data_registre', endStr);
+
+    return data.map((json) => HabitRecordModel.fromJson(json)).toList();
   }
 }

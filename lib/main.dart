@@ -1,6 +1,8 @@
+import 'package:Constancy/persistence/repositories/achievement_repository.dart';
 import 'package:Constancy/persistence/repositories/league_repository.dart';
 import 'package:Constancy/persistence/repositories/mission_repository.dart';
 import 'package:Constancy/persistence/repositories/shop_repository.dart';
+import 'package:Constancy/presentation/providers/achievement_provider.dart';
 import 'package:Constancy/presentation/providers/league_provider.dart';
 import 'package:Constancy/presentation/providers/mission_provider.dart';
 import 'package:Constancy/presentation/providers/shop_provider.dart';
@@ -9,6 +11,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'domain/services/achievement_service.dart';
 import 'domain/services/league_service.dart';
 import 'domain/services/mission_service.dart';
 import 'domain/services/shop_service.dart';
@@ -27,9 +30,15 @@ import 'domain/services/habit_service.dart';
 import 'persistence/repositories/auth_repository.dart';
 import 'persistence/repositories/social_repository.dart';
 import 'persistence/repositories/habit_repository.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   await dotenv.load(fileName: ".env");
 
@@ -50,6 +59,7 @@ void main() async {
         Provider(create: (_) => LeagueRepository()),
         Provider(create: (_) => MissionRepository()),
         Provider(create: (_) => ShopRepository()),
+        Provider(create: (_) => AchievementRepository()),
         ProxyProvider<AuthRepository, AuthService>(
           update: (context, authRepo, previous) => AuthService(authRepo),
         ),
@@ -68,17 +78,23 @@ void main() async {
         ProxyProvider<ShopRepository, ShopService>(
           update: (context, shopRepo, previous) => ShopService(shopRepo),
         ),
-        ChangeNotifierProxyProvider<AuthService, AuthProvider>(
-          create: (context) => AuthProvider(context.read<AuthService>()),
-          update: (context, authService, previous) => previous ?? AuthProvider(authService),
+        ProxyProvider<AchievementRepository, AchievementService>(
+          update: (context, achievementRepo, previous) => AchievementService(achievementRepo),
         ),
-        ChangeNotifierProxyProvider2<SocialService, MissionService, SocialProvider>(
-          create: (context) => SocialProvider(context.read<SocialService>(), context.read<MissionService>(),),
-          update: (context, socialService, missionService, previous) => previous ?? SocialProvider(socialService, missionService),
+        ChangeNotifierProxyProvider2<AuthService, AchievementService, AuthProvider>(
+          create: (context) => AuthProvider(context.read<AuthService>(), context.read<AchievementService>(),),
+          update: (context, authService, achievementService, previous) =>
+          previous ?? AuthProvider(authService, achievementService),
         ),
-        ChangeNotifierProxyProvider2<HabitService, MissionService, HabitProvider>(
-          create: (context) => HabitProvider(context.read<HabitService>(), context.read<MissionService>(),),
-          update: (context, habitService, missionService, previous) => previous ?? HabitProvider(habitService, missionService),
+        ChangeNotifierProxyProvider3<SocialService, MissionService, AchievementService, SocialProvider>(
+          create: (context) => SocialProvider(context.read<SocialService>(),context.read<MissionService>(),context.read<AchievementService>(),),
+          update: (context, socialService, missionService, achievementService, previous) =>
+          previous ?? SocialProvider(socialService, missionService, achievementService),
+        ),
+        ChangeNotifierProxyProvider3<HabitService, MissionService, AchievementService, HabitProvider>(
+          create: (context) => HabitProvider(context.read<HabitService>(), context.read<MissionService>(), context.read<AchievementService>(),),
+          update: (context, habitService, missionService, achievementService, previous) =>
+          previous ?? HabitProvider(habitService, missionService, achievementService),
         ),
         ChangeNotifierProxyProvider2<LeagueService, MissionService, LeagueProvider>(
           create: (context) => LeagueProvider(context.read<LeagueService>(), context.read<MissionService>(),),
@@ -91,6 +107,10 @@ void main() async {
         ChangeNotifierProxyProvider<ShopService, ShopProvider>(
           create: (context) => ShopProvider(context.read<ShopService>()),
           update: (context, shopService, previous) => previous ?? ShopProvider(shopService),
+        ),
+        ChangeNotifierProxyProvider<AchievementService, AchievementProvider>(
+          create: (context) => AchievementProvider(context.read<AchievementService>()),
+          update: (context, achievementService, previous) => previous ?? AchievementProvider(achievementService),
         ),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],

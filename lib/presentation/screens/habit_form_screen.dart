@@ -33,6 +33,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
   late String _selectedColor;
   late PeriodeObjectiu _selectedPeriode;
   late UnitatMesura _selectedUnitat;
+  bool _isGroup = false;
 
   @override
   void initState() {
@@ -53,6 +54,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
     _selectedColor = h?.color ?? HabitAssets.colors.first;
     _selectedPeriode = h?.periodeObjectiu ?? PeriodeObjectiu.diari;
     _selectedUnitat = h?.unitatMesura ?? UnitatMesura.vegades;
+    _isGroup = h?.isGroup ?? false;
   }
 
   @override
@@ -120,6 +122,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
         dataFi: _dataFi,
         createdAt: widget.habitToEdit?.createdAt ?? DateTime.now(),
         arxivat: widget.habitToEdit?.arxivat ?? false,
+        isGroup: _isGroup,
       );
 
       if (widget.habitToEdit == null) {
@@ -180,6 +183,25 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
+
+                if (widget.habitToEdit == null) ...[
+                  Container(
+                    decoration: BoxDecoration(
+                      color: _isGroup ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3) : null,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _isGroup ? theme.colorScheme.primary : theme.colorScheme.outlineVariant),
+                    ),
+                    child: SwitchListTile(
+                      title: Text(strings.groupHabitSwitch, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text(strings.groupHabitDesc),
+                      value: _isGroup,
+                      activeThumbColor: theme.colorScheme.primary,
+                      onChanged: (val) => setState(() => _isGroup = val),
+                      secondary: Icon(Icons.groups_rounded, color: _isGroup ? theme.colorScheme.primary : null),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
 
                 TextFormField(
                   controller: _titolController,

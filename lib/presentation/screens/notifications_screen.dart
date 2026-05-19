@@ -45,15 +45,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  void _navigateToProfile(Map<String, dynamic> userData) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: userData)),
-    ).then((_) {
-      _loadAll();
-      final myId = context.read<AuthProvider>().currentUser!.id;
-      context.read<SocialProvider>().refreshSocialStats(myId);
-    });
+  void _navigateToProfile(Map<String, dynamic> userData) async {
+    final socialProv = context.read<SocialProvider>();
+
+    final targetUser = await socialProv.getUserById(userData['id']);
+
+    if (targetUser != null && mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => OtherProfileScreen(userData: targetUser)),
+      ).then((_) {
+        _loadAll();
+        final myId = context.read<AuthProvider>().currentUser!.id;
+        context.read<SocialProvider>().refreshSocialStats(myId);
+      });
+    }
   }
 
   @override

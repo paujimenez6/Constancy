@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../domain/models/achievement_model.dart';
 import '../../generated/l10n.dart';
+import '../providers/achievement_provider.dart';
 import '../providers/social_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/habit_provider.dart';
@@ -8,9 +10,10 @@ import 'user_list_screen.dart';
 import 'profile_habits_list_screen.dart';
 import '../providers/league_provider.dart';
 import '../../domain/models/league_model.dart';
+import '../../domain/models/user_model.dart';
 
 class OtherProfileScreen extends StatefulWidget {
-  final Map<String, dynamic> userData;
+  final UserModel userData;
   const OtherProfileScreen({super.key, required this.userData});
 
   @override
@@ -26,14 +29,24 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   int _followingCount = 0;
   LeagueModel? _otherUserLeague;
 
+  late AchievementProvider _achievementProviderRef;
+  late AuthProvider _authProviderRef;
+
   @override
   void initState() {
     super.initState();
     _loadInitialData();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _achievementProviderRef = Provider.of<AchievementProvider>(context, listen: false);
+    _authProviderRef = Provider.of<AuthProvider>(context, listen: false);
+  }
+
   Future<void> _loadInitialData() async {
-    final String userId = widget.userData['id'];
+    final String userId = widget.userData.id;
     await _loadFollowStatus();
 
     if (mounted) {
@@ -45,13 +58,38 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
       });
 
       await context.read<HabitProvider>().loadProfileHabits(userId);
+      await context.read<AchievementProvider>().loadUserAchievements(userId);
+      if (mounted) {
+        context.read<AchievementProvider>().listenToAchievementChanges(userId);
+      }
+    }
+  }
+
+  IconData _getAchievementIcon(String iconName) {
+    switch (iconName) {
+      case 'edit_calendar': return Icons.edit_calendar;
+      case 'check_circle_outline': return Icons.check_circle_outline;
+      case 'whatshot': return Icons.whatshot;
+      case 'groups': return Icons.groups;
+      case 'person_add': return Icons.person_add;
+      case 'assignment': return Icons.assignment;
+      case 'storefront': return Icons.storefront;
+      case 'backpack': return Icons.backpack;
+      case 'military_tech': return Icons.military_tech;
+      case 'diamond': return Icons.diamond;
+      case 'face': return Icons.face;
+      case 'phonelink_lock': return Icons.phonelink_lock;
+      case 'bolt': return Icons.bolt;
+      case 'savings': return Icons.savings;
+      case 'auto_awesome': return Icons.auto_awesome;
+      default: return Icons.star;
     }
   }
 
   Future<void> _loadFollowStatus() async {
     try {
       final socialProvider = context.read<SocialProvider>();
-      final String userId = widget.userData['id'];
+      final String userId = widget.userData.id;
 
       final status = await socialProvider.getFollowStatus(userId);
       final stats = await socialProvider.getOtherUserStats(userId);
@@ -112,9 +150,9 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     if (_isNavigating) return;
 
     final strings = S.of(context);
-    final privacitat = widget.userData['configuracio_privacitat'] ?? 'public';
+    final privacitat = widget.userData.configuracioPrivacitat;
 
-    if (privacitat != 'public' && !_isFollowing) {
+    if (privacitat != TipusPrivacitat.public && !_isFollowing) {
       _showTopToast(strings.privateInfoMessage);
       return;
     }
@@ -122,18 +160,23 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     setState(() => _isNavigating = true);
 
     final socialProvider = context.read<SocialProvider>();
-    final list = isFollowers
-        ? await socialProvider.getFollowersList(widget.userData['id'])
-        : await socialProvider.getFollowingList(widget.userData['id']);
+    final List<Map<String, dynamic>> rawList = isFollowers
+        ? await socialProvider.getFollowersList(widget.userData.id)
+        : await socialProvider.getFollowingList(widget.userData.id);
 
     if (mounted) {
+      final List<UserModel> list = rawList.map((m) {
+        if (m.containsKey('profiles')) return UserModel.fromJson(m['profiles']);
+        return UserModel.fromJson(m);
+      }).toList();
+
       await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => UserListScreen(
             title: isFollowers ? strings.followers : strings.following,
             users: list,
-            ownerNickname: widget.userData['nickname'],
+            ownerNickname: widget.userData.nickname,
           ),
         ),
       );
@@ -142,8 +185,8 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
   }
 
   void _handleFollowAction() async {
-    final targetId = widget.userData['id'];
-    final privacy = widget.userData['configuracio_privacitat'] ?? 'public';
+    final targetId = widget.userData.id;
+    final privacy = widget.userData.configuracioPrivacitat.toString().split('.').last;
 
     setState(() => _isLoadingStatus = true);
 
@@ -172,17 +215,17 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     final theme = Theme.of(context);
     final user = widget.userData;
 
-    final int xpTotal = (user['punts_xp'] is int) ? user['punts_xp'] : 0;
-    final int monedes = (user['monedes'] != null) ? int.parse(user['monedes'].toString()) : 0;
+    final int xpTotal = user.puntsXP;
+    final int monedes = user.monedes;
 
     final habitProvider = context.watch<HabitProvider>();
-    final privacitat = user['configuracio_privacitat'] ?? 'public';
-    bool canSeeDetails = privacitat == 'public' || _isFollowing;
+    final privacitat = user.configuracioPrivacitat;
+    bool canSeeDetails = privacitat == TipusPrivacitat.public || _isFollowing;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: Text(user['nickname'] ?? 'Usuari', style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(user.nickname, style: const TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -197,7 +240,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                 children: [
                   _buildAvatar(user, theme),
                   const SizedBox(height: 16),
-                  Text("${user['nom'] ?? ''} ${user['cognom'] ?? ''}",
+                  Text("${user.nom} ${user.cognom}",
                       style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
 
@@ -231,7 +274,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
             if (!canSeeDetails)
               _buildPrivateMessage(theme, strings)
             else ...[
-              _buildHabitsHeader(strings, theme, user['nickname'] ?? ''),
+              _buildHabitsHeader(strings, theme, user.nickname, 1),
               const SizedBox(height: 12),
 
               buildHabitList(
@@ -242,6 +285,11 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
                 theme: theme,
                 context: context,
               ),
+
+              const SizedBox(height: 40),
+              _buildHabitsHeader(strings, theme, user.nickname, 0),
+              const SizedBox(height: 16),
+              _buildAchievementShowcase(context, user.id, isMe: false),
             ],
           ],
         ),
@@ -249,7 +297,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     );
   }
 
-  Widget _buildAvatar(Map<String, dynamic> user, ThemeData theme) {
+  Widget _buildAvatar(UserModel user, ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -259,9 +307,9 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
       child: CircleAvatar(
         radius: 55,
         backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-        backgroundImage: (user['imatge_perfil'] != null) ? NetworkImage(user['imatge_perfil']) : null,
-        child: (user['imatge_perfil'] == null)
-            ? Text(user['nickname'] != null ? user['nickname'][0].toUpperCase() : '?',
+        backgroundImage: (user.imatgePerfil != null) ? NetworkImage(user.imatgePerfil!) : null,
+        child: (user.imatgePerfil == null)
+            ? Text(user.nickname[0].toUpperCase(),
             style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: theme.colorScheme.primary))
             : null,
       ),
@@ -360,7 +408,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     );
   }
 
-  Widget _buildActionButtons(String privacitat, ThemeData theme, S strings) {
+  Widget _buildActionButtons(TipusPrivacitat privacitat, ThemeData theme, S strings) {
     if (_isLoadingStatus) {
       return const SizedBox(height: 48, child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
     }
@@ -381,10 +429,10 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
       textColor = theme.colorScheme.primary;
       icon = Icons.timer_outlined;
     } else {
-      label = privacitat == 'public' ? strings.follow : strings.sendRequest;
+      label = privacitat == TipusPrivacitat.public ? strings.follow : strings.sendRequest;
       bgColor = theme.colorScheme.primary;
       textColor = Colors.white;
-      icon = privacitat == 'public' ? Icons.person_add_alt_1_rounded : Icons.lock_open_rounded;
+      icon = privacitat == TipusPrivacitat.public ? Icons.person_add_alt_1_rounded : Icons.lock_open_rounded;
     }
 
     return ElevatedButton.icon(
@@ -428,11 +476,11 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     );
   }
 
-  Widget _buildHabitsHeader(S strings, ThemeData theme, String nickname) {
+  Widget _buildHabitsHeader(S strings, ThemeData theme, String nickname, int habit) {
     return Align(
       alignment: Alignment.centerLeft,
       child: Text(
-          strings.habitsTitleOther(nickname),
+          habit == 1 ? strings.habitsTitleOther(nickname) : strings.achTitleOther(nickname),
           style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
@@ -441,5 +489,117 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
           )
       ),
     );
+  }
+
+  Widget _buildAchievementShowcase(BuildContext context, String userId, {required bool isMe}) {
+    final prov = context.watch<AchievementProvider>();
+
+    if (prov.isLoading && prov.achievements.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return SizedBox(
+      height: 130,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: prov.achievements.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        itemBuilder: (context, index) {
+          final ach = prov.achievements[index];
+          final color = ach.completat ? Theme.of(context).colorScheme.primary : Colors.grey;
+
+          return GestureDetector(
+            onTap: () => _showAchievementDetail(context, ach, isMe, userId),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
+                  ),
+                  child: Icon(_getAchievementIcon(ach.icona), color: color, size: 28),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: 70,
+                  child: Text(
+                    ach.getNom(context),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showAchievementDetail(BuildContext context, AchievementModel ach, bool isMe, String userId) {
+    final strings = S.of(context);
+    final theme = Theme.of(context);
+    final color = ach.completat ? theme.colorScheme.primary : Colors.grey;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: const BorderRadius.vertical(top: Radius.circular(28))),
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: theme.colorScheme.outlineVariant, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: Icon(_getAchievementIcon(ach.icona), color: color, size: 50),
+            ),
+            const SizedBox(height: 20),
+            Text(ach.getNom(context), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(ach.getDescripcio(context), textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 16)),
+            const SizedBox(height: 24),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("${strings.progress}: ${ach.progresActual}/${ach.valorObjectiu}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                if (ach.completat) Text(ach.dataFormatada, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(
+              value: ach.progresActual / ach.valorObjectiu,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              color: color,
+              minHeight: 8,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    final myId = _authProviderRef.currentUser?.id;
+    _achievementProviderRef.stopListeningToAchievementChanges();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (myId != null) {
+        _achievementProviderRef.loadUserAchievements(myId);
+        _achievementProviderRef.listenToAchievementChanges(myId);
+      }
+    });
+    super.dispose();
   }
 }
