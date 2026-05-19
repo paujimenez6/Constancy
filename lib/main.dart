@@ -30,9 +30,15 @@ import 'domain/services/habit_service.dart';
 import 'persistence/repositories/auth_repository.dart';
 import 'persistence/repositories/social_repository.dart';
 import 'persistence/repositories/habit_repository.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   await dotenv.load(fileName: ".env");
 
