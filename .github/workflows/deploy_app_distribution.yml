@@ -30,9 +30,11 @@ jobs:
       - name: Create dummy .env file
         run: touch .env
 
+      - name: Give execute permission to gradlew
+        run: chmod +x android/gradlew
+
       - name: Build and Upload to App Distribution
+        working-directory: android
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_DISTRIBUTION_TOKEN }}
-        run: |
-          cd android
-          ./gradlew assembleRelease appDistributionUploadRelease
+        run: ./gradlew assembleRelease appDistributionUploadRelease
