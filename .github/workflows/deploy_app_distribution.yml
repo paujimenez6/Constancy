@@ -27,10 +27,37 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate Localizations
+        run: flutter pub run intl_utils:generate
+
       - name: Create dummy .env file
         run: touch .env
+
+      - name: Create firebase_options.dart dynamically
+        run: |
+          mkdir -p lib
+          cat << 'EOF' > lib/firebase_options.dart
+          // File generated dynamically by GitHub Actions.
+          import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+          import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+
+          class DefaultFirebaseOptions {
+            static FirebaseOptions get currentPlatform {
+              if (defaultTargetPlatform == TargetPlatform.android) return android;
+              throw UnsupportedError('Platform not supported in this build.');
+            }
+
+            static const FirebaseOptions android = FirebaseOptions(
+              apiKey: 'AIzaSyD0b2Kvo9uLZM6uEdnEC9v3eeMqGNiz7hg',
+              appId: '1:155450377472:android:d6d513ac24bd1c89245fe5',
+              messagingSenderId: '155450377472',
+              projectId: 'constancy-tfg',
+              storageBucket: 'constancy-tfg.firebasestorage.app',
+            );
+          }
+          EOF
 
       - name: Build APK and Upload to Firebase App Distribution
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_DISTRIBUTION_TOKEN }}
-        run: flutter build apk --release --pub --target-platform android-arm,android-arm64,android-x64
+        run: flutter build apk --release --pub
