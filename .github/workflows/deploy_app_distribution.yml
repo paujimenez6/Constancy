@@ -92,10 +92,17 @@ jobs:
           }
           EOF
 
-      - name: Build APK and Upload to Firebase App Distribution
-        working-directory: android
+      - name: Build Release APK
+        run: flutter build apk --release
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Upload to App Distribution
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_DISTRIBUTION_TOKEN }}
         run: |
-          chmod +x gradlew
-          ./gradlew assembleRelease appDistributionUploadRelease
+          firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk \
+            --app 1:155450377472:android:d6d513ac24bd1c89245fe5 \
+            --groups testers \
+            --release-notes "Sincronització automàtica de la branca main"
