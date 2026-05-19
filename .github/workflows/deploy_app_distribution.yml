@@ -30,11 +30,7 @@ jobs:
       - name: Create dummy .env file
         run: touch .env
 
-      - name: Give execute permission to gradlew
-        run: chmod +x android/gradlew
-
-      - name: Build and Upload to App Distribution
-        working-directory: android
+      - name: Build APK and Upload to Firebase App Distribution
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_DISTRIBUTION_TOKEN }}
-        run: ./gradlew assembleRelease appDistributionUploadRelease
+        run: flutter build apk --release --pub --target-platform android-arm,android-arm64,android-x64
