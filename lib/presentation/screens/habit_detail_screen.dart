@@ -191,6 +191,15 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                   "${dateFormat.format(habit.dataInici)} - ${habit.dataFi != null ? dateFormat.format(habit.dataFi!) : "/"}"
               ),
 
+              if (habit.recordatoris && habit.horesRecordatori.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _buildChip(
+                    theme,
+                    Icons.notifications_active_outlined,
+                    habit.horesRecordatori.join(' • ')
+                ),
+              ],
+
               const SizedBox(height: 30),
 
               _buildProgressCircle(context, habit, progresActual, progresCercle, percentatge, habitColor, theme),

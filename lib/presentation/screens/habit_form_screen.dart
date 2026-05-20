@@ -34,6 +34,8 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
   late PeriodeObjectiu _selectedPeriode;
   late UnitatMesura _selectedUnitat;
   bool _isGroup = false;
+  bool _recordatoris = false;
+  List<String> _horesRecordatori = [];
 
   @override
   void initState() {
@@ -55,6 +57,9 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
     _selectedPeriode = h?.periodeObjectiu ?? PeriodeObjectiu.diari;
     _selectedUnitat = h?.unitatMesura ?? UnitatMesura.vegades;
     _isGroup = h?.isGroup ?? false;
+
+    _recordatoris = h?.recordatoris ?? false;
+    _horesRecordatori = List<String>.from(h?.horesRecordatori ?? []);
   }
 
   @override
@@ -96,11 +101,43 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
     }
   }
 
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      final String formattedTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+
+      if (!_horesRecordatori.contains(formattedTime)) {
+        setState(() {
+          _horesRecordatori.add(formattedTime);
+          _horesRecordatori.sort();
+        });
+      }
+    }
+  }
+
   Future<void> _guardarHabit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
     final strings = S.of(context);
+
+    if (_recordatoris && _horesRecordatori.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(strings.noRemindersAdded), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
 
     try {
       final userId = context.read<AuthProvider>().currentUser!.id;
@@ -120,6 +157,8 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
         unitatMesura: _selectedUnitat,
         dataInici: _dataInici,
         dataFi: _dataFi,
+        recordatoris: _recordatoris,
+        horesRecordatori: _horesRecordatori,
         createdAt: widget.habitToEdit?.createdAt ?? DateTime.now(),
         arxivat: widget.habitToEdit?.arxivat ?? false,
         isGroup: _isGroup,
@@ -172,7 +211,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: colorActual.withValues(alpha:0.1),
+                      color: colorActual.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -286,7 +325,7 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                     labelText: strings.habitFrequency,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     prefixIcon: const Icon(Icons.calendar_today),
-                    fillColor: widget.habitToEdit != null ? theme.colorScheme.surfaceContainerHighest.withValues(alpha:0.5) : null,
+                    fillColor: widget.habitToEdit != null ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5) : null,
                     filled: widget.habitToEdit != null,
                   ),
                   items: PeriodeObjectiu.values.map((p) => DropdownMenuItem(
@@ -334,6 +373,75 @@ class _HabitFormScreenState extends State<HabitFormScreen> {
                           : null,
                     ),
                     child: Text(_dataFi != null ? dateFormat.format(_dataFi!) : strings.none),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+                Text(strings.remindersTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: _recordatoris ? theme.colorScheme.primaryContainer.withValues(alpha: 0.2) : theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: _recordatoris ? theme.colorScheme.primary : theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SwitchListTile(
+                        title: Text(strings.enableReminders, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(strings.remindersDesc, style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
+                        value: _recordatoris,
+                        activeThumbColor: theme.colorScheme.primary,
+                        onChanged: (val) => setState(() => _recordatoris = val),
+                        secondary: Icon(Icons.notifications_active_outlined, color: _recordatoris ? theme.colorScheme.primary : theme.colorScheme.outline),
+                      ),
+                      if (_recordatoris) ...[
+                        const Divider(height: 1),
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(strings.reminderTimes, style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  ..._horesRecordatori.map((hora) => Chip(
+                                    label: Text(hora, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    deleteIcon: const Icon(Icons.close, size: 16),
+                                    onDeleted: () {
+                                      setState(() {
+                                        _horesRecordatori.remove(hora);
+                                      });
+                                    },
+                                    backgroundColor: theme.colorScheme.surface,
+                                    side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                                  )),
+                                  ActionChip(
+                                    label: Text(strings.addTime),
+                                    avatar: Icon(Icons.add, size: 16, color: theme.colorScheme.primary),
+                                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                    side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                                    onPressed: () => _selectTime(context),
+                                  )
+                                ],
+                              ),
+                              if (_horesRecordatori.isEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(
+                                    strings.noRemindersAdded,
+                                    style: TextStyle(color: theme.colorScheme.error, fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ]
+                    ],
                   ),
                 ),
 

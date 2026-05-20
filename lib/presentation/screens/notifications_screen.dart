@@ -47,7 +47,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   void _navigateToProfile(Map<String, dynamic> userData) async {
     final socialProv = context.read<SocialProvider>();
-
     final targetUser = await socialProv.getUserById(userData['id']);
 
     if (targetUser != null && mounted) {
@@ -77,7 +76,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : (_requests.isEmpty && _notifications.isEmpty)
+          : (_requests.isEmpty && _notifications.where((n) => n['type'] == 'new_follower').isEmpty)
           ? Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -100,12 +99,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ..._requests.map((r) => _buildRequestCard(r, theme, strings)),
             const SizedBox(height: 8),
           ],
-          if (_notifications.isNotEmpty) ...[
+          if (_notifications.any((n) => n['type'] == 'new_follower')) ...[
             Padding(
               padding: const EdgeInsets.only(left: 4.0, bottom: 8.0, top: 8.0),
               child: Text(strings.recentActivity.toUpperCase(), style: _sectionStyle(theme)),
             ),
-            ..._notifications.map((n) => _buildFollowNotification(n, theme, strings)),
+            ..._notifications
+                .where((n) => n['type'] == 'new_follower')
+                .map((n) => _buildFollowNotification(n, theme, strings)),
           ],
         ],
       ),
@@ -129,14 +130,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       child: Column(
         children: [
           ListTile(
-            onTap: () => _navigateToProfile(sender),
+            onTap: () => sender != null ? _navigateToProfile(sender) : null,
             contentPadding: EdgeInsets.zero,
             dense: true,
             leading: _buildAvatar(sender, theme),
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(sender['nickname'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(sender != null ? (sender['nickname'] ?? 'Usuari') : 'Usuari', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 Text(strings.wantsToFollow, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
               ],
             ),
@@ -196,7 +197,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _buildFollowNotification(Map<String, dynamic> notif, ThemeData theme, S strings) {
     final sender = notif['profiles'];
-    final date = DateTime.parse(notif['created_at']).toLocal();
+    final dateStr = notif['created_at'];
+    final date = dateStr != null ? DateTime.parse(dateStr).toLocal() : DateTime.now();
+
+    if (sender == null) return const SizedBox.shrink();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -213,7 +217,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(sender['nickname'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            Text(sender['nickname'] ?? 'Usuari', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             Text(strings.startedFollowingYou, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
           ],
         ),
@@ -230,11 +234,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _buildAvatar(dynamic user, ThemeData theme) {
+    if (user == null) {
+      return CircleAvatar(radius: 20, backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1), child: const Icon(Icons.person, size: 20));
+    }
+    final String? imageUrl = user['imatge_perfil'];
+    final String nickname = user['nickname'] ?? '?';
     return CircleAvatar(
       radius: 20,
       backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-      backgroundImage: user['imatge_perfil'] != null ? NetworkImage(user['imatge_perfil']) : null,
-      child: user['imatge_perfil'] == null ? Text(user['nickname'][0].toUpperCase(), style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 14)) : null,
+      backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
+      child: imageUrl == null
+          ? Text(nickname[0].toUpperCase(), style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 14))
+          : null,
     );
   }
 }
@@ -293,9 +304,7 @@ class _FollowToggleButtonState extends State<FollowToggleButton> {
         setState(() => _loading = true);
         final provider = context.read<SocialProvider>();
         final privacy = widget.userData['configuracio_privacitat'] ?? 'public';
-
         await provider.toggleFollow(widget.userData['id'], privacy);
-
         _checkStatus();
         final myId = context.read<AuthProvider>().currentUser!.id;
         provider.refreshSocialStats(myId);

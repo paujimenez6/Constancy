@@ -56,6 +56,14 @@ class AuthService {
     return await _authRepository.getUserProfile(userId);
   }
 
+  Future<void> updateDeviceToken(String userId, String token) async {
+    await _authRepository.updateUserDeviceToken(userId, token);
+  }
+
+  Future<void> updateUserLocale(String userId, String localeCode) async {
+    await _authRepository.updateUserLocale(userId, localeCode);
+  }
+
   Future<bool> checkEmailExists(String email) => _authRepository.checkEmailExists(email);
 
   Future<void> sendPasswordResetEmail(String email) => _authRepository.sendPasswordResetEmail(email);
