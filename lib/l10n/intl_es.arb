@@ -353,5 +353,11 @@
   "achDiaPerfecte10Desc": "Consigue el hito de cerrar 10 Días Perfectos completando todos tus hábitos previstos.",
   "achTitleOther": "Logros de {nickname}",
   "achTitle": "Mis logros",
-  "achRewardSubtitle": "Has completado el logro y has ganado:"
+  "achRewardSubtitle": "Has completado el logro y has ganado:",
+  "remindersTitle": "Recordatorios",
+  "enableReminders": "Activar recordatorios",
+  "remindersDesc": "Recibe una notificación a las horas escogidas",
+  "reminderTimes": "Horas de notificación",
+  "addTime": "Añadir hora",
+  "noRemindersAdded": "Añade al menos una hora para recibir notificaciones"
 }

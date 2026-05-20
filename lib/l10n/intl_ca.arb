@@ -352,5 +352,11 @@
   "achDiaPerfecte10Desc": "Aconsegueix la fita de tancar 10 Dies Perfectes completant tots els teus hàbits previstos.",
   "achTitleOther": "Assoliments de {nickname}",
   "achTitle": "Els meus assoliments",
-  "achRewardSubtitle": "Has completat l'assoliment i has guanyat:"
+  "achRewardSubtitle": "Has completat l'assoliment i has guanyat:",
+  "remindersTitle": "Recordatoris",
+  "enableReminders": "Activar recordatoris",
+  "remindersDesc": "Rep una notificació a les hores escollides",
+  "reminderTimes": "Hores de notificació",
+  "addTime": "Afegir hora",
+  "noRemindersAdded": "Afegeix almenys una hora per rebre notificacions"
 }
