@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/models/user_model.dart';
 import 'dart:convert';
@@ -260,6 +261,26 @@ class AuthRepository {
         .stream(primaryKey: ['id'])
         .eq('id', userId)
         .map((data) => UserModel.fromJson(data.first));
+  }
+
+  Future<void> updateUserDeviceToken(String userId, String token) async {
+    try {
+      await _supabase.from('profiles').update({'fcm_token': token}).eq('id', userId);
+    } catch (e) {
+      debugPrint("Error actualitzant FCM Token: $e");
+    }
+  }
+
+  Future<void> updateUserLocale(String userId, String localeCode) async {
+    try {
+      await _supabase
+          .from('profiles')
+          .update({'locale': localeCode})
+          .eq('id', userId);
+    } catch (e) {
+      print("Error a AuthRepository.updateUserLocale: $e");
+      rethrow;
+    }
   }
 }
 

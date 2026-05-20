@@ -99,7 +99,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               DropdownMenuItem(value: 'es', child: Text(strings.langSpanish)),
               DropdownMenuItem(value: 'en', child: Text(strings.langEnglish)),
             ],
-            onChanged: (code) => settings.setLocale(Locale(code!)),
+            onChanged: (code) async {
+              if (code != null) {
+                settings.setLocale(Locale(code));
+                await context.read<AuthProvider>().updateUserLocale(user.id, code);
+              }
+            },
           ),
           _buildDropdown<TipusPrivacitat>(
             label: strings.privacy,
