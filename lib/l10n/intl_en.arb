@@ -352,5 +352,11 @@
   "achDiaPerfecte10Desc": "Achieve the milestone of hitting 10 Perfect Days by completing all your planned habits.",
   "achTitleOther": "{nickname}'s Achievements",
   "achTitle": "My achievements",
-  "achRewardSubtitle": "You have completed the achievement and earned:"
+  "achRewardSubtitle": "You have completed the achievement and earned:",
+  "remindersTitle": "Reminders",
+  "enableReminders": "Enable reminders",
+  "remindersDesc": "Receive a notification at the times you choose",
+  "reminderTimes": "Notification times",
+  "addTime": "Add time",
+  "noRemindersAdded": "Add at least one time to receive notifications"
 }

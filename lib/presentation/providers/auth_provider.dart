@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'package:Constancy/presentation/providers/settings_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'dart:io';
 import '../../domain/models/user_model.dart';
 import '../../domain/services/achievement_service.dart';
 import '../../domain/services/auth_service.dart';
+import '../../main.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService;
@@ -23,6 +26,12 @@ class AuthProvider extends ChangeNotifier {
   void setUser(UserModel user) {
     _currentUser = user;
     isManualLogin = false;
+    final settings = navigatorKey.currentContext?.read<SettingsProvider>();
+    if (settings != null) {
+      if (user.locale != null && user.locale!.isNotEmpty) {
+        settings.setLocale(Locale(user.locale!));
+      }
+    }
     notifyListeners();
   }
 
@@ -140,6 +149,14 @@ class AuthProvider extends ChangeNotifier {
     if (_currentUser != null) {
       _currentUser = _currentUser!.copyWith(nom: nom, cognom: cognom);
       notifyListeners();
+    }
+  }
+
+  Future<void> updateUserLocale(String userId, String localeCode) async {
+    try {
+      await _authService.updateUserLocale(userId, localeCode);
+    } catch (e) {
+      debugPrint("Error al sincronitzar el locale: $e");
     }
   }
 

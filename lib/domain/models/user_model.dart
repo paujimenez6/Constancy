@@ -15,6 +15,7 @@ class UserModel {
   final String? token;
   final DateTime? multiplicadorXpFins;
   final DateTime? imantMonedesFins;
+  final String? locale;
 
   UserModel({
     required this.id,
@@ -31,6 +32,7 @@ class UserModel {
     this.token,
     this.multiplicadorXpFins,
     this.imantMonedesFins,
+    this.locale,
   });
 
   UserModel copyWith({
@@ -47,6 +49,7 @@ class UserModel {
     String? token,
     DateTime? multiplicadorXpFins,
     DateTime? imantMonedesFins,
+    String? locale,
   }) {
     return UserModel(
       id: id,
@@ -63,6 +66,7 @@ class UserModel {
       token: token ?? this.token,
       multiplicadorXpFins: multiplicadorXpFins ?? this.multiplicadorXpFins,
       imantMonedesFins: imantMonedesFins ?? this.imantMonedesFins,
+      locale: locale ?? this.locale,
     );
   }
 
@@ -84,6 +88,7 @@ class UserModel {
       token: json['token'],
       multiplicadorXpFins: json['multiplicador_xp_fins'] != null ? DateTime.parse(json['multiplicador_xp_fins']) : null,
       imantMonedesFins: json['imant_monedes_fins'] != null ? DateTime.parse(json['imant_monedes_fins']) : null,
+      locale: json['locale'],
     );
   }
 
@@ -103,6 +108,7 @@ class UserModel {
       'token': token,
       'multiplicador_xp_fins': multiplicadorXpFins?.toIso8601String(),
       'imant_monedes_fins': imantMonedesFins?.toIso8601String(),
+      'locale': locale,
     };
   }
 

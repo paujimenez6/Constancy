@@ -1,10 +1,12 @@
 import 'package:Constancy/persistence/repositories/achievement_repository.dart';
 import 'package:Constancy/persistence/repositories/league_repository.dart';
 import 'package:Constancy/persistence/repositories/mission_repository.dart';
+import 'package:Constancy/persistence/repositories/notification_repository.dart';
 import 'package:Constancy/persistence/repositories/shop_repository.dart';
 import 'package:Constancy/presentation/providers/achievement_provider.dart';
 import 'package:Constancy/presentation/providers/league_provider.dart';
 import 'package:Constancy/presentation/providers/mission_provider.dart';
+import 'package:Constancy/presentation/providers/notification_provider.dart';
 import 'package:Constancy/presentation/providers/shop_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +17,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'domain/services/achievement_service.dart';
 import 'domain/services/league_service.dart';
 import 'domain/services/mission_service.dart';
+import 'domain/services/notification_service.dart';
 import 'domain/services/shop_service.dart';
 import 'generated/l10n.dart';
 import 'presentation/screens/mfa_challenge_screen.dart';
@@ -33,6 +36,8 @@ import 'persistence/repositories/social_repository.dart';
 import 'persistence/repositories/habit_repository.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -66,6 +71,7 @@ void main() async {
         Provider(create: (_) => MissionRepository()),
         Provider(create: (_) => ShopRepository()),
         Provider(create: (_) => AchievementRepository()),
+        Provider(create: (_) => NotificationRepository()),
         ProxyProvider<AuthRepository, AuthService>(
           update: (context, authRepo, previous) => AuthService(authRepo),
         ),
@@ -86,6 +92,9 @@ void main() async {
         ),
         ProxyProvider<AchievementRepository, AchievementService>(
           update: (context, achievementRepo, previous) => AchievementService(achievementRepo),
+        ),
+        ProxyProvider<NotificationRepository, NotificationService>(
+          update: (context, notificationRepo, previous) => NotificationService(notificationRepo),
         ),
         ChangeNotifierProxyProvider2<AuthService, AchievementService, AuthProvider>(
           create: (context) => AuthProvider(context.read<AuthService>(), context.read<AchievementService>(),),
@@ -118,6 +127,10 @@ void main() async {
           create: (context) => AchievementProvider(context.read<AchievementService>()),
           update: (context, achievementService, previous) => previous ?? AchievementProvider(achievementService),
         ),
+        ChangeNotifierProxyProvider2<NotificationService, AuthService, NotificationProvider>(
+          create: (context) => NotificationProvider(context.read<NotificationService>(), context.read<AuthService>()),
+          update: (context, notificationService, authService, previous) => previous ?? NotificationProvider(notificationService, authService),
+        ),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],
       child: const ConstancyApp(),
@@ -145,6 +158,7 @@ class _ConstancyAppState extends State<ConstancyApp> {
   void _setupAuthListener() {
     final authProvider = context.read<AuthProvider>();
     final authRepo = context.read<AuthRepository>();
+    final notificationProvider = context.read<NotificationProvider>();
 
     Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
       final event = data.event;
@@ -175,6 +189,9 @@ class _ConstancyAppState extends State<ConstancyApp> {
         try {
           final userProfile = await authRepo.getUserProfile(session.user.id);
           authProvider.setUser(userProfile);
+
+          notificationProvider.initializeNotifications(session.user.id);
+          notificationProvider.setupListeners();
         } catch (e) {
           debugPrint("Error sincronitzant perfil: $e");
         }
@@ -193,6 +210,7 @@ class _ConstancyAppState extends State<ConstancyApp> {
     final settings = context.watch<SettingsProvider>();
 
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Constancy',
       debugShowCheckedModeBanner: false,
 

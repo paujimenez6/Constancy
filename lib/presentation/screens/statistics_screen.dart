@@ -939,9 +939,39 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
                         Expanded(child: Text(h.titol, style: const TextStyle(fontWeight: FontWeight.bold))),
                       ],
                     ),
-                    subtitle: estaRealmentFet
-                        ? Text("${strings.registeredAt} ${DateFormat.Hm().format(record.updatedAt)}")
-                        : Text(strings.pendingStatus),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        estaRealmentFet
+                            ? Text("${strings.registeredAt} ${DateFormat.Hm().format(record.updatedAt)}")
+                            : Text(strings.pendingStatus),
+                        if (h.recordatoris && h.horesRecordatori.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.notifications_active_outlined, size: 12, color: Theme.of(context).colorScheme.primary),
+                                const SizedBox(width: 4),
+                                Text(
+                                  h.horesRecordatori.join(' • '),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                     trailing: Text("${record.valorProgres % 1 == 0 ? record.valorProgres.toInt() : record.valorProgres} / ${h.valorObjectiu % 1 == 0 ? h.valorObjectiu.toInt() : h.valorObjectiu}",
                         style: TextStyle(fontWeight: FontWeight.bold, color: estaRealmentFet ? color : Colors.grey)),
                   );
