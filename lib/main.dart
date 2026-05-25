@@ -94,7 +94,7 @@ void main() async {
           update: (context, achievementRepo, previous) => AchievementService(achievementRepo),
         ),
         ProxyProvider<NotificationRepository, NotificationService>(
-          update: (context, notificationRepo, previous) => NotificationService(notificationRepo),
+          update: (context, notificationRepo, previous) => NotificationService(notificationRepo, FirebaseMessagingWrapper()),
         ),
         ChangeNotifierProxyProvider2<AuthService, AchievementService, AuthProvider>(
           create: (context) => AuthProvider(context.read<AuthService>(), context.read<AchievementService>(),),

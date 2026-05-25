@@ -19,13 +19,13 @@ class MissionModel {
 
   factory MissionModel.fromJson(Map<String, dynamic> json) {
     return MissionModel(
-      id: json['id'],
-      titolClau: json['titol_clau'],
-      descripcioClau: json['descripcio_clau'],
+      id: json['id'] ?? '',
+      titolClau: json['titol_clau'] ?? '',
+      descripcioClau: json['desc_clau'] ?? '',
       recompensaXp: json['recompensa_xp'] ?? 0,
       recompensaMonedes: json['recompensa_monedes'] ?? 0,
-      objectiu: (json['objectiu'] as num).toDouble(),
-      tipus: json['tipus'],
+      objectiu: (json['objectiu'] as num?)?.toDouble() ?? 0.0,
+      tipus: json['tipus'] ?? '',
     );
   }
 }
@@ -47,13 +47,15 @@ class UserMissionModel {
 
   factory UserMissionModel.fromJson(Map<String, dynamic> json) {
     return UserMissionModel(
-      id: json['id'],
-      progresActual: (json['progres_actual'] as num).toDouble(),
+      id: json['id'] ?? '',
+      progresActual: (json['progres_actual'] as num?)?.toDouble() ?? 0.0,
       completada: json['completada'] ?? false,
       reclamada: json['reclamada'] ?? false,
-      definicio: MissionModel.fromJson(json['missions_definicions']),
+      definicio: MissionModel.fromJson(json['missions_definicions'] ?? {}),
     );
   }
 
-  double get percentatge => (progresActual / definicio.objectiu).clamp(0.0, 1.0);
+  double get percentatge => definicio.objectiu > 0
+      ? (progresActual / definicio.objectiu).clamp(0.0, 1.0)
+      : 0.0;
 }

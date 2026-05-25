@@ -19,13 +19,13 @@ class ShopItemModel {
 
   factory ShopItemModel.fromJson(Map<String, dynamic> json) {
     return ShopItemModel(
-      id: json['id'],
-      nomClau: json['nom_clau'],
-      descClau: json['desc_clau'],
-      tipusEfecte: json['tipus_efecte'],
-      valorEfecte: (json['valor_efecte'] as num).toDouble(),
-      preu: json['preu'] as int,
-      icona: json['icona'],
+      id: json['id'] ?? '',
+      nomClau: json['nom_clau'] ?? '',
+      descClau: json['desc_clau'] ?? '',
+      tipusEfecte: json['tipus_efecte'] ?? '',
+      valorEfecte: (json['valor_efecte'] as num?)?.toDouble() ?? 0.0,
+      preu: json['preu'] as int? ?? 0,
+      icona: json['icona'] ?? 'star',
     );
   }
 }

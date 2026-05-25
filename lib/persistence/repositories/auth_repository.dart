@@ -5,7 +5,9 @@ import 'dart:convert';
 import 'dart:io';
 
 class AuthRepository {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient _supabase;
+  AuthRepository({SupabaseClient? supabase}) : _supabase = supabase ?? Supabase.instance.client;
+
 
   Future<void> signUp({
     required String email,

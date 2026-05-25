@@ -439,6 +439,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 : ListView.separated(
               padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 80),
               physics: const BouncingScrollPhysics(),
+              key: const Key('habits_list'),
               itemCount: activeHabits.length,
               separatorBuilder: (context, index) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
@@ -466,6 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => HabitDetailScreen(habitId: habit.id)));
                     }
                   },
+                  key: const Key('habit_tile_h1'),
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     padding: const EdgeInsets.all(16),
