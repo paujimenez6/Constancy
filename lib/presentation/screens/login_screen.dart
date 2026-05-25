@@ -158,6 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(strings.loginSubtitle, textAlign: TextAlign.center, style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withValues(alpha:0.7))),
                 const SizedBox(height: 30),
                 TextFormField(
+                  key: const Key('email_field'),
                   controller: _emailController,
                   inputFormatters: [
                     FilteringTextInputFormatter.deny(RegExp(r'\s')),
@@ -169,6 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
+                  key: const Key('password_field'),
                   controller: _passwordController,
                   inputFormatters: [
                     FilteringTextInputFormatter.deny(RegExp(r'\s')),
@@ -186,10 +188,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: TextButton(onPressed: () => _showForgotPasswordSheet(context), child: Text(strings.forgotPassword)),
+                  child: TextButton(key: const Key('forgot_password_button'), onPressed: () => _showForgotPasswordSheet(context), child: Text(strings.forgotPassword)),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
+                  key: const Key('login_button'),
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       try {
