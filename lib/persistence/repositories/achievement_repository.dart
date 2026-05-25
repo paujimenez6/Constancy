@@ -3,7 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/models/achievement_model.dart';
 
 class AchievementRepository {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient _supabase;
+  AchievementRepository({SupabaseClient? supabase}) : _supabase = supabase ?? Supabase.instance.client;
 
   Future<List<AchievementModel>> getUserAchievements(String userId) async {
     final response = await _supabase
