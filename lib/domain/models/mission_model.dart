@@ -21,7 +21,7 @@ class MissionModel {
     return MissionModel(
       id: json['id'] ?? '',
       titolClau: json['titol_clau'] ?? '',
-      descripcioClau: json['desc_clau'] ?? '',
+      descripcioClau: json['descripcio_clau'] ?? '',
       recompensaXp: json['recompensa_xp'] ?? 0,
       recompensaMonedes: json['recompensa_monedes'] ?? 0,
       objectiu: (json['objectiu'] as num?)?.toDouble() ?? 0.0,
