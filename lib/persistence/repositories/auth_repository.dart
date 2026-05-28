@@ -8,7 +8,6 @@ class AuthRepository {
   final SupabaseClient _supabase;
   AuthRepository({SupabaseClient? supabase}) : _supabase = supabase ?? Supabase.instance.client;
 
-
   Future<void> signUp({
     required String email,
     required String password,
@@ -17,7 +16,6 @@ class AuthRepository {
     required String cognom,
   }) async {
     try {
-
       final existingNickname = await _supabase
           .from('profiles')
           .select('nickname')
@@ -102,7 +100,7 @@ class AuthRepository {
 
   Future<void> updatePassword(String newPassword) async {
     try {
-      await _supabase.auth.updateUser(UserAttributes(password: newPassword),);
+      await _supabase.auth.updateUser(UserAttributes(password: newPassword));
     } catch (e) {
       throw Exception('Error actualitzant contrasenya: $e');
     }
@@ -129,7 +127,7 @@ class AuthRepository {
         await _supabase.auth.mfa.unenroll(factor.id);
       }
 
-      return await _supabase.auth.mfa.enroll(factorType: FactorType.totp, issuer: 'Constancy',);
+      return await _supabase.auth.mfa.enroll(factorType: FactorType.totp, issuer: 'Constancy');
     } catch (e) {
       throw Exception('Error en enrolar MFA: $e');
     }
@@ -139,7 +137,7 @@ class AuthRepository {
     try {
       final challenge = await _supabase.auth.mfa.challenge(factorId: factorId);
 
-      await _supabase.auth.mfa.verify(factorId: factorId, challengeId: challenge.id, code: code,);
+      await _supabase.auth.mfa.verify(factorId: factorId, challengeId: challenge.id, code: code);
 
     } catch (e) {
       print("Error en verifyMFA: $e");
@@ -162,7 +160,7 @@ class AuthRepository {
       final verifiedFactor = factors.all.firstWhere((f) => f.status.name == 'verified');
       final challenge = await _supabase.auth.mfa.challenge(factorId: verifiedFactor.id);
 
-      await _supabase.auth.mfa.verify(factorId: verifiedFactor.id, challengeId: challenge.id, code: code,);
+      await _supabase.auth.mfa.verify(factorId: verifiedFactor.id, challengeId: challenge.id, code: code);
 
     } catch (e) {
       print("Error en loginMFAChallenge: $e");
@@ -227,7 +225,7 @@ class AuthRepository {
         finalImageUrl = "$rawUrl?t=${DateTime.now().millisecondsSinceEpoch}";
       }
 
-      await _supabase.from('profiles').update({'nom': nom, 'cognom': cognom, 'imatge_perfil': finalImageUrl,}).eq('id', userId);
+      await _supabase.from('profiles').update({'nom': nom, 'cognom': cognom, 'imatge_perfil': finalImageUrl}).eq('id', userId);
 
       return finalImageUrl;
     } catch (e) {
@@ -262,6 +260,7 @@ class AuthRepository {
         .from('profiles')
         .stream(primaryKey: ['id'])
         .eq('id', userId)
+        .where((data) => data.isNotEmpty)
         .map((data) => UserModel.fromJson(data.first));
   }
 
@@ -285,4 +284,3 @@ class AuthRepository {
     }
   }
 }
-

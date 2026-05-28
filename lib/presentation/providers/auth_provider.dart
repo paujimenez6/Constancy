@@ -71,6 +71,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    _profileSubscription?.cancel();
     await _authService.signOut();
     logout();
   }
@@ -101,6 +102,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void logout() {
+    _profileSubscription?.cancel();
     _currentUser = null;
     isManualLogin = false;
     _currentTabIndex = 0;
@@ -134,6 +136,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> deleteAccount() async {
+    _profileSubscription?.cancel();
     await _authService.deleteAccount();
     logout();
   }

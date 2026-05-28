@@ -28,13 +28,14 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final habitProv = context.read<HabitProvider>();
-      final habit = habitProv.habits.firstWhere(
-            (h) => h.id == widget.habitId,
-        orElse: () => habitProv.habits.first,
-      );
-      if (habit.isGroup) {
-        habitProv.loadGroupDetails(widget.habitId);
-        habitProv.listenToGroupChanges(widget.habitId);
+      final habitIndex = habitProv.habits.indexWhere((h) => h.id == widget.habitId);
+
+      if (habitIndex != -1) {
+        final habit = habitProv.habits[habitIndex];
+        if (habit.isGroup) {
+          habitProv.loadGroupDetails(widget.habitId);
+          habitProv.listenToGroupChanges(widget.habitId);
+        }
       }
     });
   }
@@ -54,15 +55,21 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final habitProvider = context.watch<HabitProvider>();
+
+    final habitIndex = habitProvider.habits.indexWhere((h) => h.id == widget.habitId);
+    if (habitIndex == -1) {
+      return Scaffold(
+        appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final habit = habitProvider.habits[habitIndex];
+
     final authProvider = context.watch<AuthProvider>();
     final theme = Theme.of(context);
     final strings = S.of(context);
     final dateFormat = DateFormat.yMMMMd(Intl.getCurrentLocale());
-
-    final habit = habitProvider.habits.firstWhere(
-          (h) => h.id == widget.habitId,
-      orElse: () => habitProvider.habits.first,
-    );
 
     bool isUserAdmin = !habit.isGroup;
     if (habit.isGroup) {

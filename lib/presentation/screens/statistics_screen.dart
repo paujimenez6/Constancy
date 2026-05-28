@@ -344,9 +344,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
                 progress = (r.valorProgres / _selectedHabit!.valorObjectiu).clamp(0.0, 1.0);
               } else {
                 final completedCount = dayRecords.where((r) {
-                  final h = provider.habits.firstWhere((hab) => hab.id == r.habitId);
-                  return r.valorProgres >= h.valorObjectiu;
+                  final hIndex = provider.habits.indexWhere((hab) => hab.id == r.habitId);
+                  if (hIndex == -1) return false;
+                  return r.valorProgres >= provider.habits[hIndex].valorObjectiu;
                 }).length;
+
                 progress = (completedCount / filteredExpected.length).clamp(0.0, 1.0);
               }
             }

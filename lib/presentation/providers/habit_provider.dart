@@ -23,8 +23,8 @@ class HabitProvider extends ChangeNotifier {
   String? _currentInviteCode;
   RealtimeChannel? _groupSubscription;
   double _currentGroupTotalProgress = 0.0;
-  Map<String, double> _groupTotals = {};
-  Map<String, RealtimeChannel> _activeSubscriptions = {};
+  final Map<String, double> _groupTotals = {};
+  final Map<String, RealtimeChannel> _activeSubscriptions = {};
   List<HabitRecordModel> _groupAggregatedMonthlyRecords = [];
   List<HabitRecordModel> _groupAggregatedAllTimeRecords = [];
 
@@ -35,37 +35,22 @@ class HabitProvider extends ChangeNotifier {
   HabitProvider(this._habitService, this._missionService, this._achievementService);
 
   List<HabitModel> get habits => _habits;
-
   List<HabitModel> get profileHabits => _profileHabits;
-
   Map<String, HabitRecordModel> get dailyRecords => _dailyRecords;
-
   DateTime get selectedDate => _selectedDate;
-
   bool get isLoading => _isLoading;
-
   DateTime get focusedMonth => _focusedMonth;
-
   List<HabitRecordModel> get monthlyRecords => _monthlyRecords;
-
   List<HabitRecordModel> get allTimeRecords => _allTimeRecords;
 
   List<HabitModel> get filteredHabits => _habitService.filterHabitsForDate(_habits, _selectedDate);
-
   List<HabitModel> get archivedHabits => _habitService.getArchivedHabits(_habits);
-
   List<String> getMonthLabels() => _habitService.getLocalizedMonths();
-
   List<String> get availableCategories => _habitService.getUniqueCategories(_habits);
-
   List<HabitGroupMember> get currentGroupMembers => _currentGroupMembers;
-
   String? get currentInviteCode => _currentInviteCode;
-
   double get currentGroupTotalProgress => _currentGroupTotalProgress;
-
   Map<String, double> get groupTotals => _groupTotals;
-
   List<HabitRecordModel> get groupAggregatedMonthlyRecords => _groupAggregatedMonthlyRecords;
 
   List<ChartDataPoint> getStatisticsChartData({
@@ -283,6 +268,7 @@ class HabitProvider extends ChangeNotifier {
       final bool eraGrupal = _habits.any((h) => h.id == habitId && h.isGroup);
 
       stopListeningToAllGroups();
+      await _habitService.deleteHabit(habitId);
       await loadDataForDate(_selectedDate);
       listenToAllVisibleGroups();
 
@@ -292,6 +278,7 @@ class HabitProvider extends ChangeNotifier {
         await _achievementService.setAbsoluteProgress(myId, 'grupalsUnits5', totalGrupals);
       }
 
+      await loadMonthlyData(_focusedMonth);
       await loadAllTimeData();
     } finally {
       _isLoading = false;
@@ -463,6 +450,7 @@ class HabitProvider extends ChangeNotifier {
       final int totalGrupals = _habits.where((h) => h.isGroup).length;
       await _achievementService.setAbsoluteProgress(myId, 'grupalsUnits5', totalGrupals);
 
+      await loadMonthlyData(_focusedMonth);
       await loadAllTimeData();
     } catch (e) {
       debugPrint("Error al abandonar grup: $e");
