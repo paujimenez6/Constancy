@@ -152,7 +152,6 @@ class HabitRepository {
       'comentari': comentari,
       'updated_at': DateTime.now().toIso8601String(),
     }, onConflict: 'habit_id, user_id, data_registre');
-
   }
 
   Future<void> updateHabitRecordComment(String habitId, String userId, DateTime date, String comentari) async {
@@ -183,7 +182,7 @@ class HabitRepository {
 
     await _supabase
         .from('habit_records')
-        .update({'is_shielded': false, 'completat': false,})
+        .update({'is_shielded': false, 'completat': false})
         .eq('user_id', userId)
         .eq('data_registre', dateStr);
   }
@@ -198,19 +197,24 @@ class HabitRepository {
     final hBase = await _supabase.from('habits').insert(habitData).select().single();
     final hId = hBase['id'];
 
-    await _supabase.from('group_habits').insert({
-      'id': hId,
-      'codi_invitacio': inviteCode,
-      'creat_per': userId,
-    });
+    try {
+      await _supabase.from('group_habits').insert({
+        'id': hId,
+        'codi_invitacio': inviteCode,
+        'creat_per': userId,
+      });
 
-    await _supabase.from('participacions_habits').insert({
-      'user_id': userId,
-      'habit_grupal_id': hId,
-      'es_administrador': true,
-    });
+      await _supabase.from('participacions_habits').insert({
+        'user_id': userId,
+        'habit_grupal_id': hId,
+        'es_administrador': true,
+      });
 
-    return HabitModel.fromJson(hBase);
+      return HabitModel.fromJson(hBase);
+    } catch (e) {
+      await _supabase.from('habits').delete().eq('id', hId);
+      rethrow;
+    }
   }
 
   Future<void> joinByCode(String userId, String code) async {
