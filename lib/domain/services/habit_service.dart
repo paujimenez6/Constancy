@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
-
+import 'dart:math';
 import '../../persistence/repositories/habit_repository.dart';
 import '../models/chart_data_model.dart';
 import '../models/habit_group_member_model.dart';
@@ -29,18 +29,18 @@ class HabitService {
     return await _habitRepository.createHabit(habit);
   }
 
-  Future<void> joinGroup(String userId, String code) async {
-    await _habitRepository.joinByCode(userId, code);
-  }
-
   String generateInviteCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    final random = DateTime.now().millisecondsSinceEpoch;
+    final random = Random();
     String code = '';
     for (int i = 0; i < 6; i++) {
-      code += chars[(random + i) % chars.length];
+      code += chars[random.nextInt(chars.length)];
     }
     return "CONST-$code";
+  }
+
+  Future<void> joinGroup(String userId, String code) async {
+    await _habitRepository.joinByCode(userId, code);
   }
 
   List<HabitModel> getArchivedHabits(List<HabitModel> allHabits) {
@@ -188,7 +188,6 @@ class HabitService {
 
     return false;
   }
-
 
   List<String> getMonthLabels(BuildContext context) {
     final dateFormat = DateFormat.MMM(Intl.getCurrentLocale());
