@@ -29,7 +29,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
   bool _isCumulativeView = false;
   StatsView _currentView = StatsView.mensual;
   HabitModel? _selectedHabit;
-  String? _selectedCategory;
   TabController? _tabController;
 
   @override
@@ -201,8 +200,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
   }
 
   Widget _buildHabitSelector(HabitProvider provider, S strings, ThemeData theme) {
-    final categories = provider.availableCategories;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -212,9 +209,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: _selectedHabit != null
-              ? 'h_${_selectedHabit!.id}'
-              : (_selectedCategory != null ? 'c_$_selectedCategory' : 'all'),
+          value: _selectedHabit != null ? 'h_${_selectedHabit!.id}' : 'all',
           isExpanded: true,
           icon: const Icon(Icons.filter_list_rounded),
           items: [
@@ -228,19 +223,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
                 ],
               ),
             ),
-            if (categories.isNotEmpty) ...[
-              const DropdownMenuItem(enabled: false, child: Divider()),
-              ...categories.map((cat) => DropdownMenuItem(
-                value: 'c_$cat',
-                child: Row(
-                  children: [
-                    const Icon(Icons.folder_open_rounded, size: 20, color: Colors.orange),
-                    const SizedBox(width: 10),
-                    Text(cat, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              )),
-            ],
             const DropdownMenuItem(enabled: false, child: Divider()),
             ...provider.habits.map((h) {
               final bool isArchived = h.arxivat;
@@ -274,14 +256,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
             setState(() {
               if (newValue == 'all') {
                 _selectedHabit = null;
-                _selectedCategory = null;
-              } else if (newValue!.startsWith('c_')) {
-                _selectedCategory = newValue.replaceFirst('c_', '');
-                _selectedHabit = null;
-              } else if (newValue.startsWith('h_')) {
+              } else if (newValue!.startsWith('h_')) {
                 final id = newValue.replaceFirst('h_', '');
                 _selectedHabit = provider.habits.firstWhere((h) => h.id == id);
-                _selectedCategory = null;
               }
             });
             _loadData();
@@ -392,7 +369,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
     final chartData = provider.getStatisticsChartData(
       isMensual: isMensual,
       selectedHabit: _selectedHabit,
-      selectedCategory: _selectedCategory,
+      selectedCategory: null,
       viewDate: _currentMonth,
       isCumulative: _isCumulativeView,
       useGroupData: isGroupMode,
@@ -513,7 +490,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
     final stats = provider.getStats(
       isMensual: _currentView == StatsView.mensual,
       habitId: _selectedHabit?.id,
-      categoryId: _selectedCategory,
+      categoryId: null,
       useGroupData: isGroupMode,
     );
 
@@ -531,7 +508,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
               ),
             Flexible(
               child: Text(
-                _selectedHabit != null ? _selectedHabit!.titol : (_selectedCategory ?? ( _currentView == StatsView.mensual ? strings.monthlySummary : strings.globalSummary)),
+                _selectedHabit != null ? _selectedHabit!.titol : (_currentView == StatsView.mensual ? strings.monthlySummary : strings.globalSummary),
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),

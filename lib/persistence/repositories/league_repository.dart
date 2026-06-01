@@ -5,14 +5,11 @@ class LeagueRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   Future<Map<String, dynamic>?> getCurrentUserLeague(String userId) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-
     return await _supabase
         .from('participacio_lliga')
         .select('*, lligues!inner(*)')
         .eq('user_id', userId)
-        .lte('lligues.data_inici', now)
-        .gte('lligues.data_fi', now)
+        .eq('lligues.activa', true)
         .maybeSingle();
   }
 
