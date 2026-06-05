@@ -34,21 +34,3 @@ USING (
   bucket_id = 'avatars' AND
   (storage.foldername(name))[1] = auth.uid()::text
 );
-
-CREATE OR REPLACE FUNCTION public.delete_user_avatar_folder()
-RETURNS TRIGGER AS $$
-BEGIN
-  DELETE FROM storage.objects
-  WHERE bucket_id = 'avatars'
-  AND (storage.foldername(name))[1] = OLD.id::text;
-
-  RETURN OLD;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-DROP TRIGGER IF EXISTS trigger_delete_avatar_on_profile_delete ON public.profiles;
-
-CREATE TRIGGER trigger_delete_avatar_on_profile_delete
-  AFTER DELETE ON public.profiles
-  FOR EACH ROW
-  EXECUTE PROCEDURE public.delete_user_avatar_folder();

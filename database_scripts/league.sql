@@ -50,7 +50,7 @@ CREATE TABLE resultats_lliga (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE OR REPLACE FUNCTION obtenir_lliga_disponible(p_nivell INTEGER)
+CREATE OR REPLACE FUNCTION public.obtenir_lliga_disponible(p_nivell INTEGER)
 RETURNS UUID AS $$
 DECLARE
     v_league_id UUID;
@@ -58,70 +58,70 @@ DECLARE
     v_end TIMESTAMPTZ := v_start + interval '7 days';
 BEGIN
     SELECT l.id INTO v_league_id
-    FROM lligues l
-    LEFT JOIN participacio_lliga p ON l.id = p.league_id
+    FROM public.lligues l
+    LEFT JOIN public.participacio_lliga p ON l.id = p.league_id
     WHERE l.nivell_lliga = p_nivell AND l.activa = true
     GROUP BY l.id
     HAVING count(p.user_id) < 10
     LIMIT 1;
 
     IF v_league_id IS NULL THEN
-        INSERT INTO lligues (nivell_lliga, nom_lliga, color, data_inici, data_fi)
+        INSERT INTO public.lligues (nivell_lliga, nom_lliga, color, data_inici, data_fi)
         SELECT nivell, nom, color, v_start, v_end
-        FROM lligues_definicions WHERE nivell = p_nivell
+        FROM public.lligues_definicions WHERE nivell = p_nivell
         RETURNING id INTO v_league_id;
     END IF;
 
     RETURN v_league_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION actualitzar_posicions_lliga()
+CREATE OR REPLACE FUNCTION public.actualitzar_posicions_lliga()
 RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE participacio_lliga
+    UPDATE public.participacio_lliga
     SET posicio_actual = sub.nova_posicio
     FROM (
         SELECT user_id, league_id,
                ROW_NUMBER() OVER (PARTITION BY league_id ORDER BY xp_temporada DESC, joined_at ASC) as nova_posicio
-        FROM participacio_lliga
+        FROM public.participacio_lliga
         WHERE league_id = NEW.league_id
     ) AS sub
-    WHERE participacio_lliga.user_id = sub.user_id AND participacio_lliga.league_id = sub.league_id;
+    WHERE public.participacio_lliga.user_id = sub.user_id AND public.participacio_lliga.league_id = sub.league_id;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE TRIGGER trigger_recalcul_posicions
 AFTER UPDATE OF xp_temporada ON participacio_lliga
 FOR EACH ROW EXECUTE FUNCTION actualitzar_posicions_lliga();
 
-CREATE OR REPLACE FUNCTION assignar_lliga_inicial()
+CREATE OR REPLACE FUNCTION public.assignar_lliga_inicial()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO participacio_lliga (user_id, league_id, xp_temporada, posicio_actual)
-    VALUES (NEW.id, obtenir_lliga_disponible(1), 0, 1);
+    INSERT INTO public.participacio_lliga (user_id, league_id, xp_temporada, posicio_actual)
+    VALUES (NEW.id, public.obtenir_lliga_disponible(1), 0, 1);
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE TRIGGER trigger_nou_usuari_lliga
 AFTER INSERT ON profiles
 FOR EACH ROW EXECUTE FUNCTION assignar_lliga_inicial();
 
-CREATE OR REPLACE FUNCTION rotacio_setmanal_lligues()
+CREATE OR REPLACE FUNCTION public.rotacio_setmanal_lligues()
 RETURNS void AS $$
 DECLARE
     curr RECORD;
     v_target_level INTEGER;
     v_new_league_id UUID;
 BEGIN
-    UPDATE lligues SET activa = false WHERE activa = true;
+    UPDATE public.lligues SET activa = false WHERE activa = true;
 
     FOR curr IN
         SELECT p.*, l.nivell_lliga
-        FROM participacio_lliga p
-        JOIN lligues l ON p.league_id = l.id
+        FROM public.participacio_lliga p
+        JOIN public.lligues l ON p.league_id = l.id
         WHERE l.activa = false
     LOOP
         v_target_level := CASE
@@ -130,21 +130,21 @@ BEGIN
             ELSE curr.nivell_lliga
         END;
 
-        INSERT INTO resultats_lliga (user_id, nivell_anterior, nivell_nou, posicio_final)
+        INSERT INTO public.resultats_lliga (user_id, nivell_anterior, nivell_nou, posicio_final)
         VALUES (curr.user_id, curr.nivell_lliga, v_target_level, curr.posicio_actual);
 
         INSERT INTO public.notifications (receiver_id, type, created_at)
         VALUES (curr.user_id, 'league_end', NOW());
 
-        v_new_league_id := obtenir_lliga_disponible(v_target_level);
+        v_new_league_id := public.obtenir_lliga_disponible(v_target_level);
 
-        DELETE FROM participacio_lliga WHERE user_id = curr.user_id AND league_id = curr.league_id;
+        DELETE FROM public.participacio_lliga WHERE user_id = curr.user_id AND league_id = curr.league_id;
 
-        INSERT INTO participacio_lliga (user_id, league_id, xp_temporada, posicio_actual)
+        INSERT INTO public.participacio_lliga (user_id, league_id, xp_temporada, posicio_actual)
         VALUES (curr.user_id, v_new_league_id, 0, 1);
     END LOOP;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 ALTER TABLE lligues ENABLE ROW LEVEL SECURITY;
 ALTER TABLE participacio_lliga ENABLE ROW LEVEL SECURITY;

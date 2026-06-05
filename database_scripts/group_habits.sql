@@ -131,3 +131,124 @@ DROP TRIGGER IF EXISTS trigger_actualitzar_progres ON public.habit_records;
 CREATE TRIGGER trigger_actualitzar_progres
 AFTER INSERT OR UPDATE OR DELETE ON public.habit_records
 FOR EACH ROW
+EXECUTE FUNCTION public.actualitzar_progres_acumulat();
+
+DROP TRIGGER IF EXISTS trigger_sincronitzar_completat ON public.habit_records;
+CREATE TRIGGER trigger_sincronitzar_completat
+AFTER INSERT OR UPDATE OF valor_progres ON public.habit_records
+FOR EACH ROW
+EXECUTE FUNCTION public.sincronitzar_completat_grupal();
+
+CREATE OR REPLACE VIEW public.v_user_habits
+WITH (security_invoker = true) AS
+SELECT DISTINCT h.*, ph.user_id as participant_id
+FROM public.habits h
+LEFT JOIN public.participacions_habits ph ON h.id = ph.habit_grupal_id;
+
+CREATE OR REPLACE VIEW public.v_habit_group_ranking AS
+SELECT
+    ph.habit_grupal_id,
+    ph.user_id,
+    ph.progres_acumulat,
+    ph.es_administrador,
+    p.nickname,
+    p.imatge_perfil,
+    COALESCE(
+        (SELECT hr.valor_progres
+         FROM public.habit_records hr
+         WHERE hr.user_id = ph.user_id
+           AND hr.habit_id = ph.habit_grupal_id
+           AND hr.data_registre = CURRENT_DATE
+         LIMIT 1),
+    0) AS progres_avui
+FROM public.participacions_habits ph
+JOIN public.profiles p ON ph.user_id = p.id;
+
+CREATE OR REPLACE FUNCTION public.get_group_ranking_custom_date(p_habit_id UUID, p_date DATE)
+RETURNS TABLE (
+    user_id UUID,
+    nickname TEXT,
+    imatge_perfil TEXT,
+    progres_acumulat FLOAT,
+    es_administrador BOOLEAN,
+    progres_dia FLOAT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        ph.user_id,
+        p.nickname,
+        p.imatge_perfil,
+        ph.progres_acumulat,
+        ph.es_administrador,
+        COALESCE(
+            (SELECT hr.valor_progres
+             FROM public.habit_records hr
+             WHERE hr.user_id = ph.user_id
+               AND hr.habit_id = ph.habit_grupal_id
+               AND hr.data_registre = p_date
+             LIMIT 1),
+        0)::FLOAT AS progres_dia
+    FROM public.participacions_habits ph
+    JOIN public.profiles p ON ph.user_id = p.id
+    WHERE ph.habit_grupal_id = p_habit_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.get_group_total_progress(p_habit_id UUID, p_date DATE)
+RETURNS NUMERIC AS $$
+BEGIN
+    RETURN (
+        SELECT COALESCE(SUM(valor_progres), 0)
+        FROM public.habit_records
+        WHERE habit_id = p_habit_id AND data_registre = p_date
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+ALTER TABLE public.group_habits ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Usuaris poden crear els seus propis hàbits grupals" ON public.group_habits;
+CREATE POLICY "Usuaris poden crear els seus propis hàbits grupals" ON public.group_habits FOR INSERT TO authenticated WITH CHECK (auth.uid() = creat_per);
+DROP POLICY IF EXISTS "Usuaris poden veure hàbits grupals" ON public.group_habits;
+CREATE POLICY "Usuaris poden veure hàbits grupals" ON public.group_habits FOR SELECT TO authenticated USING (true);
+
+ALTER TABLE public.participacions_habits ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Usuaris poden crear la seva pròpia participació" ON public.participacions_habits;
+CREATE POLICY "Usuaris poden crear la seva pròpia participació" ON public.participacions_habits FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Usuaris poden veure participacions" ON public.participacions_habits;
+CREATE POLICY "Usuaris poden veure participacions" ON public.participacions_habits FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Usuaris poden actualitzar el seu propi progrés" ON public.participacions_habits;
+CREATE POLICY "Usuaris poden actualitzar el seu propi progrés" ON public.participacions_habits FOR UPDATE TO authenticated USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Usuaris poden eliminar la seva pròpia participació" ON public.participacions_habits;
+CREATE POLICY "Usuaris poden eliminar la seva pròpia participació" ON public.participacions_habits FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+ALTER PUBLICATION supabase_realtime ADD TABLE public.participacions_habits;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.habit_records;
+
+DROP POLICY IF EXISTS "Usuaris poden eliminar els seus propis hàbits grupals" ON public.group_habits;
+CREATE POLICY "Usuaris poden eliminar els seus propis hàbits grupals"
+ON public.group_habits FOR DELETE USING (auth.uid() = creat_per);
+
+DROP POLICY IF EXISTS "Usuaris poden eliminar participacions" ON public.participacions_habits;
+DROP POLICY IF EXISTS "Usuaris poden eliminar la seva pròpia participació" ON public.participacions_habits;
+CREATE POLICY "Usuaris poden eliminar participacions"
+ON public.participacions_habits FOR DELETE USING (
+  auth.uid() = user_id
+  OR EXISTS (SELECT 1 FROM public.habits WHERE id = habit_grupal_id AND user_id = auth.uid())
+);
+
+DROP POLICY IF EXISTS "Usuaris poden esborrar els seus registres" ON public.habit_records;
+CREATE POLICY "Usuaris poden esborrar els seus registres"
+ON public.habit_records FOR DELETE USING (
+  auth.uid() = user_id
+  OR EXISTS (SELECT 1 FROM public.habits WHERE id = habit_id AND user_id = auth.uid())
+);
+
+ALTER TABLE public.group_habits
+DROP CONSTRAINT IF EXISTS group_habits_creat_per_fkey;
+
+ALTER TABLE public.group_habits
+ADD CONSTRAINT group_habits_creat_per_fkey
+FOREIGN KEY (creat_per)
+REFERENCES public.profiles(id)
+ON DELETE CASCADE;
