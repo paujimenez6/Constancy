@@ -66,3 +66,33 @@ BEGIN
   DELETE FROM auth.users WHERE id = auth.uid();
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (
+    id,
+    nickname,
+    nom,
+    cognom,
+    correu,
+    punts_xp,
+    monedes,
+    configuracio_privacitat
+  )
+  VALUES (
+    new.id,
+    COALESCE(new.raw_user_meta_data->>'nickname', 'user_' || substring(new.id::text, 1, 5)),
+    new.raw_user_meta_data->>'nom',
+    new.raw_user_meta_data->>'cognom',
+    new.email,
+    0,
+    0,
+    'privat'
+  );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

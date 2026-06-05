@@ -37,24 +37,6 @@ CREATE TABLE IF NOT EXISTS public.habit_records (
 ALTER TABLE public.habits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.habit_records ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Usuaris poden veure els seus propis hàbits" ON public.habits;
-DROP POLICY IF EXISTS "Visibilitat d'hàbits" ON public.habits;
-CREATE POLICY "Visibilitat d'hàbits" ON public.habits FOR SELECT USING (
-  auth.uid() = user_id
-  OR EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE profiles.id = habits.user_id
-    AND profiles.configuracio_privacitat = 'public'
-  )
-  OR EXISTS (
-    SELECT 1 FROM public.profiles p
-    JOIN public.follows f ON f.following_id = habits.user_id
-    WHERE p.id = habits.user_id
-    AND p.configuracio_privacitat = 'amics'
-    AND f.follower_id = auth.uid()
-  )
-);
-
 DROP POLICY IF EXISTS "Usuaris poden crear els seus propis hàbits" ON public.habits;
 CREATE POLICY "Usuaris poden crear els seus propis hàbits" ON public.habits FOR INSERT WITH CHECK (auth.uid() = user_id);
 
@@ -241,3 +223,25 @@ BEGIN
     PERFORM public.update_achievement_progress(p_user_id, 'utilitzarInventari25', 1);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP POLICY IF EXISTS "Visibilitat d'hàbits" ON public.habits;
+CREATE POLICY "Visibilitat d'hàbits" ON public.habits FOR SELECT USING (
+  auth.uid() = user_id
+  OR EXISTS (
+    SELECT 1 FROM public.participacions_habits ph
+    WHERE ph.habit_grupal_id = habits.id
+    AND ph.user_id = auth.uid()
+  )
+  OR EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE profiles.id = habits.user_id
+    AND profiles.configuracio_privacitat = 'public'
+  )
+  OR EXISTS (
+    SELECT 1 FROM public.profiles p
+    JOIN public.follows f ON f.following_id = habits.user_id
+    WHERE p.id = habits.user_id
+    AND p.configuracio_privacitat = 'amics'
+    AND f.follower_id = auth.uid()
+  )
+);

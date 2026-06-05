@@ -118,3 +118,7 @@ SELECT cron.schedule('notificacio-final-dia', '0 20 * * *', 'SELECT public.send_
 
 SELECT cron.unschedule('notificacio-recordatoris-habits');
 SELECT cron.schedule('notificacio-recordatoris-habits', '* * * * *', 'SELECT public.send_habit_reminders()');
+
+ALTER TABLE public.notifications DROP CONSTRAINT IF EXISTS notifications_habit_id_fkey;
+ALTER TABLE public.notifications ADD CONSTRAINT notifications_habit_id_fkey
+FOREIGN KEY (habit_id) REFERENCES public.habits(id) ON DELETE CASCADE;
